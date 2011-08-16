@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 2.8)
+message ("Processing mvstore tests ")
+project (tests)
+SET(TESTS_TARGET_NAME "tests")
+add_subdirectory(src)
