@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 2.8)
+IF(CMAKE_SYSTEM_NAME MATCHES Windows)
+        cmake_minimum_required(VERSION 2.8)
+ENDIF(CMAKE_SYSTEM_NAME MATCHES Windows)
 if(NOT CMAKE_BUILD_TYPE)
 set (CMAKE_BUILD_TYPE "Debug")
 #SET (CMAKE_BUILD_TYPE "Release")
