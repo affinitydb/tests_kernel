@@ -9,7 +9,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "sync.h"
 #include "stdafx.h"
 
-using namespace MVStoreKernel;
+using namespace MVTestsPortability;
 
 inline void RWLock::wait(SemData *q) {
 	assert(ptrdiff_t(queue)==ptrdiff_t(~0ULL) && ptrdiff_t(q)!=ptrdiff_t(~0ULL));

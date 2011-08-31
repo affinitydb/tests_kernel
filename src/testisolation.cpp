@@ -34,8 +34,8 @@ class PITTestIsolation
         typedef std::vector<PID> TPIDs;
         TPIDs mPIDs;
         Tofstream mLog;
-        MVStoreKernel::Mutex mLogLock;
-        MVStoreKernel::Event mSynchro;
+        MVTestsPortability::Mutex mLogLock;
+        MVTestsPortability::Event mSynchro;
         MVStoreKernel::StoreCtx *mStoreCtx;
         volatile long mSynchroVal, mSynchroTarget, mFailure;
         volatile long mClock;
@@ -61,7 +61,7 @@ class PITTestIsolation
             }
             else
             {
-                MVStoreKernel::Mutex lBogus;
+                MVTestsPortability::Mutex lBogus;
                 lBogus.lock();
                 mSynchro.wait(lBogus, 100000);
                 lBogus.unlock();
@@ -230,7 +230,7 @@ int TestIsolation::execute()
             ti[i] = new testIsolation_s(mLogger, &lTI, 1 + i, mRandomSeed);
             createThread(&threadTestIsolation, ti[i], th[i]);
         }
-        MVStoreKernel::threadsWaitFor(sizeof(th)/sizeof(th[0]), th);
+        MVTestsPortability::threadsWaitFor(sizeof(th)/sizeof(th[0]), th);
         if (lTI.mFailure)
             lSuccess = false;
 

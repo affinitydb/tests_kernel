@@ -684,7 +684,7 @@ void TestOrderBy::populateStore(ISession *session){
 			
 		if ( i % ( COUNT_PINS / 10 ) == 0 ) 
 		{
-		   MVStoreKernel::threadSleep(100);	 // Just to give changing _CREATED_ time stamps
+		   MVTestsPortability::threadSleep(100);	 // Just to give changing _CREATED_ time stamps
 		   mLogger.out() << "." ;
 	  	}
 	}
@@ -697,6 +697,7 @@ void TestOrderBy::testOrderByIndex( ISession * inSession, int inCntPins )
 	PropertyID dateProp ;
 	MVTApp::mapURIs( inSession, "TestOrderBy_IndexedDate", 1, &dateProp ) ;
 
+	// Create index (note: similar class also investigated in testpidocs7.cpp)
 	CmvautoPtr<IStmt> classQ( inSession->createStmt() ) ;
 	unsigned char var = classQ->addVariable() ;
 

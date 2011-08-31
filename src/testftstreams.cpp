@@ -137,9 +137,9 @@ int TestFTStreams::execute()
 		for ( int i = 0 ; i < STRESS_THREAD_COUNT ; i++ )
 		{
 			createThread(TestFTStreams::testFTStreamsThread, this, lThreads[i]);
-			MVStoreKernel::threadSleep( 25 ) ; 
+			MVTestsPortability::threadSleep( 25 ) ; 
 		}
-		MVStoreKernel::threadsWaitFor(STRESS_THREAD_COUNT, lThreads);
+		MVTestsPortability::threadsWaitFor(STRESS_THREAD_COUNT, lThreads);
 #else
 		// Regular test, suitable for smoke test
 		ISession * const session = MVTApp::startSession();

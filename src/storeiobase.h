@@ -7,10 +7,11 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #ifndef _STOREIOBASE_H
 #define _STOREIOBASE_H
 
+namespace MVStoreKernel { typedef uint8_t FileID; };
 #include "../../kernel/include/storeio.h"
 
 
-using namespace MVStoreKernel;
+using namespace MVTestsPortability;
 
 /*
 An optional base class implementing IStoreIO.

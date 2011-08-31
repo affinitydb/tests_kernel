@@ -29,12 +29,12 @@ class testLocking_s
 		PID mPID1, mPID2;
 		RC mRC1, mRC2;
 		volatile long mStep;
-		MVStoreKernel::Event mNextStep;
+		MVTestsPortability::Event mNextStep;
 		MVStoreKernel::StoreCtx *mStoreCtx;
 		testLocking_s() : mRC1(RC_OK), mRC2(RC_OK), mStep(0), mStoreCtx(NULL){}
 		void setStoreCtx(MVStoreKernel::StoreCtx *pCtx) { mStoreCtx = pCtx; }
 		void nextStep() { INTERLOCKEDI(&mStep); mNextStep.signalAll(); }
-		void waitStep(long pStep) { MVStoreKernel::Mutex lBogus; lBogus.lock(); while (pStep != mStep) mNextStep.wait(lBogus, 100000); mNextStep.reset(); lBogus.unlock(); }
+		void waitStep(long pStep) { MVTestsPortability::Mutex lBogus; lBogus.lock(); while (pStep != mStep) mNextStep.wait(lBogus, 100000); mNextStep.reset(); lBogus.unlock(); }
 };
 
 THREAD_SIGNATURE threadTestLocking1(void * pTL)
@@ -135,7 +135,7 @@ int TestLocking::execute()
 		HTHREAD t1, t2;
 		createThread(&threadTestLocking1, &lTL, t1);
 		createThread(&threadTestLocking2, &lTL, t2);
-		HTHREAD ts[] = {t1, t2}; MVStoreKernel::threadsWaitFor(sizeof(ts)/sizeof(ts[0]), ts);
+		HTHREAD ts[] = {t1, t2}; MVTestsPortability::threadsWaitFor(sizeof(ts)/sizeof(ts[0]), ts);
 
 		if ((lTL.mRC1 != RC_OK || lTL.mRC2 != RC_NOTFOUND) && (lTL.mRC1 != RC_NOTFOUND || lTL.mRC2 != RC_OK)) {
 			if (lTL.mRC1 == RC_OK && lTL.mRC2 == RC_OK)

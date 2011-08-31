@@ -387,7 +387,7 @@ int TestStreams::execute()
 
 		#if TESTSTREAMS_BASHQUERY
 			lStop = 1;
-			MVStoreKernel::threadsWaitFor(2, lThreads);
+			MVTestsPortability::threadsWaitFor(2, lThreads);
 		#endif
 		lSession->terminate();
 		MVTApp::stopStore();

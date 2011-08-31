@@ -17,7 +17,7 @@ class TestAbortQuery : public ITest
 		static const int sNumPINs = 1000;	
 		Tstring mClassStr;
 		bool mStartAbortQ;
-		MVStoreKernel::Mutex mLock;
+		MVTestsPortability::Mutex mLock;
 
 	public:
 		TEST_DECLARE(TestAbortQuery);
@@ -53,7 +53,7 @@ class TestAbortQuery : public ITest
 			SetThreadPriority(lThreads,2);*/
 			
 			threadCtx->quickTest();
-			MVStoreKernel::threadsWaitFor(1, &lThreads);
+			MVTestsPortability::threadsWaitFor(1, &lThreads);
 			mSession->terminate();
 
 			return 0;
@@ -90,7 +90,7 @@ void TestAbortQuery::doTest()
 		SetThreadPriority(mThread,2);*/
 		
 		quickTest();
-		MVStoreKernel::threadsWaitFor(1, &mThread);
+		MVTestsPortability::threadsWaitFor(1, &mThread);
 	}
 
 	// Test Multi threaded (Session) abortQuery()
@@ -101,7 +101,7 @@ void TestAbortQuery::doTest()
 		for(size_t i = 0; i < sNumThreads; i++) 
 			createThread(&abortQueryMultiThread,this, lThreads[i]);
 
-		MVStoreKernel::threadsWaitFor(sNumThreads, lThreads);
+		MVTestsPortability::threadsWaitFor(sNumThreads, lThreads);
 	}
 }
 
@@ -283,13 +283,13 @@ void TestAbortQuery::abortQuery()
 	{
 		while(!mLock.trylock())
 		{
-			MVStoreKernel::threadSleep(1);
+			MVTestsPortability::threadSleep(1);
 			continue;
 		}
 		if(mStartAbortQ)
 			mSession->abortQuery();
 		mLock.unlock();
-		MVStoreKernel::threadSleep(50);
+		MVTestsPortability::threadSleep(50);
 	}
 }
 

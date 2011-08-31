@@ -1663,14 +1663,14 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 		}
 	#endif
 
-	MVStoreKernel::Mutex lLock;
+	MVTestsPortability::Mutex lLock;
 	CreatePINThreadInfo lInfo = {lNumPINsToCreate, lImageStr, lRandStr, lImageSubStr, lRandSubStr, lPropIDs, lNumProps , &lLock, mStoreCtx, this};	
 	HTHREAD lThreads[lNumThreads];
 	for (i = 0; i < lNumThreads; i++)			
 		createThread(&TestFamilies2::createPINsAsync, &lInfo, lThreads[i]);	
 
 	#if !CREATE_FAMILY_BEFORE_PINS
-		MVStoreKernel::threadSleep(2000);
+		MVTestsPortability::threadSleep(2000);
 		ClassID lCLSImageID = STORE_INVALID_CLASSID;
 		{
 			IStmt *lQ = pSession->createStmt();
@@ -1747,7 +1747,7 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 			mLogger.out() << "Iteration " << i << ": Number of PINs in family = " << lNumPINsInFamily << std::endl;
 	}	
 	mLogger.out() << "INFO(testAsyncPINCreationWithFamily): Completed. Waiting for threads to exit" << std::endl;
-	MVStoreKernel::threadsWaitFor(lNumThreads, lThreads);
+	MVTestsPortability::threadsWaitFor(lNumThreads, lThreads);
 	return lSuccess;
 }
 bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
@@ -3296,7 +3296,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 	GetStreamThreadInfo lInfo2 = {lPIDList,lPropIDs[3],mStoreCtx};
 	createThread(&TestFamilies2::getStreamAync, &lInfo2, lThreads[sNumThreads-1]);
 
-	MVStoreKernel::threadSleep(200);
+	MVTestsPortability::threadSleep(200);
 	mLogger.out() << "Executing Family " << lBuf << " ... ";
 	{		
 		Value lParam[1];
@@ -3319,7 +3319,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		lQ->destroy();
 	}
 	
-	MVStoreKernel::threadsWaitFor(sNumThreads, lThreads);
+	MVTestsPortability::threadsWaitFor(sNumThreads, lThreads);
 	*/
 	lPIDList.clear();
 	return lSuccess;

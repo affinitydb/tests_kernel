@@ -23,16 +23,16 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 class TestStoreInfo 
 {
 	enum eStoreStates { kSNone = 0, kSCreated, kSOpened, kSClosing, kSClosed, kSError };
-	MVStoreKernel::Mutex mStoreLock;
+	MVTestsPortability::Mutex mStoreLock;
 	long volatile mSessionCount;
 	long volatile mThreadCount;
 public:
 	ITest *mTest;
-	MVStoreKernel::Mutex *mLock;
-	MVStoreKernel::Event *mStart; 
+	MVTestsPortability::Mutex *mLock;
+	MVTestsPortability::Event *mStart; 
 	bool &fStarted;
 	long &mCounter;
-	MVStoreKernel::Event *mFinish;
+	MVTestsPortability::Event *mFinish;
 	MVStoreKernel::StoreCtx *mStoreCtx;
 	Tstring mIdentity;
 	Tstring mPassword;
@@ -43,7 +43,7 @@ public:
 	HTHREAD mTHREAD[NUMTHREADSPERSTORE];
 
 public:
-	TestStoreInfo(ITest *pTest, MVStoreKernel::Mutex *pLock, MVStoreKernel::Event *pStart, MVStoreKernel::Event *pFinished, bool &pStarted, long &pCounter,/* MVStoreKernel::Event &pFinish,*/ const char *pIdentity, 
+	TestStoreInfo(ITest *pTest, MVTestsPortability::Mutex *pLock, MVTestsPortability::Event *pStart, MVTestsPortability::Event *pFinished, bool &pStarted, long &pCounter,/* MVTestsPortability::Event &pFinish,*/ const char *pIdentity, 
 		const char *pPwd, const char *pDir, unsigned short pStoreID) 
 		: mTest(pTest), mLock(pLock), mStart(pStart), fStarted(pStarted), mCounter(pCounter), mFinish(pFinished), mIdentity(pIdentity)
 		, mPassword(pPwd), mDirectory(pDir), mStoreID(pStoreID)		
@@ -102,7 +102,7 @@ public:
 	{
 		bool lShutdown = false;
 		{
-			MVStoreKernel::MutexP lLock(&mStoreLock);
+			MVTestsPortability::MutexP lLock(&mStoreLock);
 			if(canShutdown())
 			{
 				mState = kSClosing;
@@ -136,7 +136,7 @@ protected:
 				}else pIters++;
 			}
 			else TV_R(false && "Failed to start store", mTest);			
-			MVStoreKernel::threadSleep((MVTRand::getRange(3, 10) * 1000));
+			MVTestsPortability::threadSleep((MVTRand::getRange(3, 10) * 1000));
 		}		
 		mLock->lock();
 		INTERLOCKEDD(&mCounter);
@@ -147,8 +147,8 @@ protected:
 	}
 	bool startStore(bool pCreate = false)
 	{		
-		while(mState == kSClosing) MVStoreKernel::threadSleep(1000);
-		MVStoreKernel::MutexP lLock(&mStoreLock); 
+		while(mState == kSClosing) MVTestsPortability::threadSleep(1000);
+		MVTestsPortability::MutexP lLock(&mStoreLock); 
 		if(mState == kSOpened) return true;
 
 		StartupParameters const lSP(0, mDirectory.c_str(), DEFAULT_MAX_FILES, MVTApp::Suite().mNBuffer,  
@@ -192,7 +192,7 @@ protected:
 
 	bool stopStore()
 	{		
-		MVStoreKernel::MutexP lLock(&mStoreLock);
+		MVTestsPortability::MutexP lLock(&mStoreLock);
 		//if(RC_OK == MVTApp::sDynamicLinkMvstore->shutdown(mStoreCtx, true))
 		if(RC_OK == shutdownStore(mStoreCtx))
 		{
@@ -211,7 +211,7 @@ protected:
 	}
 	ISession *startSession()
 	{		
-		MVStoreKernel::MutexP lLock(&mStoreLock);
+		MVTestsPortability::MutexP lLock(&mStoreLock);
 		if(mState == kSClosing || mState == kSClosed) return NULL;
 		assert(mState == kSOpened || mStoreCtx != NULL);
 		//ISession *lSession = MVTApp::sDynamicLinkMvstore->startSession(mStoreCtx, mIdentity.c_str(), mPassword.c_str());
@@ -245,10 +245,10 @@ class TestDynamicMount : public ITest
 		int mNumStores;
 		long mCounter;
 		std::vector<TestStoreInfo*>	mStoreInfos;
-		MVStoreKernel::Mutex mLock;
-		MVStoreKernel::Event mStart; 
-		MVStoreKernel::Event mFinish;
-		MVStoreKernel::Event mComplete;
+		MVTestsPortability::Mutex mLock;
+		MVTestsPortability::Event mStart; 
+		MVTestsPortability::Event mFinish;
+		MVTestsPortability::Event mComplete;
 		bool fStarted;
 
 		int mNumThreads;
@@ -395,14 +395,14 @@ int TestDynamicMount::execute()
 			TestStoreInfo *lInfo = mStoreInfos[j];
 			lInfo->dynamicShutdown();
 		}
-		MVStoreKernel::threadSleep(5000);
+		MVTestsPortability::threadSleep(5000);
 	}
 	mLock.lock();
 	mComplete.signalAll();
 	mLock.unlock();
 	
 	while(mDummyThreads != 0) 
-		MVStoreKernel::threadSleep(5000);
+		MVTestsPortability::threadSleep(5000);
 
 	mLogger.out() << std::endl << "Test completed." << std::endl;
 	return lSuccess?0:1;

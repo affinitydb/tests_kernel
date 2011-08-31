@@ -366,7 +366,7 @@ void TestRecoveryBase::doCrashScenario()
 void TestRecoveryBase::testRecovery()
 {
 	mLogger.out() << "Sleeping..." << endl ;	
-	MVStoreKernel::threadSleep(3000); // 11227
+	MVTestsPortability::threadSleep(3000); // 11227
 
 	mLogger.out() << "Recovering from crash..." << endl ;	
 

@@ -1090,7 +1090,7 @@ static THREAD_SIGNATURE threadTestDeadlock(void * pDeadlockThreadInfo)
 	INTERLOCKEDD(pTI->syncPoint); // first thread reduces from 2 to 1.  Second thread does 1 to 0
 	while( *(pTI->syncPoint) > 0 )
 	{
-		MVStoreKernel::threadSleep(50); 
+		MVTestsPortability::threadSleep(50); 
 	}
 
 	// At this point we know that the other thread has already modified
@@ -1167,8 +1167,8 @@ void TestTransactions::multithreadDeadlock(ISession * session)
 
 // NOTE: If you want to experiment with store forced shutdown replace the waitfor with
 // this sleep call:
-//	MVStoreKernel::threadSleep(	10000 ); 
-	MVStoreKernel::threadsWaitFor(sNumThreads, lThreads);
+//	MVTestsPortability::threadSleep(	10000 ); 
+	MVTestsPortability::threadsWaitFor(sNumThreads, lThreads);
 
 	// Check that the values actually set on the pins match the winning threads
 	// assigned task
@@ -1261,7 +1261,7 @@ int pinUpdateMethod1( UpdateThreadInfo * pTI, ISession * session, long threadId 
 
 	// Sleep, during which time the pin might change
 	// This simulates some long calculation.
-	MVStoreKernel::threadSleep(	MVTRand::getRange(50,500) ); 
+	MVTestsPortability::threadSleep(	MVTRand::getRange(50,500) ); 
 
 	// Each append to the property repeats the last character in the string
 	// and then adds its own.
@@ -1309,7 +1309,7 @@ int pinUpdateMethod2( UpdateThreadInfo * pTI, ISession * session, long threadId 
 
 	// Sleep, during which time the pin might change
 	// This simulates some long calculation.
-	MVStoreKernel::threadSleep(	MVTRand::getRange(50,500) ); 
+	MVTestsPortability::threadSleep(	MVTRand::getRange(50,500) ); 
 	
 	char appendStr[4] ;
 	sprintf(appendStr, "%c %c", 
@@ -1408,7 +1408,7 @@ void TestTransactions::safePinUpdates(ISession * session)
 		createThread(&threadPinUpdate, &info, lThreads[i]);
 	}
 
-	MVStoreKernel::threadsWaitFor(sNumThreads, lThreads);
+	MVTestsPortability::threadsWaitFor(sNumThreads, lThreads);
 
 	// Should see some of the data appended by the threads
 	Value finalValue ;

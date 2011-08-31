@@ -9,7 +9,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 
 #include "types.h"
 
-namespace MVStoreKernel
+namespace MVTestsPortability
 {
 
 #ifdef WIN32

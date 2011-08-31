@@ -31,7 +31,7 @@ class TestSessionLogin : public ITest
 		
 		virtual int execute();
 		virtual void destroy() { delete this; }
-		MVStoreKernel::Mutex mLock;
+		MVTestsPortability::Mutex mLock;
 		long volatile mFinalResult;
 		TestSessionLogin() : mFinalResult(0) {}
 	public:
@@ -91,7 +91,7 @@ THREAD_SIGNATURE threadTestSessionLogin(void * pSI)
 			INTERLOCKEDI(lSI->mStop); lSI->mContext.mLock.unlock(); continue;		
 		}		
 		lSI->mContext.mLock.unlock();
-		MVStoreKernel::threadSleep(10);			
+		MVTestsPortability::threadSleep(10);			
 
 		if(lSI->mSession != NULL) {lSI->mSession->terminate(); lSI->mSession = NULL;}
 		
@@ -148,7 +148,7 @@ int	TestSessionLogin::execute()
 	for (i = 0; i < sNumIdentities; i++)
 			createThread(&threadTestSessionLogin, lSIs[i], lThreads[i]);
 
-	MVStoreKernel::threadsWaitFor(sNumIdentities, lThreads);	
+	MVTestsPortability::threadsWaitFor(sNumIdentities, lThreads);	
 //#if 0
 
 	if(changePwdCert()) {
@@ -159,7 +159,7 @@ int	TestSessionLogin::execute()
 		lSuccess = false;
 	}
 
-	MVStoreKernel::threadsWaitFor(sNumIdentities, lThreads);
+	MVTestsPortability::threadsWaitFor(sNumIdentities, lThreads);
 //#endif
 	// Terminate the sessions, before stopping the store.
 	for (i = 0; i < (int)lSIs.size(); i++)

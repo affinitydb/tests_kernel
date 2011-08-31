@@ -198,11 +198,11 @@ int TestMultiStore::execute()
 		createThread(&testThread, &(lThreadData[i]), lThreads[i]) ;
 	}
 
-	// MVStoreKernel::threadsWaitFor only supports a limited number of
+	// MVTestsPortability::threadsWaitFor only supports a limited number of
 	// threads (63 on windows) so use a counter instead
 	while ( gFinishedThreads < numThreads )
 	{
-		MVStoreKernel::threadSleep(200); 
+		MVTestsPortability::threadSleep(200); 
 	}
 
 
@@ -247,14 +247,14 @@ void TestMultiStore::threadImpl( ThreadInfo * inInfo )
 	if ( inInfo->mbCreateStore )
 	{
 		//Stagger store creation a bit
-		MVStoreKernel::threadSleep(MVTRand::getRange(0,250*mNumStores)); 
+		MVTestsPortability::threadSleep(MVTRand::getRange(0,250*mNumStores)); 
 		storeCtx = createStoreInDir( inInfo, inInfo->mDir.c_str(), inInfo->mIdentity.c_str(), inInfo->mStoreID ) ;
 		if ( isVerbose() )
             mLogger.out() <<"*****CREATOR OPEN "<< inInfo->mDir.c_str() <<endl;
 	}
 	else
 	{
-		MVStoreKernel::threadSleep(MVTRand::getRange(1000,2000)); // Give first thread a second headstart
+		MVTestsPortability::threadSleep(MVTRand::getRange(1000,2000)); // Give first thread a second headstart
 		storeCtx = openStoreInDir( inInfo->mDir.c_str() ) ;
 		if ( isVerbose() )
             mLogger.out() <<"*****GUEST OPEN " << inInfo->mDir.c_str() << " - " << getThreadId() <<endl;
@@ -280,7 +280,7 @@ void TestMultiStore::threadImpl( ThreadInfo * inInfo )
 			#if 0 // remove IPC		
 			if ( !MVTApp::sDynamicLinkMvstore->isInProc() )
 			{
-				MVStoreKernel::threadSleep(MVTRand::getRange(1000,2000)); // Give first thread a second headstart
+				MVTestsPortability::threadSleep(MVTRand::getRange(1000,2000)); // Give first thread a second headstart
 				continue ;
 			}
 			else
@@ -410,18 +410,18 @@ MVStoreKernel::StoreCtx * TestMultiStore::openStoreInDir(const char * inDir)
 		if ( rcopen == RC_NOACCESS )
 		{
 			// try again in a moment
-			MVStoreKernel::threadSleep(MVTRand::getRange(250,2000)); 
+			MVTestsPortability::threadSleep(MVTRand::getRange(250,2000)); 
 		}
 		else if ( rcopen == RC_NOTFOUND )
 		{
 			// Creator thread hasn't even had a chance to get in
-			MVStoreKernel::threadSleep(MVTRand::getRange(1000,3000)); 
+			MVTestsPortability::threadSleep(MVTRand::getRange(1000,3000)); 
 		}
 		else if ( rcopen == RC_CORRUPTED )
 		{
 			// REVIEW: RC_CORRUPTED may occur on linux due to log files
 			// loop to see if we are really stuck in that state
-			MVStoreKernel::threadSleep(MVTRand::getRange(250,2000)); 
+			MVTestsPortability::threadSleep(MVTRand::getRange(250,2000)); 
 		}
 		else if ( rcopen == RC_OK )
 		{
@@ -594,7 +594,7 @@ void TestMultiStore::doStuffInStore( ISession* inS  )
 	lQ->destroy() ;
 
 	// Wait just to give more chance to see the state/RAM usage etc
-	//MVStoreKernel::threadSleep(10000);			
+	//MVTestsPortability::threadSleep(10000);			
 }
 
 void TestMultiStore::doGuestStuffInStore( ISession* inS  )
@@ -615,7 +615,7 @@ void TestMultiStore::doGuestStuffInStore( ISession* inS  )
 		#endif
 
 		// IPC Guest thread is probably getting ahead of first thread
-		MVStoreKernel::threadSleep(50);
+		MVTestsPortability::threadSleep(50);
 	}
 	TVERIFYRC(rc) ;
 

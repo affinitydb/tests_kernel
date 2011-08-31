@@ -237,16 +237,16 @@ void TestQueries::testMemory(ISession *session)
 			mpin->destroy();
 			mpin = result->next();
 		}
-		// MVStoreKernel::threadSleep(1000);
+		// MVTestsPortability::threadSleep(1000);
 		result->destroy();
 		query->setConditionFT(var,"jp");
 		TVERIFYRC(query->execute(&result));
 		result->destroy();
-		// MVStoreKernel::threadSleep(1000);
+		// MVTestsPortability::threadSleep(1000);
 		query->setConditionFT(var,"jpg");
 		TVERIFYRC(query->execute(&result));
 		result->destroy();
-		// MVStoreKernel::threadSleep(1000);
+		// MVTestsPortability::threadSleep(1000);
 	}
 	query->destroy();
 }

@@ -61,7 +61,7 @@ int TestPersistence::execute()
 		MVTApp::stopStore();
 	}
 	else { TVERIFY(!"Unable to start store"); }
-	MVStoreKernel::threadSleep(1000);
+	MVTestsPortability::threadSleep(1000);
 	if (MVTApp::startStore())
 	{
 		ISession * const session = MVTApp::startSession();
@@ -74,7 +74,7 @@ int TestPersistence::execute()
 		MVTApp::stopStore();
 	}
 	else { TVERIFY(!"Unable to start store"); }
-	MVStoreKernel::threadSleep(1000);
+	MVTestsPortability::threadSleep(1000);
 	if (MVTApp::startStore())
 	{
 		ISession * const session = MVTApp::startSession();
@@ -95,7 +95,7 @@ int TestPersistence::execute()
 		MVTApp::stopStore();
 	}
 	else { TVERIFY(!"Unable to start store"); }
-	MVStoreKernel::threadSleep(1000);
+	MVTestsPortability::threadSleep(1000);
 	if (MVTApp::startStore())
 	{
 		ISession * const session = MVTApp::startSession();

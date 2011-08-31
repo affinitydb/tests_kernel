@@ -197,7 +197,7 @@ class ITest
 		unsigned int mRandomSeed;
 		int mCntEvents; // optional - count of TVERIFY calls
 		int mCntFailures; // optional - count of failed TVERIFY calls
-		MVStoreKernel::Mutex mOutputLock; // Serialize TVERIFY macros or calls to mLogger.out
+		MVTestsPortability::Mutex mOutputLock; // Serialize TVERIFY macros or calls to mLogger.out
 		MVTArgs * mpArgs; // parsed command line parameters
 		TTestArgs mTestArgs;
 

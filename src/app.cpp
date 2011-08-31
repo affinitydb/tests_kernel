@@ -35,7 +35,7 @@ long MVTApp::sCommandCrashWithinMsAfterStartup = 0;
 long MVTApp::sCommandCrashWithinMsBeforeStartup = 0;
 MVStoreKernel::StoreCtx * MVTApp::sReplicaStoreCtx = NULL;
 //mvcore::DynamicLinkMvstore * MVTApp::sDynamicLinkMvstore = NULL;
-MVStoreKernel::Tls MVTApp::sThread2Session;
+MVTestsPortability::Tls MVTApp::sThread2Session;
 MvStoreMessageReporter MVTApp::sReporter ;
 Tstring MVTApp::mAppName;
 int MVTApp::sNumStores = 1;
@@ -233,7 +233,7 @@ MVTApp::TestSuiteCtx::TestSuiteCtx()
 	mSeed=0;
 	mbSeedSet = false;
 	mIO=NULL;
-	mLock = new MVStoreKernel::Mutex ;
+	mLock = new MVTestsPortability::Mutex ;
 }
 MVTApp::TestSuiteCtx::TestSuiteCtx(const TestSuiteCtx& rhs )
 {
@@ -243,7 +243,7 @@ MVTApp::TestSuiteCtx::TestSuiteCtx(const TestSuiteCtx& rhs )
 	{
 		mTests[i]=rhs.mTests[i]->newInstance() ;
 	}
-	mLock = new MVStoreKernel::Mutex ;
+	mLock = new MVTestsPortability::Mutex ;
 }
 MVTApp::TestSuiteCtx::~TestSuiteCtx()
 {
@@ -952,9 +952,9 @@ int MVTApp::executeTests()
 		{
 			ctxts[j].pThis = this ; ctxts[j].pSuite = &mMultiStoreCxt[j];
 			createThread(&MVTApp::threadExecuteSuite, &(ctxts[j]), lThreads[j]);
-			MVStoreKernel::threadSleep(mMultiStoreCxt[j].mDelay);
+			MVTestsPortability::threadSleep(mMultiStoreCxt[j].mDelay);
 		}
-		MVStoreKernel::threadsWaitFor((int)mMultiStoreCxt.size(), lThreads);
+		MVTestsPortability::threadsWaitFor((int)mMultiStoreCxt.size(), lThreads);
 		free(lThreads);
 
 		// Look for any failures
@@ -1286,7 +1286,7 @@ void MVTApp::prepareMultiStoreTests()
 THREAD_SIGNATURE MVTApp::threadCrash(void * pThreadCrashCtxt)
 {
 	ThreadCrashCtxt * const lCtx = (ThreadCrashCtxt *)pThreadCrashCtxt;	
-	MVStoreKernel::threadSleep(lCtx->mCrashTime);
+	MVTestsPortability::threadSleep(lCtx->mCrashTime);
 	bool lContinue = true;
 	if(lCtx->mSingleProcess && lCtx->mTestIndex != 0 && MVTApp::getCurrentTestIndex(lCtx->mDirectory) != lCtx->mTestIndex)
 		lContinue = false;
@@ -1775,7 +1775,7 @@ class ReplicationEventProcessor
 						{ lAttemptsAt = lLastReceived; lAttempts = 0; }
 					else
 						lAttempts++;
-					MVStoreKernel::threadSleep(500);
+					MVTestsPortability::threadSleep(500);
 				}
 				else
 					lCompleted = true;
@@ -1819,7 +1819,7 @@ class ReplicationEventProcessor
 				ReplicationID iCID;
 				for (iCID = lLastReceived + 1; iCID <= lLastSent; iCID++)
 					sendEvents(&iCID, 1);
-				MVStoreKernel::threadSleep(500);
+				MVTestsPortability::threadSleep(500);
 			}
 		}
 };
@@ -2009,7 +2009,7 @@ bool MVTApp::startStore(
 			{
 				std::cout << "No access error opening store" << std::endl;
 				suite.mLock->unlock() ;
-				MVStoreKernel::threadSleep(1000);
+				MVTestsPortability::threadSleep(1000);
 			//	return false;
 			}
 			else if (rc == RC_OTHER )
@@ -2569,9 +2569,9 @@ int main(int argc, char * argv[])
 }
 
 #ifndef WIN32
-	volatile long MVStoreKernel::Mutex::fInit = 0;
-	pthread_mutexattr_t MVStoreKernel::Mutex::mutexAttrs;
-	MVStoreKernel::Mutex::Mutex()
+	volatile long MVTestsPortability::Mutex::fInit = 0;
+	pthread_mutexattr_t MVTestsPortability::Mutex::mutexAttrs;
+	MVTestsPortability::Mutex::Mutex()
 	{
 		while (fInit<=0)
 			if (cas(&fInit,-1,0)!=0) threadYield();

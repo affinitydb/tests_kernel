@@ -188,7 +188,7 @@ using namespace std;
 #define	_set_u16(a,b) (((byte*)(a))[1]=(byte)(b),((byte*)(a))[0]=(byte)((b)>>8))
 #endif
 
-namespace MVStoreKernel
+namespace MVTestsPortability
 {
 
 typedef	uint32_t		CRC;
@@ -254,7 +254,7 @@ extern void		closeReport();
 
 };
 
-inline	void*	operator new(size_t s,MVStoreKernel::HEAP_TYPE allc) throw() {return MVStoreKernel::malloc(s,allc);}
-inline	void*	operator new[](size_t s,MVStoreKernel::HEAP_TYPE allc) throw() {return MVStoreKernel::malloc(s,allc);}
+inline	void*	operator new(size_t s,MVTestsPortability::HEAP_TYPE allc) throw() {return MVTestsPortability::malloc(s,allc);}
+inline	void*	operator new[](size_t s,MVTestsPortability::HEAP_TYPE allc) throw() {return MVTestsPortability::malloc(s,allc);}
 
 #endif

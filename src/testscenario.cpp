@@ -373,8 +373,8 @@ class PITScenario
 		typedef std::vector<PID> TPIDs;
 	public:
 		static Tofstream * sOutputPINs; // The output stream of resulting PINs.
-		static MVStoreKernel::Mutex * sLockOutputPINs; // To regulate shared access to the output stream of PINs.
-		static MVStoreKernel::Mutex sLockOutputDbg;
+		static MVTestsPortability::Mutex * sLockOutputPINs; // To regulate shared access to the output stream of PINs.
+		static MVTestsPortability::Mutex sLockOutputDbg;
 		static bool sFailed;
 	protected:
 		TestLogger & mLogger; // Log output.
@@ -415,8 +415,8 @@ class PITScenario
 		void ThreadFunctionImplementation();
 };
 Tofstream * PITScenario::sOutputPINs = NULL;
-MVStoreKernel::Mutex * PITScenario::sLockOutputPINs = NULL;
-MVStoreKernel::Mutex PITScenario::sLockOutputDbg;
+MVTestsPortability::Mutex * PITScenario::sLockOutputPINs = NULL;
+MVTestsPortability::Mutex PITScenario::sLockOutputDbg;
 bool PITScenario::sFailed = false;
 
 // PITDomain
@@ -1132,7 +1132,7 @@ bool PITScenario::test()
 }
 void PITScenario::wait()
 {
-	MVStoreKernel::threadsWaitFor(1, &mThread);
+	MVTestsPortability::threadsWaitFor(1, &mThread);
 	#ifdef WIN32
 		CloseHandle(mThread);
 	#endif
@@ -1145,7 +1145,7 @@ void PITScenario::setFailed(char const * pMessage, PITOperation const * pOp)
 }
 void PITScenario::outputMessage(char const * pMessage, PITOperation const * pOp, int pParamLen) const
 {
-	MVStoreKernel::MutexP const lLock(&sLockOutputDbg);
+	MVTestsPortability::MutexP const lLock(&sLockOutputDbg);
 	mLogger.out() << "{scenario} [T" << mThreadAbstrID << "] ";
 	mLogger.out() << pMessage << " ";
 	mLogger.out() << PITOperation::sTypeName[pOp->getType()] << " ";
@@ -1706,7 +1706,7 @@ int TestScenarioRun::execute()
 
 	// Produce an output file for resulting PIDs.
 	Tofstream lOs(pPINsFileName.c_str(), std::ios::ate);
-	MVStoreKernel::Mutex lLockOs;
+	MVTestsPortability::Mutex lLockOs;
 	PITScenario::sOutputPINs = &lOs;
 	PITScenario::sLockOutputPINs = &lLockOs;
 

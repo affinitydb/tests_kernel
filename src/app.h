@@ -118,7 +118,7 @@ class MVTApp
 
 			long volatile			mStarted;		// ref count for openstore calls
 			long volatile			mTestIndex;		// executing test index
-			MVStoreKernel::Mutex	*mLock;			// Protect state during concurrent store open/closing
+			MVTestsPortability::Mutex	*mLock;			// Protect state during concurrent store open/closing
 			MVStoreKernel::StoreCtx *mStoreCtx;		// Store context when the store is open
 			THREADID				mThreadID;		// framework thread running this suite
 
@@ -185,7 +185,7 @@ class MVTApp
 		static MVStoreKernel::StoreCtx * sReplicaStoreCtx;
 		//static mvcore::DynamicLinkMvstore * sDynamicLinkMvstore;
 		//static mvcore::DynamicLinkMvstore * smartPtr;
-		static MVStoreKernel::Tls sThread2Session;
+		static MVTestsPortability::Tls sThread2Session;
 		static MvStoreMessageReporter sReporter;
 		static Tstring mAppName; //argv[0]
 		static bool bVerbose;

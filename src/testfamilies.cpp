@@ -20,7 +20,7 @@ class TestFamilies : public ITest{
 		uint64_t mUI64a; 
 		uint64_t mUI64b;
 		long volatile mFinalResult; // thread will set non-zero if failure
-		MVStoreKernel::Mutex mLock; // REVIEW: not really necessary in its current usage
+		MVTestsPortability::Mutex mLock; // REVIEW: not really necessary in its current usage
 		clock_t mTimeTaken;
 		MVStoreKernel::StoreCtx *mStoreCtx;
 	public:
@@ -158,7 +158,7 @@ int	TestFamilies::execute(){
 			HTHREAD lThreads[sNumThreads];
 			for (i = 0; i < sNumThreads; i++)
 				createThread(&threadFamily, new CSession(*this,NULL), lThreads[i]);
-			MVStoreKernel::threadsWaitFor(sNumThreads, lThreads);
+			MVTestsPortability::threadsWaitFor(sNumThreads, lThreads);
 		}
 		if(mFinalResult != 0) lSuccess = false;
 #endif

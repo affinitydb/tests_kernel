@@ -42,7 +42,7 @@ int TestPageAlreadyExists::execute()
 		HTHREAD lThreads[numthreads];
 		createThread(&threadReplicate, this, lThreads[0]);
 		createThread(&threadAddBinary, this, lThreads[1]);
-		MVStoreKernel::threadsWaitFor(numthreads, lThreads);
+		MVTestsPortability::threadsWaitFor(numthreads, lThreads);
 		session->terminate();
 		MVTApp::stopStore();
 	}
@@ -83,7 +83,7 @@ THREAD_SIGNATURE TestPageAlreadyExists::threadAddBinary(void * inTest)
 THREAD_SIGNATURE TestPageAlreadyExists::threadReplicate(void * inTest)
 {
 	TestPageAlreadyExists *test = (TestPageAlreadyExists*)inTest;
-	MVStoreKernel::threadSleep(5000);
+	MVTestsPortability::threadSleep(5000);
 	ISession *session = MVTApp::startSession(test->mStoreCtx);
 	for (int i=0; i < 20; i ++)
 	{

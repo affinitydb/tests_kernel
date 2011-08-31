@@ -23,7 +23,7 @@ class TestCustom59 : public ITest
 		typedef std::vector<eSteps> TThreadProgram;
 		typedef std::vector<TThreadProgram> TDeadlockProgram;
 		MVStoreKernel::StoreCtx * mStoreCtx;
-		MVStoreKernel::Mutex mSteppingL, mLoggingL;
+		MVTestsPortability::Mutex mSteppingL, mLoggingL;
 		PID mPID1, mPID2, mPID3;
 		PropertyID mPropIds[2];
 		long volatile mStep, mStepCnt, mStepCntReset;
@@ -33,7 +33,7 @@ class TestCustom59 : public ITest
 		{
 			long lWaitForStep = pWaitForStep;
 			{
-				MVStoreKernel::MutexP lLock(&mSteppingL);
+				MVTestsPortability::MutexP lLock(&mSteppingL);
 				if (0 == --mStepCnt)
 				{
 					InterlockedIncrement(&mStep);
@@ -43,7 +43,7 @@ class TestCustom59 : public ITest
 					lWaitForStep = mStep;
 			}
 			while (mStep <= lWaitForStep)
-				MVStoreKernel::threadSleep(100);
+				MVTestsPortability::threadSleep(100);
 		}
 		void nextStep(bool pFreeRun, long & pFreeStep)
 		{
@@ -54,7 +54,7 @@ class TestCustom59 : public ITest
 		}
 		long detachStepping(bool & pDetached)
 		{
-			MVStoreKernel::MutexP lLock(&mSteppingL);
+			MVTestsPortability::MutexP lLock(&mSteppingL);
 			long const lResult = mStep;
 			if (pDetached)
 				return lResult;
@@ -158,7 +158,7 @@ THREAD_SIGNATURE TestCustom59::threadTestCustom59(void * pC)
 			case TestCustom59::kSWaiting: if (!lFreeRun) lC->mTest.nextStep(lStepIndex); break;
 			case TestCustom59::kSSleepAndGo:
 			{
-				MVStoreKernel::threadSleep(1000);
+				MVTestsPortability::threadSleep(1000);
 				if (!lFreeRun)
 				{
 					lFreeStep = lC->mTest.detachStepping(lC->mDetachedStepping);
@@ -168,7 +168,7 @@ THREAD_SIGNATURE TestCustom59::threadTestCustom59(void * pC)
 				lFreeStep++;
 				break;
 			}
-			case TestCustom59::kSSleep: MVStoreKernel::threadSleep(1000); lC->mTest.nextStep(lFreeRun, lFreeStep); break;
+			case TestCustom59::kSSleep: MVTestsPortability::threadSleep(1000); lC->mTest.nextStep(lFreeRun, lFreeStep); break;
 			case TestCustom59::kSStartTx: lSession->startTransaction(); lC->mTest.nextStep(lFreeRun, lFreeStep); break;
 			case TestCustom59::kSCommitTx: lRC = lSession->commit(); lC->mTest.nextStep(lFreeRun, lFreeStep); break;
 			case TestCustom59::kSRead1: if (NULL == lSession->getPIN(lC->mTest.mPID1)) lC->mDeadlocked = true; lC->mTest.nextStep(lFreeRun, lFreeStep); break;
@@ -313,7 +313,7 @@ bool TestCustom59::runProgram(ISession & pSession, TestCustom59::TDeadlockProgra
 	}
 
 	// Wait for completion.
-	MVStoreKernel::threadsWaitFor((int)pProgram.size(), lT);
+	MVTestsPortability::threadsWaitFor((int)pProgram.size(), lT);
 
 	// Verifications and cleanup.
 	bool lDeadlockFound = false;

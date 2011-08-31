@@ -59,7 +59,7 @@ void TestCollRecovery::thread1Implementation()
 
 	INTERLOCKEDI(&mReadyToExit);
 
-	while(!mStartRollback) MVStoreKernel::threadSleep(500);
+	while(!mStartRollback) MVTestsPortability::threadSleep(500);
 
 	// rollback
 	lSession->rollback();	
@@ -101,7 +101,7 @@ void TestCollRecovery::thread2Implementation()
 
 	INTERLOCKEDI(&mReadyToExit);
 
-	while(!mStartRollback) MVStoreKernel::threadSleep(500);
+	while(!mStartRollback) MVTestsPortability::threadSleep(500);
 
 	// rollback
 	lSession->rollback();
@@ -183,10 +183,10 @@ int TestCollRecovery::execute()
 		// rollback
 		mSession->rollback();
 
-		while(mReadyToExit < 2) MVStoreKernel::threadSleep(500);
+		while(mReadyToExit < 2) MVTestsPortability::threadSleep(500);
 		INTERLOCKEDI(&mStartRollback);
-		MVStoreKernel::threadSleep(750);
-		MVStoreKernel::threadsWaitFor(sNumThreads, mThreads);
+		MVTestsPortability::threadSleep(750);
+		MVTestsPortability::threadsWaitFor(sNumThreads, mThreads);
 		mSession->terminate();
 		MVTApp::stopStore();
 	}

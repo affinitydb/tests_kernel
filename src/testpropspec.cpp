@@ -43,7 +43,7 @@ int TestPropSpec::execute()
 
 		// Sleep, to observe an interesting elapsed time between "created" and "updated" properties.
 		int const lWaitMS = 100;
-		MVStoreKernel::threadSleep(lWaitMS);
+		MVTestsPortability::threadSleep(lWaitMS);
 
 		// Modify the document.
 		lPINDoc->getValue(PROP_SPEC_PINID); // Not allowed?

@@ -9,7 +9,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include <stdarg.h>
 #include <stdio.h>
 
-using namespace MVStoreKernel;
+using namespace MVTestsPortability;
 
 static IReport *iReport = NULL;
 static void *reportNS = NULL;
@@ -130,7 +130,7 @@ RC convCode(DWORD dwError)
 
 static const char *msgType[] = {"PANIC", "ERROR", "WARNING", "NOTICE", "INFO", "DEBUG"};
 
-void MVStoreKernel::report(MsgType type,const char *str,...)
+void MVTestsPortability::report(MsgType type,const char *str,...)
 {
 	va_list args; va_start(args,str); char buffer[600];
 	if (iReport!=NULL) {
@@ -149,11 +149,11 @@ void MVStoreKernel::report(MsgType type,const char *str,...)
 #endif
 }
 
-void MVStoreKernel::initReport()
+void MVTestsPortability::initReport()
 {
 }
 
-void MVStoreKernel::closeReport()
+void MVTestsPortability::closeReport()
 {
 }
 
@@ -203,7 +203,7 @@ RC convCode(int err)
 static bool fSyslogOpen = false;
 static int facility = LOG_USER;
 
-void MVStoreKernel::report(MsgType type,const char *str,...)
+void MVTestsPortability::report(MsgType type,const char *str,...)
 {
 	va_list va; va_start(va,str);
 	if (iReport!=NULL) {
@@ -230,7 +230,7 @@ void MVStoreKernel::report(MsgType type,const char *str,...)
 #endif
 }
 
-void MVStoreKernel::initReport()
+void MVTestsPortability::initReport()
 {
 	if (iReport==NULL) {
 		facility = LOG_USER;
@@ -240,7 +240,7 @@ void MVStoreKernel::initReport()
 	}
 }
 
-void MVStoreKernel::closeReport()
+void MVTestsPortability::closeReport()
 {
 	if (fSyslogOpen) {closelog(); fSyslogOpen=false;}
 }

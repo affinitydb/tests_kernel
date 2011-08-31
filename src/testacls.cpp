@@ -35,7 +35,7 @@ class TestAcls : public ITest
 		std::vector<Tstring> mIdentitiesStr;
 		std::vector<IdentityID> mIdentities;
 		TPINsInfo mPINs;
-		MVStoreKernel::Mutex mLock;
+		MVTestsPortability::Mutex mLock;
 		MVStoreKernel::StoreCtx *mStoreCtx;
 		long volatile mFinalResult; // Non-zero means test failed
 };
@@ -147,7 +147,7 @@ THREAD_SIGNATURE threadTestAcls(void * pSI)
 	while (!*lSI->mStop)
 	{
 		if (lSI->mContext.mPINs.empty())
-			{ MVStoreKernel::threadSleep(50); continue; }
+			{ MVTestsPortability::threadSleep(50); continue; }
 
 		lSI->mContext.mLock.lock();
 
@@ -160,7 +160,7 @@ THREAD_SIGNATURE threadTestAcls(void * pSI)
 			if (lCanR)
 				declareError(*lSI, "Error: PIN expected to be readable was not!", lPINInfo, lPIN);
 			lSI->mContext.mLock.unlock();
-			MVStoreKernel::threadSleep(10);
+			MVTestsPortability::threadSleep(10);
 			continue;
 		}
 		IPIN * lPINParent = NULL;
@@ -226,7 +226,7 @@ THREAD_SIGNATURE threadTestAcls(void * pSI)
 		if (lPINParent)
 			lPINParent->destroy();
 		lSI->mContext.mLock.unlock();
-		MVStoreKernel::threadSleep(10);
+		MVTestsPortability::threadSleep(10);
 	}
 	lSI->mSession->terminate();
 	if (0 == (lTested & kTWrite) || 0 == (lTested & kTRead) || 0 == (lTested & kTACL))
@@ -383,19 +383,19 @@ int TestAcls::execute()
 			mLogger.out() << "Error: Could not create new pin!" << std::endl;
 		}
 		#if TESTS_CONCURRENT_WITH_POPULATE
-			MVStoreKernel::threadSleep(10);
+			MVTestsPortability::threadSleep(10);
 		#endif
 	}
 
 	#if !TESTS_CONCURRENT_WITH_POPULATE
 		for (i = 0; i < sNumIdentities; i++)
 			createThread(&threadTestAcls, lSIs[i], lThreads[i]);
-		MVStoreKernel::threadSleep(100000);
+		MVTestsPortability::threadSleep(100000);
 	#endif
 
 	// We're done.
 	lStop = 1;
-	MVStoreKernel::threadsWaitFor(sNumIdentities, lThreads);
+	MVTestsPortability::threadsWaitFor(sNumIdentities, lThreads);
 	TPINsInfo::iterator iP;
 	for (iP = mPINs.begin(); mPINs.end() != iP; iP++)
 		delete (*iP);

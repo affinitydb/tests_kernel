@@ -123,7 +123,7 @@ private:
 
     struct auto_lock
     {
-        inline auto_lock( MVStoreKernel::Mutex & l ) : the_lock(l)
+        inline auto_lock( MVTestsPortability::Mutex & l ) : the_lock(l)
         {
             the_lock.lock();
         }
@@ -133,7 +133,7 @@ private:
             the_lock.unlock();
         }
     private:
-        MVStoreKernel::Mutex & the_lock;
+        MVTestsPortability::Mutex & the_lock;
     };
 
     struct pending_stat
@@ -819,7 +819,7 @@ private:
 	batchstat mStoreReadASync ;
 
 	bool mReportOnClose;
-	MVStoreKernel::Mutex mLock ;  // pageWrite can be called from different threads
+	MVTestsPortability::Mutex mLock ;  // pageWrite can be called from different threads
 								// can't use mvcore version because of dependencies this brings in
 
 	bool mLogFiles[FIO_MAX_OPENFILES]; // Track which files are logs

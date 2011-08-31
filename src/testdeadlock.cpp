@@ -220,7 +220,7 @@ void TestDeadLock::doTests(bool bUseTransaction, int cntThreads)
 
 bool TestDeadLock::finishAndReport(DeadlockThreadInfo *threadCtxt,HTHREAD *threads,int cntThreads)
 {
-	MVStoreKernel::threadsWaitFor(cntThreads, threads);
+	MVTestsPortability::threadsWaitFor(cntThreads, threads);
 	#ifdef WIN32
 	for ( int k = 0 ; k < cntThreads ; k++ ) ::CloseHandle( threads[k] ) ;
 	#endif
@@ -638,7 +638,7 @@ void TestDeadLock::modifyInOrder(DeadlockThreadInfo *info, bool bReadAndWrite)
 		}
 
 		// Sleep not necessary but can jumble the ordering
-		if ( MVTRand::getRange(1,10) < 4 ) MVStoreKernel::threadSleep(MVTApp::randInRange(25,200));
+		if ( MVTRand::getRange(1,10) < 4 ) MVTestsPortability::threadSleep(MVTApp::randInRange(25,200));
 	}
 
 	#ifdef WIN32

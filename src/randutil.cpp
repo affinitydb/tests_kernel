@@ -157,7 +157,7 @@ class TestgenDeterministicRandomGenerator
 	//   platform/language.
 	protected:
 		mutable uint32_t mS1, mS2;
-		static MVStoreKernel::Tls sDRG;
+		static MVTestsPortability::Tls sDRG;
 	public:
 		TestgenDeterministicRandomGenerator() { setSeed(); }
 		void setSeed(uint32_t pS1 = 179424673, uint32_t pS2 = 222222227) { assert(pS1 && pS2); mS1 = pS1; mS2 = pS2; }
@@ -178,7 +178,7 @@ class TestgenDeterministicRandomGenerator
 		static uint32_t randUI() { return getGen()->getRandUI(); }
 		static double randD() { return getGen()->getRandD(); }
 };
-MVStoreKernel::Tls TestgenDeterministicRandomGenerator::sDRG;
+MVTestsPortability::Tls TestgenDeterministicRandomGenerator::sDRG;
 
 int MVTRand2::getRange(int pMin, int pMax)
 {

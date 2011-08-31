@@ -12,7 +12,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #define NSESSION 9
 
 #define CRITICAL_SECTION(expr) lck->lock(); {expr} lck->unlock();
-#define TRY_LOCK(lock) 	while(!lock->trylock()) {MVStoreKernel::threadSleep(5);}
+#define TRY_LOCK(lock) 	while(!lock->trylock()) {MVTestsPortability::threadSleep(5);}
 
 class testrollbackscenario;
 
@@ -30,8 +30,8 @@ class testrollbackscenario : public ITest
 		MVStoreKernel::StoreCtx *mCtx;
 		ISession *mSession[NSESSION];
 		ClassID clsid,familyid;
-		MVStoreKernel::Mutex *lck;
-		MVStoreKernel::Event *evnt;
+		MVTestsPortability::Mutex *lck;
+		MVTestsPortability::Event *evnt;
 		unsigned ses_count;
 		bool mStarted,finish;
 	public:
@@ -81,7 +81,7 @@ void testrollbackscenario::trans_rollback()
 		//)
 		lck->unlock();
 		//going to sleep.
-		MVStoreKernel::threadSleep(30);
+		MVTestsPortability::threadSleep(30);
 		if(finish) break;
 	}
 }
@@ -151,7 +151,7 @@ void testrollbackscenario::commit_pins()
 	
 		if(i == 0){mStarted = true; evnt->signalAll();}
 		lck->unlock();
-		MVStoreKernel::threadSleep(10);
+		MVTestsPortability::threadSleep(10);
 	}
 
 	TRY_LOCK(lck);
@@ -180,8 +180,8 @@ int testrollbackscenario::execute()
 		return -2;
 	}
 
-	lck = new MVStoreKernel::Mutex();
-	evnt = new MVStoreKernel::Event();
+	lck = new MVTestsPortability::Mutex();
+	evnt = new MVTestsPortability::Event();
 
 	MVTApp::mapURIs(lSession,"testrollbackscenario",nProps,mPropIDs);
 
@@ -232,10 +232,10 @@ int testrollbackscenario::execute()
 
 	createThread(threadRollBack,this,lThread[NTHREAD - 1]);
 
-	MVStoreKernel::threadsWaitFor(NTHREAD - 1,lThread);
+	MVTestsPortability::threadsWaitFor(NTHREAD - 1,lThread);
 	
 	finish = true;
-	MVStoreKernel::threadsWaitFor(1,&(lThread[NTHREAD-1]));
+	MVTestsPortability::threadsWaitFor(1,&(lThread[NTHREAD-1]));
 
 	//clean up
 	for(int i=0;i<NSESSION;i++)

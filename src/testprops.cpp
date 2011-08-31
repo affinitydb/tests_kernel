@@ -18,9 +18,9 @@ struct ThreadInfoProps
 	MVStoreKernel::StoreCtx *mStoreCtx;
 	unsigned int mSeed;
 	TestProps * pTest;
-	MVStoreKernel::Mutex *lock;
-	MVStoreKernel::Event *start;
-	MVStoreKernel::Event *finish;
+	MVTestsPortability::Mutex *lock;
+	MVTestsPortability::Event *start;
+	MVTestsPortability::Event *finish;
 	bool &fStarted;
 	long &counter;
 	PropertyID *mPropIDs;
@@ -136,13 +136,13 @@ int TestProps::execute()
 		mStoreCtx = MVTApp::getStoreCtx();
 		mapURIs(mStoreCtx); // I am going to register the array of properties. They are good for the store life... 
 		
-		MVStoreKernel::Mutex lock;
-		MVStoreKernel::Event start;
-		MVStoreKernel::Event finish;
+		MVTestsPortability::Mutex lock;
+		MVTestsPortability::Event start;
+		MVTestsPortability::Event finish;
 		bool fStarted = false;
 		long counter = 0;
 		ThreadInfoProps lInfo = {mStoreCtx, mRandomSeed,this, &lock, &start, &finish, fStarted, counter, mPropIDs};
-        for (counter = 0; counter<NTHREADS; counter++) 
+		for (counter = 0; counter<NTHREADS; counter++) 
 		{
 			HTHREAD lThread; 
 			if (createThread(threadProc, &lInfo, lThread)!=RC_OK) 

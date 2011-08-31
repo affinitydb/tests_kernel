@@ -239,7 +239,7 @@ private:
 
 	std::map<THREADID,ThreadTxCtxt> mTxs;
 
-	MVStoreKernel::Mutex mLock;
+	MVTestsPortability::Mutex mLock;
 
 	ThreadTxCtxt & getCtxt()
 	{
@@ -515,7 +515,7 @@ static THREAD_SIGNATURE threadTestDeadlock(void * pDeadlockThreadInfo)
 	INTERLOCKEDD(pTI->syncPoint); // first thread reduces from 2 to 1.  Second thread does 1 to 0
 	while( *(pTI->syncPoint) > 0 )
 	{
-		MVStoreKernel::threadSleep(50); 
+		MVTestsPortability::threadSleep(50); 
 	}
 
 	// At this point we know that the other thread has already modified
@@ -634,7 +634,7 @@ I won the deadlock resolution (thread 1)
 	createThread(&threadTestDeadlock, &ti0, lThreads[0]);
 	createThread(&threadTestDeadlock, &ti1, lThreads[1]);
 
-	MVStoreKernel::threadsWaitFor(sNumThreads, lThreads);
+	MVTestsPortability::threadsWaitFor(sNumThreads, lThreads);
    
 	// (not doing validation of actual deadlock resolution correctness - that
 	// is done in testtran.cpp)

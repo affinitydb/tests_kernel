@@ -8,6 +8,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "app.h"
 #include "md5stream.h"
 #include "mvauto.h"
+namespace MVStoreKernel { typedef uint8_t FileID; };
 #include "../../kernel/include/storeio.h"
 
 #define STORE_DYNAMIC_LINK
@@ -1191,6 +1192,7 @@ int MVTUtil::executeProcess(
 		}
 		return (int)lExitCode;
 	#else		
+		//Linux & Darwin 	
 		lBef = getTimeInMs(); getTimestamp(lBefTS);	
 		int const lForked = fork();
 		if (0 == lForked)
@@ -1266,7 +1268,7 @@ int MVTUtil::executeProcess(
 			// launching (parent) process
 			if ( bVerbose ) 
 				cout << "Launched child process " << lForked << endl;
-			int lExitCode;
+			int lExitCode=0;
 			if (lForked != waitpid(lForked, &lExitCode, 0))
 				std::cout << "Problem waiting for forked process!" << std::endl;
 			else
@@ -2007,7 +2009,7 @@ bool MVTUtil::deleteStoreFiles(const char* inDir)
 
 bool MVTUtil::deleteStore(const char * inIOInit, const char * inStoreDir, const char * inLogDir, bool inbArchiveLogs)
 {
-    // New version using the IO layer to delete the files
+	// New version using the IO layer to delete the files
 	// This makes it possible for s3 to also delete its files.
 	// It respects the settings of the currently active test suite,
 	// so it should work for multi-stores.
@@ -2015,10 +2017,15 @@ bool MVTUtil::deleteStore(const char * inIOInit, const char * inStoreDir, const 
 	std::cout << "Deleting store in dir " << inStoreDir << endl;
 
 #ifdef Darwin        
-        int ersh = system( "rm mv.store; rm -rf *.txlog;");
-	std::cout << " rm mv.store; rm -rf *txlog; ( " << ersh << ")" << endl;
+        string pathDat = inStoreDir ;
+        pathDat += "/" ;
+        string rm = "rm " +  pathDat + "mv.store; rm -rf " + pathDat + "*.txlog";
+        
+	//int ersh = system( "rm mv.store; rm -rf *.txlog;");
+	int ersh = system( rm.c_str());
+	std::cout << rm.c_str() << " ( " << ersh << ")" << endl;
         return true; 
-#endif
+#else
 
 	CmvautoPtr<IStoreIO> pStoreIO(MVTUtil::storeIOFromString(inIOInit));
 
@@ -2058,6 +2065,7 @@ bool MVTUtil::deleteStore(const char * inIOInit, const char * inStoreDir, const 
 
 	removeReplicationFiles(pathDat.c_str());
 	return true;
+#endif
 }
 
 bool MVTUtil::removeReplicationFiles(const char * inPathWithSlash)
