@@ -109,7 +109,7 @@ struct CreatePINThreadInfo
 	Tstring mRandSubStr;
 	PropertyID *mPropIds;
 	int mNumProps;
-	MVStoreKernel::Mutex * mLock;
+	MVTestsPortability::Mutex * mLock;
 	MVStoreKernel::StoreCtx *mStoreCtx;
 	ITest* mTest ;
 };
