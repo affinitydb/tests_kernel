@@ -283,7 +283,7 @@ static bool containsValue(MVStore::Value const & pV, long pValue)
 {
 	switch (pV.type)
 	{
-		case MVStore::VT_INT: return (pValue == pV.i);
+		case MVStore::VT_INT: return (int32_t)pValue == pV.i;
 		case MVStore::VT_ARRAY: { size_t i; for (i = 0; i < pV.length; i++) if (containsValue(pV.varray[i], pValue)) return true; } return false;
 		case MVStore::VT_COLLECTION: if (pV.nav) { Value const * lNext; for (lNext = pV.nav->navigate(GO_FIRST); NULL != lNext; lNext = pV.nav->navigate(GO_NEXT)) { if (containsValue(*lNext, pValue)) return true; } } return false;
 		default: return false;

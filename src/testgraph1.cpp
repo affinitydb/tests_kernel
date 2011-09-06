@@ -647,18 +647,17 @@ void runQueries(ISession & pSession)
                     }
                 }
             #else
-                sprintf(lStmt, "SELECT * FROM @"_LX_FM".friendof.rootproject.children{+}[access=%u].pname;", lPin->getPID().pid, lPin->getValue(sPropIDs[P_ORGID])->ui);
-                printf("statement: %s\n", lStmt);
-                IStmt * lS2 = pSession.createStmt(lStmt);
+                IStmt * lS2 = pSession.createStmt("SELECT * FROM :0.friendof.rootproject.children{*}[access=:1].children[NOT exists(children) AND exists(pname)]");
                 if (lS2)
                 {
+                    Value params[2]; params[0].set(lPin->getPID()); params[1].set((unsigned)lPin->getValue(sPropIDs[P_ORGID])->ui);
                     uint64_t lNP;
-                    lS2->count(lNP);
+                    lS2->count(lNP,params,2);
                     lNumPhotos += lNP;
                     lS2->destroy();
                 }
                 else
-                    printf("ERROR(%d): Couldn't createStmt %s\n", __LINE__, lStmt);
+                    printf("ERROR(%d): Couldn't createStmt %s\n", __LINE__, "SELECT * FROM :0.friendof.rootproject.children{*}[access=:1].children[NOT exists(children) AND exists(pname)]");
             #endif
             lTotalTime += getTimeInMs() - lT1;
             printf("%s %s %s has access to %ld photos shared by friends\n", lPin->getValue(sPropIDs[P_FIRSTNAME])->str, lPin->getValue(sPropIDs[P_MIDDLENAME])->str, lPin->getValue(sPropIDs[P_LASTNAME])->str, lNumPhotos);

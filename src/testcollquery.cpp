@@ -59,9 +59,7 @@ int TestCollQuery::execute()
 
 	queryCollection( 1 ) ; // Edge case - only single PIN in the collection
 	queryCollectionWithDuplicates( 1000, true ) ;
-	#if 0 // Review (maxw, Feb2011): when DISTINCT is supported...
-		queryCollectionWithDuplicates( 1000, false ) ;
-	#endif
+	queryCollectionWithDuplicates( 1000, false ) ;
 
 	mSession->terminate(); // No return code to test
 	MVTApp::stopStore();  // No return code to test
@@ -232,7 +230,7 @@ void TestCollQuery::queryCollectionWithDuplicates( unsigned int cntElements, boo
 	TVERIFY(cnt==((lAllowDuplicates!=0)?2:1)); mLogger.out() << cnt << endl ; 
 
 	ICursor * lR = NULL;
-	TVERIFYRC(lQ->execute(&lR,0,~0,0,lAllowDuplicates)) ;
+	TVERIFYRC(lQ->execute(&lR,NULL,0,~0u,0,lAllowDuplicates)) ;
 	bool bFoundPINInResults = false ;
 	if ( lR != NULL )
 	{

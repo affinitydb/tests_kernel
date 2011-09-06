@@ -147,7 +147,7 @@ void TestRedefineClass::doTest()
 
 
 			qry = mSession->createStmt("DELETE FROM \"TestRedefineClass.class3\"");
-			qry->execute(NULL,0U,~0U,0U,MODE_PURGE);
+			qry->execute(NULL,NULL,0U,~0U,0U,MODE_PURGE);
 			qry->destroy(); //deleting all PINS
 
 			mSession->getClassID("TestRedefineClass.class3",clsid);
@@ -170,7 +170,7 @@ void TestRedefineClass::doTest()
 			}
 
 			qry = mSession->createStmt("DELETE FROM \"TestRedefineClass.class2\"");
-			qry->execute(NULL,0U,~0U,0U,MODE_PURGE);
+			qry->execute(NULL,NULL,0U,~0U,0U,MODE_PURGE);
 			qry->destroy(); //deleting all PINS
 
 			mSession->getClassID("TestRedefineClass.class2",clsid);
