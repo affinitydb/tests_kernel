@@ -528,7 +528,7 @@ void TestRDBMS::doTest()
 
 	// Get the earliest active loan
 	CmvautoPtr<IStmt> qLoans(mLoanTable.GetClassQuery()) ;
-	OrderSeg order={NULL,mLoanTable.mBorrowDate_id,0,0};
+	OrderSeg order={NULL,mLoanTable.mBorrowDate_id,0,0,0};
 	qLoans->setOrder( &order, 1 ) ; 
 	ICursor* lC = NULL;
 	TVERIFYRC(qLoans->execute(&lC));
@@ -574,7 +574,7 @@ void TestRDBMS::LoanReport()
 	// "Join" - Resolve the client and book numbers to generate complete loan report
 	CmvautoPtr<IStmt> qAllLoans( mLoanTable.GetClassQuery() ) ;
 	
-	OrderSeg lOrder={NULL,mLoanTable.mDueDate_id,ORD_DESC,0} ;
+	OrderSeg lOrder={NULL,mLoanTable.mDueDate_id,ORD_DESC,0,0} ;
 	qAllLoans->setOrder( &lOrder, 1) ; // Sorting by due date
 
 	ICursor* lC = NULL;

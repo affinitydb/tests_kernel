@@ -224,7 +224,7 @@ namespace PSSER_NAMESPACE
 		public:
 			inline static bool testType(Value const & pValue, ValueType pVT) { return pValue.type == pVT; }
 			inline static bool testProperty(Value const & pValue, PropertyID pPropID) { return pValue.property == pPropID; }
-			inline static bool isPointerType(Value const & pValue) { return (MVStore::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type) || (VT_RANGE == pValue.type) || (MVStore::VT_STREAM == pValue.type) || (VT_STRING == pValue.type) || (VT_URL == pValue.type) || (MVStore::VT_BSTR == pValue.type) || (VT_PARAM == pValue.type) || (VT_VARREF == pValue.type && pValue.length > 1) || (VT_STMT == pValue.type) || (VT_EXPR == pValue.type) || (VT_EXPRTREE == pValue.type); }
+			inline static bool isPointerType(Value const & pValue) { return (MVStore::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type) || (VT_RANGE == pValue.type) || (MVStore::VT_STREAM == pValue.type) || (VT_STRING == pValue.type) || (VT_URL == pValue.type) || (MVStore::VT_BSTR == pValue.type) || (VT_VARREF == pValue.type && pValue.length > 1) || (VT_STMT == pValue.type) || (VT_EXPR == pValue.type) || (VT_EXPRTREE == pValue.type); }
 			inline static bool isRefType(Value const & pValue) { return (VT_REF == pValue.type || VT_REFID == pValue.type || VT_REFPROP == pValue.type || VT_REFIDPROP == pValue.type || VT_REFELT == pValue.type || VT_REFIDELT == pValue.type); }
 			inline static bool isRefPtrType(Value const & pValue) { return (VT_REF == pValue.type || VT_REFPROP == pValue.type || VT_REFELT == pValue.type); }
 			inline static bool isCollectionType(Value const & pValue) { return (MVStore::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type); }
@@ -472,12 +472,12 @@ namespace PSSER_NAMESPACE
 			// Variable-length.
 			case VT_STRING: case VT_URL: TContextOut::TPrimitives::outString(pCtx, pValue.str, pValue.length); break;
 			case MVStore::VT_BSTR: TContextOut::TPrimitives::outString(pCtx, pValue.bstr, pValue.length); break;
-			case VT_PARAM: case VT_VARREF:
+			case VT_VARREF:
 			{
-				pCtx.os() << (int)pValue.refPath.refN << " ";
-				pCtx.os() << (int)pValue.refPath.type << " ";
+				pCtx.os() << (int)pValue.refV.refN << " ";
+				pCtx.os() << (int)pValue.refV.type << " ";
 				if (pValue.length == 1)
-					TContextOut::TPrimitives::outPropertyID(pCtx, pValue.refPath.id);
+					TContextOut::TPrimitives::outPropertyID(pCtx, pValue.refV.id);
 				break;
 			}
 			case VT_STMT: TContextOut::TPrimitives::outQuery(pCtx, pValue); break;
@@ -701,14 +701,14 @@ namespace PSSER_NAMESPACE
 			case VT_STRING: TContextIn::TPrimitives::inString(pCtx, pValue, (char *)0); break;
 			case MVStore::VT_BSTR: TContextIn::TPrimitives::inString(pCtx, pValue, (unsigned char *)0); break;
 			case VT_URL: TContextIn::TPrimitives::inURL(pCtx, pValue, (char *)0); break;
-			case VT_PARAM: case VT_VARREF:
+			case VT_VARREF:
 			{
 				int lRefN, lType;
-				pCtx.is() >> lRefN; pValue.refPath.refN = (unsigned char)lRefN;
-				pCtx.is() >> lType; pValue.refPath.type = (unsigned char)lType;
+				pCtx.is() >> lRefN; pValue.refV.refN = (unsigned char)lRefN;
+				pCtx.is() >> lType; pValue.refV.type = (unsigned char)lType;
 				PropertyID * lPropIDs;
 				uint32_t lNum = 1;
-					lPropIDs = &pValue.refPath.id;
+					lPropIDs = &pValue.refV.id;
 				uint32_t i;
 				if (pCtx.getVersion() < ContextIn::kVVTPARAMFix1)
 				{
@@ -1626,7 +1626,7 @@ namespace PSSER_NAMESPACE
 			case VT_INTERVAL:
 			case VT_CURRENT:
 				break;
-			case VT_PARAM: case VT_VARREF:
+			case VT_VARREF:
 				break;
 
 			// References.

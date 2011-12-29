@@ -222,7 +222,7 @@ public:
 			// Use listValues to enumerate each unique value in the index and
 			// test each individually.
 			CmvautoPtr<IndexNav> lValEnum ; 
-			RC rc=inSession->listValues(inClassID,STORE_INVALID_PROPID,VT_ANY, lValEnum.Get());
+			RC rc=inSession->listValues(inClassID,STORE_INVALID_PROPID, lValEnum.Get());
 			if ( rc!= RC_OK ) 
 			{ 
 				outResultInfo << "Problem with listValues" << std::endl;
@@ -303,7 +303,7 @@ public:
 		vals.clear();
 
 		CmvautoPtr<IndexNav> lValEnum ; 
-		RC rc=inSession->listValues(inClass,STORE_INVALID_PROPID,VT_ANY, lValEnum.Get());
+		RC rc=inSession->listValues(inClass,STORE_INVALID_PROPID, lValEnum.Get());
 		if ( rc!= RC_OK ) return false;
 		
 		for(;;)
@@ -332,7 +332,7 @@ public:
 		stringstream osConclude ; // so errors appear at the end
 
 		CmvautoPtr<IndexNav> lValEnum ; 
-		RC rc=inSession->listValues(inClass,STORE_INVALID_PROPID,VT_ANY, lValEnum.Get());
+		RC rc=inSession->listValues(inClass,STORE_INVALID_PROPID, lValEnum.Get());
 		if ( rc!= RC_OK ) 
 		{ 
 			outResultInfo << "listValues value traversal failed" << endl ; return false; 
@@ -428,7 +428,7 @@ public:
 		// Discover information about an family index
 
 		CmvautoPtr<IndexNav> lValEnum ; 
-		RC rc=inSession->listValues(inClass,STORE_INVALID_PROPID,VT_ANY, lValEnum.Get());
+		RC rc=inSession->listValues(inClass,STORE_INVALID_PROPID, lValEnum.Get());
 		if ( rc!= RC_OK ) 
 		{ 
 			return false; 

@@ -204,7 +204,7 @@ void TestOrderBy::doTest()
 		CmvautoPtr<IStmt> lQ(getClassQuery(lCLSID,mSession));
 
 		// 50% chance of being ORD_DESC
-		OrderSeg lOrder={NULL,mPropids[i],(i == propStrNoCase?ORD_NCASE:0)|(MVTRand::getBool()?0:ORD_DESC),0};
+		OrderSeg lOrder={NULL,mPropids[i],ORD_NULLS_BEFORE|(i == propStrNoCase?ORD_NCASE:0)|(MVTRand::getBool()?0:ORD_DESC),0,0};
 		TVERIFYRC(lQ->setOrder(&lOrder,1));
 
 		const char *lQStr = lQ->toString();	TVERIFY( lQStr != NULL ) ;
@@ -245,7 +245,7 @@ void TestOrderBy::doTest()
 		TExprTreePtr lE = EXPRTREEGEN(mSession)(OP_MUL, 2, val, 0);
 
 		CmvautoPtr<IStmt> lQ(getClassQuery(lCLSID,mSession));
-		OrderSeg ord = {lE,STORE_INVALID_PROPID,0,0};
+		OrderSeg ord = {lE,STORE_INVALID_PROPID,0,0,0};
 		TVERIFYRC(lQ->setOrder(&ord,1));
 		lE->destroy() ;
 
@@ -289,7 +289,7 @@ void TestOrderBy::testPinIDOrdering(ISession* session)
 	
 	IStmt * const lQ = session->createStmt();
 	unsigned char lVar = lQ->addVariable();
-	OrderSeg lSortBy = {NULL, PROP_SPEC_PINID, 0, 0};
+	OrderSeg lSortBy = {NULL, PROP_SPEC_PINID, 0, 0, 0};
 	lQ->setOrder( &lSortBy, 1);
 	lQ->setPropCondition(lVar,&groupingProp,1); // Only sort the pins created in this function (see 5938)	
 	ICursor * lR = NULL;
@@ -351,7 +351,7 @@ void TestOrderBy::getRandomOrdering( OrderSeg * order )
 	// Also randomize the ordering ascending/descending flags
 	for ( int k = 0 ; k < MAX_ORDERING_DEPTH ; k++ )
 	{
-		order[k].expr = NULL; order[k].lPrefix = 0;
+		order[k].expr = NULL; order[k].lPrefix = 0; order[k].var = 0;
 		// Pick a random property, but make sure
 		// we haven't already picked it
 		int rnd;
@@ -775,7 +775,7 @@ void TestOrderBy::testOrderByIndex( ISession * inSession, int inCntPins )
 	// Check with ascending ordering
 	//
 
-	OrderSeg ord={NULL,dateProp,0,0}; // Ascending order
+	OrderSeg ord={NULL,dateProp,0,0,0}; // Ascending order
 	TVERIFYRC( allPins->setOrder( &ord, 1) ) ;
 
 	// Removing duplicate pins requires sorting by pin id so

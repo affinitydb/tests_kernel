@@ -162,7 +162,7 @@ void TestPrefixIndex::doTest()
         IStmt * const iStmt = mSession->createStmt();
         TVERIFY(iStmt != NULL);
         QVarID lVar = iStmt->addVariable();
-        OrderSeg lSortBy = {NULL, ids[0], flag, (uint16_t)sub_len};
+        OrderSeg lSortBy = {NULL, ids[0], flag, 0, (uint16_t)sub_len};
         iStmt->setOrder(&lSortBy, 1);
         iStmt->setPropCondition(lVar,ids,1);
         // cout << iStmt->toString() <<endl;

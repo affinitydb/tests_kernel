@@ -153,7 +153,7 @@ void TestJoinExcept::runJoinQuery(ClassID pLeftCLSID, ClassID pRightCLSID, QUERY
 		lCS[1].classID = pRightCLSID; lCS[1].nParams = 0; lCS[1].params = NULL;
 		unsigned char lLeftVar = lQ->addVariable(&lCS[0], 1);		
 		unsigned char lRightVar = lQ->addVariable(&lCS[1], 1);
-		if (pJoinOp<QRY_UNION) lQ->join(lLeftVar, lRightVar, NULL, pJoinOp); else lQ->setOp(lLeftVar, lRightVar, pJoinOp);
+		if (pJoinOp<QRY_UNION) lQ->setOp(lLeftVar, lRightVar, QRY_INTERSECT); else lQ->setOp(lLeftVar, lRightVar, pJoinOp);
 		uint64_t lCount = 0;
 		TIMESTAMP lStart; getTimestamp(lStart);
 		if(!isVerbose())
@@ -210,7 +210,7 @@ void TestJoinExcept::runJoinQuery(PID pPID, PropertyID pPropID, ClassID pRightCL
 		ClassSpec lCS; lCS.classID = pRightCLSID; lCS.nParams = 0; lCS.params = NULL;
 		unsigned char lLeftVar = lQ->addVariable(pPID, pPropID);		
 		unsigned char lRightVar = lQ->addVariable(&lCS, 1);
-		if (pJoinOp<QRY_UNION) lQ->join(lLeftVar, lRightVar, NULL, pJoinOp); else lQ->setOp(lLeftVar, lRightVar, pJoinOp);
+		if (pJoinOp<QRY_UNION) lQ->setOp(lLeftVar, lRightVar, QRY_INTERSECT); else lQ->setOp(lLeftVar, lRightVar, pJoinOp);
 		uint64_t lCount = 0;
 		TIMESTAMP lStart; getTimestamp(lStart);
 		if(!isVerbose())

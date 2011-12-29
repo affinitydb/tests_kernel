@@ -15,6 +15,17 @@ message ( "Project dir: " ${PROJECT_SOURCE_DIR})
 #SET(TESTS_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
 #SET(TESTS_GLOBAL_HEADER ${PROJECT_SOURCE_DIR}/include)
 
+#The line below will create ${CPUTYPE} variable, and set it 
+#either to  'arm' or  to 'x86' 
+STRING( REGEX MATCH "86" CPUTYPE ${CMAKE_SYSTEM_PROCESSOR})
+IF(${CPUTYPE} MATCHES "86")
+	SET(CPUTYPE "x86")
+	message ("CPU: " ${CPUTYPE} )
+ELSE (${CPUTYPE} MATCHES "86")
+	STRING( REGEX MATCH "^..." CPUTYPE ${CMAKE_SYSTEM_PROCESSOR})
+	message ("CPU: " ${CPUTYPE} )
+ENDIF(${CPUTYPE} MATCHES "86")
+
 #specifying location of mvstore lib
 #for now, it is just hard coded in, assuming that both project are located side by side... 
 SET(MVSTORE_PRJ "${PROJECT_SOURCE_DIR}/../kernel")
@@ -48,6 +59,7 @@ ENDIF(CMAKE_SYSTEM_NAME MATCHES Windows)
 
 #adding some generic definitions and compiler flags for Linuxi ...
 IF(CMAKE_SYSTEM_NAME MATCHES Linux)
+IF(${CPUTYPE} MATCHES "x86")
    ADD_DEFINITIONS(-D_LINUX)
    ADD_DEFINITIONS(-DPOSIX)
    ADD_DEFINITIONS(-DIA32)
@@ -67,6 +79,22 @@ ELSE(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
 	SET( CMAKE_CXX_FLAGS  "  -g -O3 -march=i686 -m32 -pthread -fexceptions -fno-strict-aliasing -W -Wall -Wno-parentheses -Wno-unused-parameter -fnon-call-exceptions -Wno-non-virtual-dtor -Wno-deprecated -Wno-write-strings ")
 ENDIF (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
 ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+ENDIF(${CPUTYPE} MATCHES "x86")
+
+#ADDING command for 'arm' CPU familes...
+IF(${CPUTYPE} MATCHES "arm")
+   ADD_DEFINITIONS(-D_LINUX)
+   ADD_DEFINITIONS(-DPOSIX)
+#   ADD_DEFINITIONS(-DIA32)
+IF(CMAKE_BUILD_TYPE MATCHES Debug)
+	ADD_DEFINITIONS(-DDEBUG)
+	ADD_DEFINITIONS(-D_DEBUG)
+	SET( CMAKE_CXX_FLAGS  "  -g -O0 -march=armv7-a -pthread -fexceptions -fno-strict-aliasing -W -Wall -Wno-parentheses -Wno-unused-parameter -fnon-call-exceptions -Wno-non-virtual-dtor -Wno-deprecated -Wno-write-strings ")
+ELSE(CMAKE_BUILD_TYPE MATCHES Debug)
+	ADD_DEFINITIONS(-DNDEBUG)
+	SET( CMAKE_CXX_FLAGS  "  -g -O3 -march=armv7-a -pthread -fexceptions -fno-strict-aliasing -W -Wall -Wno-parentheses -Wno-unused-parameter -fnon-call-exceptions -Wno-non-virtual-dtor -Wno-deprecated -Wno-write-strings ")
+ENDIF(CMAKE_BUILD_TYPE MATCHES Debug)
+ENDIF(${CPUTYPE} MATCHES "arm")
 ENDIF(CMAKE_SYSTEM_NAME MATCHES Linux)
 
 #adding some generic definitions and compiler flags for Darwin (Mac OSX) ...

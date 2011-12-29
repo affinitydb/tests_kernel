@@ -28,6 +28,22 @@ TEST_IMPLEMENT(TestReadProto, TestLogger::kDStdOut);
 
 int TestReadProto::execute()
 {
+	// 1) Generate the input file: protobuf.out: calling testprotobuf to generate.
+
+	mLogger.out() << endl << endl << "Beginning generate protobuf.out file." << endl << endl ;
+	
+	mLogger.out() << "Generating..." << std::endl;
+	
+	string cmd =string("testprotobuf ");
+	
+	int lResult = MVTUtil::executeProcess(MVTApp::mAppName.c_str(),cmd.c_str(),NULL,NULL,false,true );
+	if (0 != lResult)
+	{
+		TVERIFY(!"Generation phase failed");
+		return -1;
+	}
+
+	// 2) Begin to test read protobuf file.
 
 	string fileName(DEFAULT_FILENAME);
 	

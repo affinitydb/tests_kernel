@@ -1353,7 +1353,9 @@ bool TestScenarioBase::parsePINsFile(char const * pFileName, std::vector<PITScen
 		long lThreadAbstrID;
 		PID lPID;
 		INITLOCALPID(lPID);
-		sscanf(&lLine[lStartOfLine], "%ld "_LD_FM, &lThreadAbstrID, &LOCALPID(lPID));
+		// The implementation of sscanf(...) is more strict under OSX 
+		// see 'man sscanf' for details
+		sscanf(&lLine[lStartOfLine], "%ld %lld", &lThreadAbstrID, &LOCALPID(lPID));
 
 		// Add the PID to the right scenario.
 		bool lHandled = false;

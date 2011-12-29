@@ -128,7 +128,7 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	pvs[0].setURL("http://www.srilankaalways.com"); SETVATTR_C(pvs[0], pm[14].uid, OP_ADD, STORE_LAST_ELEMENT);
 	rc = pin1->modify(pvs,1);
 
-	RefV rv;
+	RefP rv;
 	rv.eid = STORE_COLLECTION_ID;
 	rv.pin = session->getPIN(pid[0],true);
 	rv.pid = pm[1].uid;
@@ -148,7 +148,7 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	rc = session->createPIN(pid[4],pvs,1);
 
 	// PIN 6
-	RefV rv1; rv1.eid = STORE_COLLECTION_ID; rv1.vid = 0;
+	RefP rv1; rv1.eid = STORE_COLLECTION_ID; rv1.vid = 0;
 	IPIN *pinx = session->getPIN(pid[2]);
 	Value pvx = *pinx->getValue(pm[14].uid);
 	if (pvx.type==VT_COLLECTION) {
@@ -193,7 +193,7 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	SETVALUE_C(pvs[0], PROP_SPEC_VALUE, ref1, OP_ADD, STORE_LAST_ELEMENT);
 	rc = pin8->modify(pvs,1);
 	
-	RefV rv2;
+	RefP rv2;
 	rv2.eid = STORE_COLLECTION_ID;
 	rv2.pin = session->getPIN(pid[0],true);
 	rv2.pid = PROP_SPEC_VALUE;

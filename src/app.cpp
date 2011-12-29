@@ -226,6 +226,7 @@ MVTApp::TestSuiteCtx::TestSuiteCtx()
 	mbGetStoreCreationParam = false;
 	mbForceOpen = false;
 	mbForceClose = false;
+	mbTestDurability = false;
 	mbPrintStats = false;
 	mCntFailure = 0 ;
 	getTimestamp(mStartTime);
@@ -323,6 +324,7 @@ int MVTApp::start(MVTArgs *args)
 	pargs->get_param("-gscp",Suite().mbGetStoreCreationParam);
 	pargs->get_param("-forceopen",Suite().mbForceOpen);
 	pargs->get_param("-forceclose",Suite().mbForceClose);
+	pargs->get_param("-durability",Suite().mbTestDurability);
 	pargs->get_param("-printstats",Suite().mbPrintStats);
 	pargs->get_param("-newstore",Suite().mbFlushStore);
 	pargs->get_param("errlogsize",Suite().mKernelErrSize);
@@ -586,6 +588,7 @@ int MVTApp::help() const
 	std::cout << "  -client=client host address (now ignored: the host address is now inferred from ident), use the clientapi library to connect over http" << std::endl;
 	
 	std::cout << "  -archivelogs, -forcenew, -forceopen,-forceclose, -rollforward, -printstats : Enable kernel STARTUP_ flags" << std::endl;
+	std::cout << "  -durability : perform an additional durability test, at shutdown" << std::endl;
 	std::cout << "  -----" << std::endl;
 	std::cout << "These flags only work when store does not exist (and may be ignored by some tests):" << std::endl ;
 	std::cout << "  -ident=NAME Set the identity (no spaces allowed)" << std::endl;
@@ -1195,6 +1198,8 @@ void MVTApp::buildCommandLine(TestSuiteCtx & suite,std::stringstream & cmdstr)
 		cmdstr << " -forceopen" ;
 	if ( suite.mbForceClose )
 		cmdstr << " -forceclose" ;
+	if ( suite.mbTestDurability )
+		cmdstr << " -durability" ;
 	if ( suite.mbRollforward )
 		cmdstr << " -rollforward" ;
 	if ( suite.mbPrintStats )
@@ -2238,6 +2243,41 @@ void MVTApp::stopStore()
 	assert(suite.mStarted > 0) ; // Store not open
 	assert(suite.mStoreCtx != NULL) ;
 
+#if 1
+	typedef std::map<PID, std::string> TMD5s;
+	TMD5s lMD5s;
+	if (suite.mbTestDurability)
+	{
+		printf("\n\n{\nProducing durability snapshot before shutdown...\n\n");
+		MVStoreKernel::StoreCtx * const lStoreCtx = Suite().mStoreCtx;
+		ISession * const lSession = lStoreCtx ? startSession(lStoreCtx) : NULL;
+		ICursor * lCursor;
+		if (lSession && RC_OK == CmvautoPtr<IStmt>(lSession->createStmt("SELECT *;"))->execute(&lCursor))
+		{
+			CmvautoPtr<ICursor> lCursorA(lCursor);
+			Md5Stream lMd5S;
+			unsigned char lMd5[16];
+			MvStoreSerialization::ContextOutComparisons lSerCtx(lMd5S, *lSession);
+			IPIN * lPIN;
+			for (lPIN = lCursor->next(); NULL != lPIN; lPIN = lCursor->next())
+			{
+				PID const lPID = lPIN->getPID();
+				MvStoreSerialization::OutComparisons::pin(lSerCtx, *lPIN);
+				lMd5S.flush_md5(lMd5);
+				lPIN->destroy();
+
+				std::ostringstream lOs;
+				for (size_t iC = 0; iC < sizeof(lMd5); iC++)
+					lOs << std::hex << std::setw(2) << std::setfill('0') << (int)lMd5[iC];
+				lOs << std::ends;
+				lMD5s[lPID] = lOs.str();
+			}
+		}
+		if (lSession)
+			lSession->terminate();
+	}
+#endif
+
 	if (suite.mStarted > 1)
 	{
 		if (suite.mbForceClose)	
@@ -2248,6 +2288,7 @@ void MVTApp::stopStore()
 		suite.mLock->unlock() ;
 		return;
 	}
+
 #if 0 // remove replication temporarily
 	if (ReplicationEventProcessor::sTheOrgToken)
 		{ sDynamicLinkMvstore->repDestroyStoreNotificationHandler(ReplicationEventProcessor::sTheOrgToken); ReplicationEventProcessor::sTheOrgToken = NULL; }
@@ -2261,6 +2302,7 @@ void MVTApp::stopStore()
 	if(RC_OK == sDynamicLinkMvstore->shutdown(suite.mStoreCtx, bReplicate|suite.mbForceClose ? true : false))
 		suite.mStarted--;
 #endif 
+
 	if(RC_OK == shutdownStore(suite.mStoreCtx))
 		suite.mStarted--;
 	
@@ -2272,6 +2314,67 @@ void MVTApp::stopStore()
 
 	suite.mStoreCtx=NULL;
 	assert(suite.mStarted==0);
+
+#if 1
+	if (suite.mbTestDurability)
+	{
+		printf("\nTesting durability snapshot after shutdown...\n\n");
+		bool lDurabilityOk = true;
+		StartupParameters const lSP(0, suite.mDir.c_str(), DEFAULT_MAX_FILES, suite.mNBuffer, DEFAULT_ASYNC_TIMEOUT, NULL, NULL, suite.mPwd.c_str(), suite.mLogDir.c_str(), NULL);
+		MVStoreKernel::StoreCtx * lStoreCtx = NULL;
+		size_t const lNumChecked = lMD5s.size();
+		if (RC_OK == openStore(lSP, lStoreCtx))
+		{
+			ISession * const lSession = lStoreCtx ? startSession(lStoreCtx) : NULL;
+			ICursor * lCursor;
+			if (lSession && RC_OK == CmvautoPtr<IStmt>(lSession->createStmt("SELECT *;"))->execute(&lCursor))
+			{
+				CmvautoPtr<ICursor> lCursorA(lCursor);
+				Md5Stream lMd5S;
+				unsigned char lMd5[16];
+				MvStoreSerialization::ContextOutComparisons lSerCtx(lMd5S, *lSession);
+				IPIN * lPIN;
+				for (lPIN = lCursor->next(); NULL != lPIN; lPIN = lCursor->next())
+				{
+					PID const lPID = lPIN->getPID();
+					MvStoreSerialization::OutComparisons::pin(lSerCtx, *lPIN);
+					lMd5S.flush_md5(lMd5);
+					lPIN->destroy();
+
+					std::ostringstream lOs;
+					for (size_t iC = 0; iC < sizeof(lMd5); iC++)
+						lOs << std::hex << std::setw(2) << std::setfill('0') << (int)lMd5[iC];
+					lOs << std::ends;
+
+					TMD5s::iterator iM = lMD5s.find(lPID);
+					if (lMD5s.end() == iM)
+						{ printf("***\n*** ERROR: pin "_LX_FM" not found in pre-shutdown snapshot!\n***\n", lPID.pid); lDurabilityOk = false; }
+					else
+					{
+						if ((*iM).second != lOs.str())
+							{ printf("***\n*** ERROR: pin "_LX_FM" different after shutdown!\n***\n", lPID.pid); lDurabilityOk = false; }
+						lMD5s.erase(iM);
+					}
+				}
+				if (lMD5s.size() > 0)
+					{ printf("***\n*** ERROR: %d pins not found after shutdown!\n***\n", lMD5s.size()); lDurabilityOk = false; }
+			}
+			else
+				{ printf("***\n*** ERROR: could not obtain session/cursor for durability check!\n***\n"); lDurabilityOk = false; }
+			if (lSession)
+				lSession->terminate();
+			shutdownStore(lStoreCtx);
+		}
+		else
+			{ printf("***\n*** ERROR: could not reopen store for durability check!\n***\n"); lDurabilityOk = false; }
+		if (!lDurabilityOk)
+		{
+			MVTestsPortability::threadSleep(5000);
+			exit(EXIT_CODE_KILL_SUITE);
+		}
+		printf("\nVerified durability of %u pins.\n}\n\n", lNumChecked);
+	}
+#endif
 
 	suite.mLock->unlock() ;
 }

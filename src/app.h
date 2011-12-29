@@ -100,6 +100,7 @@ class MVTApp
 			bool					mbForceNew;
 			bool					mbForceOpen;
 			bool					mbForceClose;	// Flag correponding to force close.
+			bool					mbTestDurability; // If true each store is dumped before shutdown, then reopened and diffed.
 			bool					mbPrintStats;
 			bool					mbSingleProcess; // If false each test is launched it is own process
 			long 					mCntFailure;	// Summary of failed tests

@@ -198,7 +198,7 @@ THREAD_SIGNATURE TestFamilies2::RunFamilyAync(void * pInfo)
 		//clock_t lBef = getTimeInMs();
 		//lQ->count(lCount);
 		//clock_t lAft = getTimeInMs();
-		OrderSeg lOrder = {NULL,lInfo->mPropID,ORD_DESC,0};
+		OrderSeg lOrder = {NULL,lInfo->mPropID,ORD_DESC,0,0};
 		lQ->setOrder(&lOrder,1);
 		ICursor *lR = NULL;
 		lQ->execute(&lR);
@@ -2185,7 +2185,7 @@ bool TestFamilies2::testFamilyWithOrderBy(ISession *pSession, int pOrderBy)
 			lSuccess = false;
 		}
 
-		OrderSeg ord = {NULL,0,0,0};
+		OrderSeg ord = {NULL,0,0,0,0};
 		ord.flags = (int)((float)rand() * lNumPINsToCreate/RAND_MAX) > (int)lNumPINsToCreate/2?0:ORD_DESC;		
 		bool lOrderAscen = ord.flags == 0;
 
@@ -2440,7 +2440,7 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 			// We added this tag to ALL the pins so we expect 
 			// same number are found as before
 			lQ->setConditionFT( var, "National" ) ;
-			OrderSeg ord = {NULL,lPropIDs[2],ORD_DESC,0};
+			OrderSeg ord = {NULL,lPropIDs[2],ORD_DESC,0,0};
 			lQ->setOrder( &ord, 1);
 
 

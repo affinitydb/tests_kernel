@@ -1201,7 +1201,7 @@ void  PhotoScenario::runClassQueries()
 	{
 		Value tag ; tag.set( mTagPool[i].c_str() ) ;
 
-		OrderSeg ord = {NULL,date_id,0,0};
+		OrderSeg ord = {NULL,date_id,0,0,0};
 		CmvautoPtr<IStmt> qTags(createClassQuery( "taggedImages",STMT_QUERY,1,&tag,1,&ord ) );
 		qTags->count( cntQ ) ;
 		TVERIFY( cntQ > 0 ) ;

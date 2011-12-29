@@ -73,8 +73,8 @@ void TestRef::testValidRefs()
 	Value valsOnParent[1];
 	RefVID ref ; 
 	RefVID *lRef = (RefVID *)mSession->alloc(1*sizeof(RefVID));
-	RefV refV ;
-	RefV *lRefV = (RefV *)mSession->alloc(1*sizeof(RefV));
+	RefP refP ;
+	RefP *lRefP = (RefP *)mSession->alloc(1*sizeof(RefP));
 	IPIN * p = NULL ;
 
 	// Scenario
@@ -118,12 +118,12 @@ void TestRef::testValidRefs()
 	p->destroy() ;
 
 	// Scenario
-	refV.pin = childPIN ;
-	refV.pid = mPropX ;
-	refV.eid = STORE_COLLECTION_ID ;
-	refV.vid = 0 ;
-	*lRefV = refV;
-	valsOnParent[0].set(*lRefV) ; valsOnParent[0].property = mPropX ; 
+	refP.pin = childPIN ;
+	refP.pid = mPropX ;
+	refP.eid = STORE_COLLECTION_ID ;
+	refP.vid = 0 ;
+	*lRefP = refP;
+	valsOnParent[0].set(*lRefP) ; valsOnParent[0].property = mPropX ; 
 	TVERIFY(valsOnParent[0].type == VT_REFPROP );
 	TVERIFYRC(mSession->createPIN(parent,valsOnParent,1));
 	p=mSession->getPIN(parent); 
@@ -131,11 +131,11 @@ void TestRef::testValidRefs()
 	p->destroy() ;
 
 	// Scenario
-	refV.pin = childPIN ;
-	refV.pid = mPropX ;
-	refV.eid = validEID ;
-	*lRefV = refV;
-	valsOnParent[0].set(*lRefV) ; valsOnParent[0].property = mPropX ; 
+	refP.pin = childPIN ;
+	refP.pid = mPropX ;
+	refP.eid = validEID ;
+	*lRefP = refP;
+	valsOnParent[0].set(*lRefP) ; valsOnParent[0].property = mPropX ; 
 	TVERIFY(valsOnParent[0].type == VT_REFELT );
 	TVERIFYRC(mSession->createPIN(parent,valsOnParent,1));
 	p=mSession->getPIN(parent); 

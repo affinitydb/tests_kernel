@@ -406,7 +406,7 @@ void TestLeftJoin::executeQuery(ClassSpec *pLHSCS, ClassSpec *pRHSCS, IExprTree 
 	TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
 	TVERIFY(lCount == (uint64_t)mLHSPINs.size());
 
-	OrderSeg lOrder = {NULL,mRHSPropID,ORD_DESC,0};
+	OrderSeg lOrder = {NULL,mRHSPropID,ORD_DESC,0,0};
 	lQ->setOrder(&lOrder, 1); 
 	MVStore::ICursor *lR = NULL;
 	lQ->execute(&lR, NULL, 0, ~0, 0, pMode|MODE_VERBOSE);

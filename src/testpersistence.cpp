@@ -194,11 +194,11 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	val[14].set(rvidelt); val[14].setPropID(pm[14].uid);
 	
 	//VT_REFPROP
-	RefV rval;
+	RefP rval;
 	rval.pin = rpin; rval.pid=propOnRef; rval.eid=STORE_COLLECTION_ID; rval.vid=0;
 	val[15].set(rval);val[15].setPropID(pm[15].uid); 
 	//VT_REFELT
-	RefV rvalelt;
+	RefP rvalelt;
 	rvalelt.pin = rpin; rvalelt.pid=propOnRef1; rvalelt.eid=STORE_FIRST_ELEMENT; rvalelt.vid=0;
 	val[16].set(rvalelt);val[16].setPropID(pm[16].uid);
 	//VT_ARRAY

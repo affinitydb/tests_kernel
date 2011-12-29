@@ -37,11 +37,9 @@ int TestModeSSVAsStream::execute()
 		lSuccess=true;
 		ISession *session = MVTApp::startSession();
 		MVTApp::mapURIs(session,"testModeSSVAsStream",sNumProps,mPropIds);
-		mode = session->getInterfaceMode();
-		mode |= MODE_FORCED_SSV_AS_STREAM;
+		mode = MODE_FORCED_SSV_AS_STREAM;
 		testMODEFORCEDSSV(session);
-		mode=0;
-		mode |= MODE_SSV_AS_STREAM;
+		mode = MODE_SSV_AS_STREAM;
 		testMODEFORCEDSSV(session);
 		session->terminate();
 		MVTApp::stopStore();

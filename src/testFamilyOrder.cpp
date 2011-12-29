@@ -102,7 +102,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 	unsigned char lVar;
 	ClassSpec cs ;
 	ICursor *lR;
-	OrderSeg os={NULL,mPropIDs[0],0,0};
+	OrderSeg os={NULL,mPropIDs[0],0,0,0};
 	
 	IPIN * pResult ;
 

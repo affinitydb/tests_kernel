@@ -23,17 +23,29 @@ class TestPGTree : public ITest
 {
 	public:
 		// Note:
-		//   The store coerces keys to a uniform type at insertion time; the type is determined either
-		//   by the very first insertion (what we use in this test - for convenience), or
-		//   by a specification when defining the family; if a value can't be coerced to an index's
-		//   type, insertion in the index will fail; in the case of this current test, whenever
-		//   we'll mix types in an index, the index's type will be VT_STRING.
+		//   When this test was written, the store used to coerce keys to a uniform type at insertion time;
+		//   the type was determined either by the very first insertion (what we use in this test - for convenience),
+		//   or by a specification when defining the family; if a value couldn't be coerced to an index's
+		//   type, insertion in the index would fail. Now, the store supports mixed-type indexes natively:
+		//   . you either force the type of index specifying the type of parameter, e.g. v[1].setParam(0,VT_DATETIME)
+		//   . or the type of index is 'variable' - which will retain the type of data being indexed
+		//   . unless you specify ORD_NCASE in flags, or the lhs of index spec contains functions UPPER, LOWER, SUBSTR (in which case the type of index is forced to VT_STRING).
 		template <ValueType Type> class CompareValues
 		{
 			public:
 				static ValueType getType() { return Type; }
+				static bool isEquivalentType(ValueType pVT)
+				{
+					if (isInteger(pVT)) return isInteger(Type);
+					if (isNumber(pVT)) return isNumber(Type);
+					if (isString(Type)) return true;
+					return false;
+				}
+				static bool isInteger(ValueType pVT) { return pVT == VT_INT || pVT == VT_INT64 || pVT == VT_UINT || pVT == VT_UINT64; }
+				static bool isNumber(ValueType pVT) { return pVT >= VT_INT && pVT <= VT_DOUBLE; }
+				static bool isString(ValueType pVT) { return pVT >= VT_STRING && pVT <= VT_URL; }
 			protected:
-				bool isInteger(Value const & pV) const { return pV.type == VT_INT || pV.type == VT_INT64 || pV.type == VT_UINT || pV.type == VT_UINT64; }
+				bool isInteger(Value const & pV) const { return isInteger((ValueType)pV.type); }
 				int64_t getInteger(Value const & pV) const
 				{
 					switch (pV.type)
@@ -704,7 +716,10 @@ void TestPGTree::defineFamilies(ISession & pSession, size_t pPassIndex)
 			Value lV[2];
 			lV[0].setVarRef(0,mProps[iC]);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET(pSession.expr(OP_IN, 2, lV, CASE_INSENSITIVE_OP));
+			bool const lIntegerOnly = (iC >= kCFirst_int && iC <= kCEnd_int);
+			bool const lFloatOnly = (iC >= kCFirst_dbl && iC <= kCEnd_dbl);
+			bool const lNumberOnly = lIntegerOnly || lFloatOnly;
+			CmvautoPtr<IExprTree> lET(pSession.expr(OP_IN, 2, lV, lNumberOnly ? 0 : CASE_INSENSITIVE_OP));
 			TVERIFYRC(lQ->addCondition(lVar, lET));
 			TVERIFYRC(defineClass(&pSession, lClassName, lQ, &mFamilies[pPassIndex][iC]));
 		}
@@ -744,7 +759,7 @@ void TestPGTree::enumKeysFT_str(ISession & pSession, Tstrings & pResult, char pL
 	CmvautoPtr<IStmt> lQ(pSession.createStmt());
 	unsigned char const lVar = lQ->addVariable();
 	TVERIFYRC(lQ->addConditionFT(lVar, lBuf, 0, &mProps[pPropIndex], 1));
-	OrderSeg const lOrder = {NULL, mProps[pPropIndex], ORD_NCASE, 0};
+	OrderSeg const lOrder = {NULL, mProps[pPropIndex], ORD_NCASE, 0, 0};
 	TVERIFYRC(lQ->setOrder(&lOrder, 1));
 	ICursor* lC = NULL;
 	TVERIFYRC(lQ->execute(&lC));
@@ -792,16 +807,16 @@ void TestPGTree::checkAllKeysByFamily1(ISession & pSession, Keys const & pKeys, 
 	Tvalues lKeys;
 
 	MVStore::IndexNav * lVE;
-	TVERIFYRC(pSession.listValues(mFamilies[pPassIndex][pPropIndex], mProps[pPropIndex], Keys::key_compare::getType(), lVE));
+	TVERIFYRC(pSession.listValues(mFamilies[pPassIndex][pPropIndex], mProps[pPropIndex], lVE));
 	if (lVE)
 	{
 		// Note: Individual values obtained through next() belong to the store.
 		Value const * lVp;
 		for (lVp = lVE->next(); NULL != lVp; lVp = lVE->next())
 		{
-			if (pSubset && lVp->type != Keys::key_compare::getType())
+			if (pSubset && !Keys::key_compare::isEquivalentType((ValueType)lVp->type))
 				continue;
-			TVERIFY(Keys::key_compare::getType() == lVp->type);
+			TVERIFY(Keys::key_compare::isEquivalentType((ValueType)lVp->type));
 			Value lV;
 			TVERIFYRC(pSession.copyValue(*lVp, lV));
 			lKeys.push_back(lV);
@@ -840,7 +855,7 @@ void TestPGTree::checkAllKeysByFamily2(ISession & pSession, Keys const & pKeys, 
 		lCS.classID = mFamilies[pPassIndex][pPropIndex];
 		lCS.nParams = 0; lCS.params = NULL;
 		lQ->addVariable(&lCS, 1);
-		OrderSeg const lOrder = {NULL, mProps[pPropIndex], ORD_NCASE, 0};
+		OrderSeg const lOrder = {NULL, mProps[pPropIndex], ORD_NCASE, 0, 0};
 		TVERIFYRC(lQ->setOrder(&lOrder, 1));
 	#endif
 	uint64_t lTotalCnt = 0;
@@ -857,9 +872,9 @@ void TestPGTree::checkAllKeysByFamily2(ISession & pSession, Keys const & pKeys, 
 		Value const * lVp = lP->getValue(mProps[pPropIndex]);
 		if (!lVp)
 			{ TVERIFY2(false, "Unexpected null value"); continue; }
-		if (pSubset && lVp->type != Keys::key_compare::getType())
+		if (pSubset && !Keys::key_compare::isEquivalentType((ValueType)lVp->type))
 			continue;
-		TVERIFY(Keys::key_compare::getType() == lVp->type);
+		TVERIFY(Keys::key_compare::isEquivalentType((ValueType)lVp->type));
 		Value lV;
 		TVERIFYRC(pSession.copyValue(*lVp, lV));
 		lKeys.push_back(lV);
@@ -897,9 +912,9 @@ void TestPGTree::checkAllKeysFullScan(ISession & pSession, Keys const & pKeys, s
 		Value const * lVp = lP->getValue(mProps[pPropIndex]);
 		if (!lVp)
 			{ TVERIFY2(false, "Unexpected null value"); continue; }
-		if (pSubset && lVp->type != Keys::key_compare::getType())
+		if (pSubset && !Keys::key_compare::isEquivalentType((ValueType)lVp->type))
 			continue;
-		TVERIFY(Keys::key_compare::getType() == lVp->type);
+		TVERIFY(Keys::key_compare::isEquivalentType((ValueType)lVp->type));
 		Value lV;
 		TVERIFYRC(pSession.copyValue(*lVp, lV));
 		lKeys.insert(lV);

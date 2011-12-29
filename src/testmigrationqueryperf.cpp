@@ -224,7 +224,7 @@ void TestMigrationQueryPerf::doTest()
 
 		/* each of these querys retrieves approximately 4% of the pins.  Add a call to runClassQueries
 		   to see the detailed break down */
-		OrderSeg ord={NULL,date_id,0,0};
+		OrderSeg ord={NULL,date_id,0,0,0};
 		CmvautoPtr<IStmt> qTags(createClassQuery( "taggedImages",STMT_QUERY,
 													1,&tag,		 // Tag to search for
 													1,&ord));  // Order by

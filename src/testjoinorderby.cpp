@@ -137,7 +137,7 @@ int testjoinorderby::execute()
 			else
 					bSuccess = false;
 		}
-		OrderSeg ord = {NULL,date_original_modifiedPropID,ORD_DESC,0};
+		OrderSeg ord = {NULL,date_original_modifiedPropID,ORD_DESC,0,0};
 		TVERIFYRC(lQuery->setOrder( &ord,1));
 		
 	//Execution

@@ -116,7 +116,7 @@ int	TestMerge::execute()
 		lV[1].setVarRef(1,lPropIdPinId);
 		expr = lSession->expr(OP_EQ,2,lV);
 		lVar1 = lQ->join(lVar1,lVar2,expr);
-		OrderSeg ord={NULL,lPropIdRef,0,0};
+		OrderSeg ord={NULL,lPropIdRef,0,0,0};
 		lQ->setOrder(&ord,1);
 
 		uint64_t lCnt = 0;

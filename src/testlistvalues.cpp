@@ -51,7 +51,7 @@ void TestListValues::checkClass(
 	//If you don't know inExpectedType then VT_ANY can be passed,
 	//REVIEW: then the return type may not match the real index type, 
 	//e.g. strings can come back as VT_BSTR with no null termination
-	RC rc = mSession->listValues( lCls, inProp, inExpectedType, lValEnum.Get() ) ;
+	RC rc = mSession->listValues( lCls, inProp, lValEnum.Get() ) ;
 
 	if(pGuest)	
 	{

@@ -82,6 +82,13 @@ inline SLIST_ENTRY *InterlockedPopEntrySList(SLIST_HEADER *pHeader)
 	return pe;
 }
 #else		//__arm__
+#define	cas(a,b,c)									__sync_bool_compare_and_swap(a,b,c)
+#define	casP(a,b,c)									__sync_bool_compare_and_swap(a,b,c)
+#define	casV(a,b,c)									__sync_val_compare_and_swap(a,b,c)
+#define	InterlockedIncrement(a)						__sync_add_and_fetch(a,1)
+#define	InterlockedDecrement(a)						__sync_sub_and_fetch(a,1)
+
+#if 0
 template<typename T> __forceinline bool cas(volatile T *ptr,T oldV,T newV) {return InterlockedCompareExchange(ptr,newV,oldV)==oldV;}
 template<typename T> __forceinline bool casP(T *volatile *ptr,T *oldV,T *newV) {return InterlockedCompareExchangePointer(ptr,newV,oldV)==oldV;}
 template<typename T> __forceinline T casV(volatile T *ptr,T oldV,T newV) {return InterlockedCompareExchange(ptr,newV,oldV);}
@@ -183,7 +190,7 @@ int lRes;
    );		
   return lRes ? 0 : 1; 
 }
-
+#endif
 struct SLIST_ENTRY
 {
 	SLIST_ENTRY		*Next;
@@ -200,6 +207,7 @@ inline void InitializeSListHead(SLIST_HEADER *head)
 {
 	head->dword=0;
 }
+#if 0
 inline void InterlockedPushEntrySList(SLIST_HEADER *pHeader,SLIST_ENTRY *entry)
 {
 	SLIST_HEADER nHdr,oHdr; nHdr.Next.Next=entry;
@@ -213,6 +221,22 @@ inline SLIST_ENTRY *InterlockedPopEntrySList(SLIST_HEADER *pHeader)
 		oHdr.dword=pHeader->dword; if ((pe=oHdr.Next.Next)==NULL) return NULL;
 		nHdr.cnt=oHdr.cnt+1; nHdr.Next.Next=pe->Next;
 	} while (!cas64(&pHeader->dword,&oHdr.dword,&nHdr.dword));
+	return pe;
+}
+#endif
+inline void InterlockedPushEntrySList(SLIST_HEADER *pHeader,SLIST_ENTRY *entry)
+{
+	SLIST_HEADER nHdr,oHdr; nHdr.Next.Next=entry;
+	do {oHdr.dword=pHeader->dword; nHdr.cnt=oHdr.cnt+1; entry->Next=oHdr.Next.Next;}
+	while (!__sync_bool_compare_and_swap(&pHeader->dword,oHdr.dword,nHdr.dword));
+}
+inline SLIST_ENTRY *InterlockedPopEntrySList(SLIST_HEADER *pHeader)
+{
+	SLIST_HEADER nHdr,oHdr; SLIST_ENTRY *pe;
+	do {
+		oHdr.dword=pHeader->dword; if ((pe=oHdr.Next.Next)==NULL) return NULL;
+		nHdr.cnt=oHdr.cnt+1; nHdr.Next.Next=pe->Next;
+	} while (!__sync_bool_compare_and_swap(&pHeader->dword,oHdr.dword,nHdr.dword));
 	return pe;
 }
 #endif

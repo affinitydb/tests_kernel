@@ -177,7 +177,7 @@ int TestFamilyBasic::execute()
 		lQFamilySorted->addCondition( lVar, lE ) ;
 
 		// Sort by PropX (Ascending is default)
-		OrderSeg ord = {NULL, mPropX, ORD_DESC, 0};
+		OrderSeg ord = {NULL, mPropX, ORD_DESC, 0, 0};
 		lQFamilySorted->setOrder( &ord, 1) ;
 
 		runQuery( "Pins in family 2 with param0='A' and PropX > 1 sorted by PropX", lQFamilySorted ) ;

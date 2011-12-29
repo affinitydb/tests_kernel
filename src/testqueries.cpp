@@ -1989,9 +1989,9 @@ IExprTree * TestQueries::createArithExpr(ISession *session,unsigned var,int Op, 
 
 IExprTree * TestQueries::createCompExpr(ISession *session,unsigned var,int Op, int type)
 {
-	IExprTree *exprfinal = NULL;
+	IExprTree *exprfinal = NULL, *expr1 = NULL,*expr2 = NULL;
 	PropertyID pids[1];
-	Value val[2];
+	Value val[2], val1[1],val2[2];
 	const char *str = NULL,*url = NULL;
 	int i = 0;
 	unsigned int ui32= 0;
@@ -2131,6 +2131,18 @@ IExprTree * TestQueries::createCompExpr(ISession *session,unsigned var,int Op, i
 		default:
 			logResult("Datatype not supported",RC_OTHER);
 	}
+       if (Op == OP_NE) {
+		if (type == VT_STRING)
+			val1[0].setVarRef(0,pm[0].uid);
+		else if(type == VT_URL)
+			val1[0].setVarRef(0,pm[14].uid);
+		else
+			assert(0);
+		expr1 = session->expr(OP_EXISTS,1,val1);
+		expr2 = session->expr(ExprOp(Op),2,val, NULLS_NOT_INCLUDED_OP);
+		val2[0].set(expr1); val2[1].set(expr2);
+		exprfinal =  session->expr(OP_LAND,2,val2);
+       } else
 	exprfinal =  session->expr(ExprOp(Op),2,val,NULLS_NOT_INCLUDED_OP);
 	return exprfinal;
 }
@@ -2222,9 +2234,9 @@ IExprTree * TestQueries::createBitwiseExpr(ISession *session,unsigned var,int Op
 
 IExprTree * TestQueries::createLogicalExpr(ISession *session,unsigned var,int Op,int Op1, int Op2,int type1, int type2,bool fake)
 {
-	IExprTree *expr1 = NULL,*expr2 = NULL,*exprfinal = NULL;
+	IExprTree *expr1 = NULL,*expr2 = NULL,*exprfinal = NULL, *expr3 = NULL, *expr4 = NULL;
 	PropertyID pids[1];
-	Value val[2];
+	Value val[2],val2[2],val3[1];
 	if(Op1 >= OP_EQ && Op1 <= OP_GE)
 		if(Op == OP_LOR && fake){
 			pids[0] = pm[0].uid;
@@ -2248,8 +2260,19 @@ IExprTree * TestQueries::createLogicalExpr(ISession *session,unsigned var,int Op
 			exprfinal = session->expr(ExprOp(Op),2,val);
 			break;
 		case OP_LNOT:	
+			if (Op1 == OP_EQ || Op1 == OP_NE){
+				// OP_LNOT and OP_EQ ==> OP_NE, add OP_EXISTS condition
+				// OP_LNOT and (OP_NE and OP_EXISTS)  ==> OP_EQ or prop is NULL, add OP_EXISTS condition
+				val3[0].setVarRef(0,pm[0].uid);
+				expr3 = session->expr(OP_EXISTS,1,val3);
+				val[0].set(expr1);
+				expr4 = session->expr(ExprOp(Op),1,val);
+				val2[0].set(expr3);val2[1].set(expr4);
+				exprfinal = session->expr(OP_LAND,2,val2);
+			}else {
 			val[0].set(expr1);
 			exprfinal = session->expr(ExprOp(Op),1,val);
+			}
 			break;
 	}
 	return exprfinal;

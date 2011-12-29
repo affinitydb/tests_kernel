@@ -265,7 +265,7 @@ unsigned long TestMergeSimple::doMerge(uint64_t startDate, uint64_t endDate, con
 
 	// Expected to be optimized with no extra pin loading or sorting
 	// because the family we use gives results in this order
-	OrderSeg ord={NULL,mDateProp,0,0};
+	OrderSeg ord={NULL,mDateProp,0,0,0};
 	TVERIFYRC(q->setOrder(&ord,1));
 
 	uint64_t cnt = 0;

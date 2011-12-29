@@ -152,9 +152,9 @@ void TestExternalSort::doTest(int newpins)
 	unsigned char var = lQ->addVariable() ;
 	TVERIFYRC(lQ->setPropCondition(var,&mProp1,1));
 #if TEST_VT_IDENTITY
-	const OrderSeg sortProps[2] = {{NULL,PROP_SPEC_CREATEDBY,0,0},{NULL,mProp1,ORD_DESC,0}}; 
+	const OrderSeg sortProps[2] = {{NULL,PROP_SPEC_CREATEDBY,0,0,0},{NULL,mProp1,ORD_DESC,0,0}}; 
 #else
-	const OrderSeg sortProps[2] = {{NULL,mProp1,0,0},{NULL,mProp2,ORD_DESC,0}}; 
+	const OrderSeg sortProps[2] = {{NULL,mProp1,0,0,0},{NULL,mProp2,ORD_DESC,0,0}}; 
 #endif
 	TVERIFYRC(lQ->setOrder(sortProps,2));
 

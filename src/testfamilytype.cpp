@@ -20,7 +20,6 @@ This test explores the implications for client callers.
 using namespace std;
 
 #define TEST_TOSTRING_9082 1
-#define TEST_FORCE_TYPE_8981 1
 
 #define VERBOSE 0
 
@@ -39,8 +38,8 @@ class TestFamilyType : public ITest
 		//virtual bool includeInSmokeTest(char const *& pReason) const { pReason = "Work in progress"; return false; }
 	protected:
 		void testIndexBeforePin() ;
+		void testIndexForceInt() ;
 		void testIndexAfterPin() ;
-		void testDummyPinToSetType() ;
 		void testForceType() ;
 		void testStringIndex() ;
 
@@ -64,10 +63,7 @@ int TestFamilyType::execute()
 
 	testIndexBeforePin() ;
 	testIndexAfterPin() ;
-	testDummyPinToSetType() ;
-#if TEST_FORCE_TYPE_8981
 	testForceType() ;
-#endif
 	testStringIndex() ;
 
 	mSession->terminate() ;
@@ -84,21 +80,18 @@ void TestFamilyType::testIndexBeforePin()
 	PropertyID prop1 = MVTUtil::getPropRand( mSession, "infamfirst" ) ;
 	ClassID mFamilyFirst = createEqFamily( "FamFirst", prop1 ) ;
 	
-	// first pin will establish type of index
+	// first pin doesn't establish type of index anymore
 	int i=-1 ;
 	Value v ; v.set( i ) ; v.property = prop1 ;
 	PID pid1 ;
 	TVERIFYRC( mSession->createPIN( pid1, &v, 1 ) ) ;
 
 	// Add some doubles
-	// None of them are at exactly -1, but they are indexed
-	// by truncation of the value after decimal place
-	// (The full double is stored for retrieval, so no data is lost)
 
-	double dbls[] = { -1.02,  //Indexed as -1
-					  -1.9,	  //Indexed as -1
-					  -2.1,   //Indexed as -2
-					  -0.8 } ;//Indexed as 0
+	double dbls[] = { -1.02,
+					  -1.9,
+					  -2.1,
+					  -0.8 } ;
 	for (size_t i = 0; i < (sizeof( dbls )/sizeof(dbls[0])) ; i++)
 	{
 		v.set( dbls[i] ) ; v.property = prop1 ;
@@ -110,16 +103,65 @@ void TestFamilyType::testIndexBeforePin()
 	v.set( "-1" ) ; v.property = prop1 ;
 	TVERIFYRC( mSession->createPIN( pidConvertableStr, &v, 1 ) ) ;
 
-	// String not indexed at all.  Overall transaction of committing the pin
-	// does not fail
 	PID pidBadType ;
 	v.set( "bogus" ) ; v.property = prop1 ;
 	TVERIFYRC( mSession->createPIN( pidBadType, &v, 1 ) ) ;
 
 	// Try out the family
-	countIndexMatches(mFamilyFirst, prop1, -1 /*val to test*/, 4 /*expected matches -1, -1.02, -1.9 and "-1"*/) ; 
-	countIndexMatches(mFamilyFirst, prop1, -2, 1) ; // from -2.1
-	countIndexMatches(mFamilyFirst, prop1, 0, 1) ; // from -0.8
+	countIndexMatches(mFamilyFirst, prop1, -1 /*val to test*/, 2 /*expected matches -1 and "-1"*/) ; 
+	countIndexMatches(mFamilyFirst, prop1, -2.1, 1) ;
+	countIndexMatches(mFamilyFirst, prop1, -0.8, 1) ;
+	countIndexMatches(mFamilyFirst, prop1, "bogus", 1) ;
+
+	// removing pid shouldn't cause trouble
+	TVERIFYRC( mSession->deletePINs( &pidBadType, 1, MODE_PURGE ) ) ;
+
+	// Changing a type to an unsupported one should silently remove it from the index
+	v.set( "Not a Number Anymore" ) ; v.property = prop1 ;
+	TVERIFYRC( mSession->modifyPIN( pidConvertableStr, &v, 1 ) ) ;
+	countIndexMatches(mFamilyFirst, prop1, -1, 1) ; 
+}
+
+void TestFamilyType::testIndexForceInt()
+{
+	//
+	// Create class before first pin
+	//
+	PropertyID prop1 = MVTUtil::getPropRand( mSession, "forceint" ) ;
+	ClassID mFamilyFirst = createEqFamily( "FamFirst", prop1, VT_INT ) ;
+	
+	int i=-1 ;
+	Value v ; v.set( i ) ; v.property = prop1 ;
+	PID pid1 ;
+	TVERIFYRC( mSession->createPIN( pid1, &v, 1 ) ) ;
+
+	// Add some doubles. No truncation of decimal part (violates semantics)
+
+	double dbls[] = { -1.02,
+					  -1.9,
+					  -2.1,
+					  -0.8 } ;
+	for (size_t i = 0; i < (sizeof( dbls )/sizeof(dbls[0])) ; i++)
+	{
+		v.set( dbls[i] ) ; v.property = prop1 ;
+		TVERIFYRC( mSession->createPIN( pid1, &v, 1 ) ) ;
+	}
+
+	// String can be converted to -1
+	PID pidConvertableStr ;
+	v.set( "-1" ) ; v.property = prop1 ;
+	TVERIFYRC( mSession->createPIN( pidConvertableStr, &v, 1 ) ) ;
+
+	// String not indexed at all.  Overall transaction of committing the pin does not fail
+	PID pidBadType ;
+	v.set( "bogus" ) ; v.property = prop1 ;
+	TVERIFYRC( mSession->createPIN( pidBadType, &v, 1 ) ) ;
+
+	// Try out the family
+	countIndexMatches(mFamilyFirst, prop1, -1 /*val to test*/, 2 /*expected matches -1 and "-1"*/) ; 
+	countIndexMatches(mFamilyFirst, prop1, -2.1, 0) ;
+	countIndexMatches(mFamilyFirst, prop1, -0.8, 0) ;
+	countIndexMatches(mFamilyFirst, prop1, "bogus", 0) ;
 
 	// removing the pid that wasn't really indexed shouldn't cause trouble
 	TVERIFYRC( mSession->deletePINs( &pidBadType, 1, MODE_PURGE ) ) ;
@@ -143,8 +185,7 @@ void TestFamilyType::testIndexAfterPin()
 	PID pid1 ;
 	TVERIFYRC( mSession->createPIN( pid1, &v, 1 ) ) ;
 
-	// Create family.  pid1 should be categorized and establish the
-	// pin
+	// Create family.  pid1 should be categorized and establish the type
 	ClassID mFamily = createEqFamily( "PinFirst", prop1 ) ;
 
 	// String can be converted to a number
@@ -154,42 +195,7 @@ void TestFamilyType::testIndexAfterPin()
 	// Try out the family
 	// (If we only got one match it would suggest that the type was VT_STR,
 	// but two matches proves VT_INT)
-	countIndexMatches(mFamily, prop1, 100 /*val to test*/, 2 /*expected matches -1 and "-1"*/) ; 
-}
-
-void TestFamilyType::testDummyPinToSetType()
-{
-	//
-	// Use a dummy pin to establish the type
-	// (Workaround until index type feature implemented)
-	//
-	PropertyID prop1 = MVTUtil::getPropRand( mSession, "dummy" ) ;
-	
-	// dummy pin to establish the type for the index
-	int i=9999 ;
-	Value v ; v.set( i ) ; v.property = prop1 ;
-	PID pidDummy ;
-	TVERIFYRC( mSession->createPIN( pidDummy, &v, 1 ) ) ;
-
-	// Create family.  pidDummy should be categorized and establish the
-	// pin
-	ClassID mFamily = createEqFamily( "TypeSetByDummy", prop1 ) ;
-
-	// Delete the dummy so that it doesn't cause false query results
-	TVERIFYRC( mSession->deletePINs( &pidDummy, 1, MODE_PURGE )) ;
-
-
-	// Now simulate real data added to the store
-
-	float f = 8.88f ;
-	v.set(f); v.property=prop1;
-	PID pid ;
-	TVERIFYRC( mSession->createPIN( pid, &v, 1 ) ) ;
-
-
-	// Try out the family
-	// (Only if the index is really INT will 8.88 == 8)
-	countIndexMatches(mFamily, prop1, 8 /*val to test*/, 1 /* match with 8.88 */) ; 
+	countIndexMatches(mFamily, prop1, 100 /*val to test*/, 2 /*expected matches 100 and "100"*/) ; 
 }
 
 void TestFamilyType::testForceType()
@@ -207,14 +213,11 @@ void TestFamilyType::testForceType()
 	TVERIFYRC( mSession->createPIN( pid1, &v, 1 ) ) ;
 
 	// Add some doubles
-	// None of them are at exactly -1, but they are indexed
-	// by truncation of the value after decimal place
-	// (The full double is stored for retrieval, so no data is lost)
 
-	double dbls[] = { -1.02,  //Indexed as -1
-					  -1.9,	  //Indexed as -1
-					  -2.1,   //Indexed as -2
-					  -0.8 } ;//Indexed as 0
+	double dbls[] = { -1.02,  
+					  -1.9,	  
+					  -2.1,   
+					  -0.8 } ;
 	for (size_t i = 0 ; i < (sizeof( dbls )/sizeof(dbls[0])) ; i++)
 	{
 		v.set( dbls[i] ) ; v.property = prop1 ;
@@ -227,8 +230,8 @@ void TestFamilyType::testForceType()
 
 	// Try out the family
 	countIndexMatches(mFamilyFirst, prop1, -1 /*val to test*/, 2 /*expected matches -1 and "-1"*/) ; 
-	countIndexMatches(mFamilyFirst, prop1, -2, 0) ; // from -2.1
-	countIndexMatches(mFamilyFirst, prop1, 0, 0) ; // from -0.8
+	countIndexMatches(mFamilyFirst, prop1, -2, 0) ;
+	countIndexMatches(mFamilyFirst, prop1, 0, 0) ;
 }
 
 void TestFamilyType::testStringIndex()

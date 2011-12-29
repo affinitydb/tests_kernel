@@ -290,6 +290,7 @@ int TestTxNotify::execute()
 
 void TestTxNotify::doTest()
 {
+	mNotifImpl.setParent(this) ;
 	bool bStarted = MVTApp::startStore(NULL, &mNotifImpl ) ;
 	if ( !bStarted ) { TVERIFY2(0,"Could not start store, bailing out completely") ; return ; }
 
@@ -300,7 +301,6 @@ void TestTxNotify::doTest()
 	// set in MVTApp helper.
 	mSession->setInterfaceMode( 0 ) ;
 
-	mNotifImpl.setParent(this) ;
 	mNotifImpl.setSession(mSession) ;
 	
 	MVTApp::mapURIs( mSession, "TestTxNotify", 10, mProps );

@@ -336,7 +336,7 @@ void TestMultiVarJoin::doPerfPass(TimedEvent & te,const char * indesc, bool ft, 
 
 		if ( orderby )
 		{
-			OrderSeg ord = {NULL,mProps[0],0,0};
+			OrderSeg ord = {NULL,mProps[0],0,0,0};
 			TVERIFYRC(q->setOrder( &ord,1)); // Doing prop 0, but any should work
 		}
 
@@ -399,7 +399,7 @@ void TestMultiVarJoin::compareQueries(bool addFT, int orderByProp)
 	if ( orderByProp > -1 )
 	{
 		// When doing implicit join scenario we can efficiently orderby any of the properties
-		OrderSeg ord={NULL,mProps[orderByProp],0,0};
+		OrderSeg ord={NULL,mProps[orderByProp],0,0,0};
 		for ( i = 0 ; i < cntQueries ; i++ )
 		{
 			TVERIFYRC(q[i]->setOrder(&ord,1));		// var ???

@@ -647,7 +647,7 @@ void runQueries(ISession & pSession)
                     }
                 }
             #else
-                IStmt * lS2 = pSession.createStmt("SELECT * FROM :0.friendof.rootproject.children{*}[access=:1].children[NOT exists(children) AND exists(pname)]");
+                IStmt * lS2 = pSession.createStmt("SELECT * FROM :0.friendof.rootproject.children{*}[access=:1].children[exists(pname)]");
                 if (lS2)
                 {
                     Value params[2]; params[0].set(lPin->getPID()); params[1].set((unsigned)lPin->getValue(sPropIDs[P_ORGID])->ui);

@@ -337,7 +337,7 @@ void TestMultiColumnIndex::proposeValues(DescrFamily & pF, bool fcollection)
                     switch (type)
                     {
                         case VT_INT: SETVALUE(pF.mProposedVals.back(), mProps[(*iD).mPropIndex], lOrderedInts[RANDOM_INDEX_IN_ARRAY(lOrderedInts)], OP_SET); break;
-                        case VT_STRING: { std::string lS = MVTRand::getString2(5, -1, false); SETVALUE(pF.mProposedVals.back(), mProps[(*iD).mPropIndex], lS.c_str(), OP_SET); break; }
+                        case VT_STRING: { std::string lS = MVTRand::getString2(5, -1, false); SETVALUE(pF.mProposedVals.back(), mProps[(*iD).mPropIndex], strdup(lS.c_str()), OP_SET); break; }
                         case VT_DOUBLE: SETVALUE(pF.mProposedVals.back(), mProps[(*iD).mPropIndex], lOrderedDoubles[RANDOM_INDEX_IN_ARRAY(lOrderedDoubles)], OP_SET); break;                        
                         case VT_FLOAT: SETVALUE(pF.mProposedVals.back(), mProps[(*iD).mPropIndex], lOrderedFloats[RANDOM_INDEX_IN_ARRAY(lOrderedFloats)], OP_SET); break;   
                         default: assert(0); break;
