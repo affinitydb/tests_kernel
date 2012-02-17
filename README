@@ -1,1 +1,1 @@
-Low-level test framework written in C++ directly against the mvStore kernel.
+Low-level test framework written in C++ directly against the Affinity kernel.
