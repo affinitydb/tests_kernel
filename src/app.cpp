@@ -33,13 +33,13 @@ long gMainThreadID = 0;
 ITest::TTests * ITest::sTests = NULL;
 long MVTApp::sCommandCrashWithinMsAfterStartup = 0;
 long MVTApp::sCommandCrashWithinMsBeforeStartup = 0;
-MVStoreKernel::StoreCtx * MVTApp::sReplicaStoreCtx = NULL;
+AfyKernel::StoreCtx * MVTApp::sReplicaStoreCtx = NULL;
 //mvcore::DynamicLinkMvstore * MVTApp::sDynamicLinkMvstore = NULL;
 MVTestsPortability::Tls MVTApp::sThread2Session;
 MvStoreMessageReporter MVTApp::sReporter ;
 Tstring MVTApp::mAppName;
 int MVTApp::sNumStores = 1;
-MVStoreKernel::StoreCtx * MVTApp::mStoreCtx = NULL;
+AfyKernel::StoreCtx * MVTApp::mStoreCtx = NULL;
 StoreCreationParameters MVTApp::mSCP; 
 
 bool MVTApp::bNoUI = false;
