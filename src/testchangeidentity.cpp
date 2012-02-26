@@ -12,7 +12,7 @@ class TestChangeIdentity : public ITest
 {
 		static const int sCharSize = 64;
 		char mOldStoreIdentity[sCharSize], mNewStoreIdentity[sCharSize];
-		MVStoreKernel::StoreCtx * mStoreCtx;
+		AfyKernel::StoreCtx * mStoreCtx;
 	public:
 		TEST_DECLARE(TestChangeIdentity);
 		virtual char const * getName() const { return "testChangeIdentity"; }

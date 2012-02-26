@@ -11,7 +11,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "mvstoreapi.h"
 //#include "dlmvstore.h"
 
-using namespace MVStore;
+using namespace AfyDB;
 
 class MvStoreMessageReporter : public IReport
 {

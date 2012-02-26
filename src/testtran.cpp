@@ -7,7 +7,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "app.h"
 #include "mvauto.h"
 using namespace std;
-using namespace MVStoreKernel;
+using namespace AfyKernel;
 
 // Note: for coverage of collections with transactions check out testtrancoll.cpp
 
@@ -159,7 +159,7 @@ private:
 // Publish this test.
 class TestTransactions : public ITest
 {
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 	public:
 		TEST_DECLARE(TestTransactions);
 		virtual char const * getName() const { return "testtran"; }
@@ -1048,7 +1048,7 @@ void TestTransactions::multisessionDeadlock(ISession * session)
 // 
 struct DeadlockThreadInfo
 {
-	DeadlockThreadInfo( ITest * inCtxt, volatile long * inSyncPoint , MVStoreKernel::StoreCtx *pStoreCtx, int idx)
+	DeadlockThreadInfo( ITest * inCtxt, volatile long * inSyncPoint , AfyKernel::StoreCtx *pStoreCtx, int idx)
 	{
 		ctxt = inCtxt ;
 		syncPoint = inSyncPoint ;
@@ -1063,7 +1063,7 @@ struct DeadlockThreadInfo
 	PID pids[2] ;    // Two pids that will get the threads into deadlock trouble
 	ITest * ctxt ;  // TestTransactions object
 	volatile long * syncPoint ;
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 	int index ;  // Gives a readable name to the thread
 	bool bLoser; // Whether this thread failed
 	PID unrelatedPID; // An unrelated PIN that doesn't contribute to deadlock
@@ -1233,7 +1233,7 @@ the chance of such parallel updates is relatively small.
 struct UpdateThreadInfo
 {
 	// Data sent to each thread
-	UpdateThreadInfo( ITest * inCtxt, PID inPid, PropertyID inProp, MVStoreKernel::StoreCtx *pStoreCtx)
+	UpdateThreadInfo( ITest * inCtxt, PID inPid, PropertyID inProp, AfyKernel::StoreCtx *pStoreCtx)
 	{
 		mTest = inCtxt ;
 		mStoreCtx = pStoreCtx;
@@ -1244,7 +1244,7 @@ struct UpdateThreadInfo
 	PID mPid ;
 	PropertyID mProperty ;
 	ITest * mTest ;  
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 } ;
 
 

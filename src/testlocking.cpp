@@ -9,7 +9,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 // Publish this test.
 class TestLocking : public ITest
 {
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 	public:
 		TEST_DECLARE(TestLocking);
 		virtual char const * getName() const { return "testlocking"; }
@@ -30,9 +30,9 @@ class testLocking_s
 		RC mRC1, mRC2;
 		volatile long mStep;
 		MVTestsPortability::Event mNextStep;
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 		testLocking_s() : mRC1(RC_OK), mRC2(RC_OK), mStep(0), mStoreCtx(NULL){}
-		void setStoreCtx(MVStoreKernel::StoreCtx *pCtx) { mStoreCtx = pCtx; }
+		void setStoreCtx(AfyKernel::StoreCtx *pCtx) { mStoreCtx = pCtx; }
 		void nextStep() { INTERLOCKEDI(&mStep); mNextStep.signalAll(); }
 		void waitStep(long pStep) { MVTestsPortability::Mutex lBogus; lBogus.lock(); while (pStep != mStep) mNextStep.wait(lBogus, 100000); mNextStep.reset(); lBogus.unlock(); }
 };

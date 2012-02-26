@@ -28,8 +28,8 @@ class TestMultiColumnIndex : public ITest
         struct DescrCondition
         {
             size_t mPropIndex; // The index of the property involved in this condition (in mProps).
-            MVStore::ExprOp mCondType; // The operator that compares the property to the indexed parameter.
-            DescrCondition(size_t pPropIndex, MVStore::ExprOp pCondType) : mPropIndex(pPropIndex), mCondType(pCondType) {}
+            AfyDB::ExprOp mCondType; // The operator that compares the property to the indexed parameter.
+            DescrCondition(size_t pPropIndex, AfyDB::ExprOp pCondType) : mPropIndex(pPropIndex), mCondType(pCondType) {}
         };
         typedef std::vector<DescrCondition> DescrIndex; // Multi-column indexes are defined by multiple conditions.
         typedef std::vector<ClassID> ClassIDs;
@@ -55,7 +55,7 @@ class TestMultiColumnIndex : public ITest
             Value lV[2];
             lV[0].setVarRef(0,mProps[pDescr.mPropIndex]);
             lV[1].setParam(pCondIndex);
-            //lV[1].refPath.type=PropMapVT[pDescr.mPropIndex-10];
+            //lV[1].refV.type=PropMapVT[pDescr.mPropIndex-10];
             return mSession->expr(pDescr.mCondType, 2, lV);
         }
         IStmt * buildIndexSingle(DescrCondition const & pDescr)
@@ -282,7 +282,7 @@ void TestMultiColumnIndex::proposeValues(DescrFamily & pF, bool fcollection)
     char * lOrderedStrings[] = {"A", "AAA", "Alphabet", "Cabbage", "Gorilla", "Xylophone", "abracadabra", "polygon", "zzz"};
     double lOrderedDoubles[] = {-1000000.25, -100000.25, -1000.25, 0.0, 0.5, 1.0, 3.141592654, 1000.25, 100000.25};
     float lOrderedFloats[] = {-199.2F, -10.1F, 0.1F, 2.1F, 100.7F};
-    ValueType lProposedVT[] = {MVStore::VT_INT, VT_STRING, VT_FLOAT, VT_DOUBLE}; // TODO: more...
+    ValueType lProposedVT[] = {AfyDB::VT_INT, VT_STRING, VT_FLOAT, VT_DOUBLE}; // TODO: more...
     int i, iValI, cValue = 0;
     DescrIndex::const_iterator iD;
     // caculate the min number of values we need to create

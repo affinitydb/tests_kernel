@@ -39,7 +39,7 @@ int TestConvertValue::execute()
 
 void TestConvertValue::doTest()
 {
-	MVStore::Value v1, v2;
+	AfyDB::Value v1, v2;
 
 	v1.set(1); v2.set(VT_ERROR);
 	TVERIFYRC(mSession->convertValue(v1,v2,VT_DOUBLE));

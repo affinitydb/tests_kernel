@@ -97,28 +97,28 @@ int testjoinorderby::execute()
 		unsigned char lastvar = 0;bool bSuccess = true;
 		for(unsigned long iidx = 0 ; iidx < nClasses && bSuccess; iidx++)
 		{
-			MVStore::ClassSpec lclassSpec;
+			AfyDB::ClassSpec lclassSpec;
 			lclassSpec.nParams=0;
 			lclassSpec.params=NULL;
 			if(RC_OK == (rc = mSession->getClassID(lClassList[iidx],lclassSpec.classID)))
 			{
 				unsigned char tmpVar = lQuery->addVariable(&lclassSpec,1); 
-				lastvar = iidx==0 ? tmpVar : lQuery->setOp(lastvar,tmpVar,MVStore::QRY_UNION);
+				lastvar = iidx==0 ? tmpVar : lQuery->setOp(lastvar,tmpVar,AfyDB::QRY_UNION);
 			}
 			else 
 				bSuccess = false;
 		}
 	//intersection of fifth class
-		MVStore::Value lrange[2];MVStore::Value lparam;
+		AfyDB::Value lrange[2];AfyDB::Value lparam;
 		if(bSuccess)
 		{
-			MVStore::ClassSpec lclassSpec;
+			AfyDB::ClassSpec lclassSpec;
 			if( RC_OK == (rc =mSession->getClassID("hostingPinsPushShredder",lclassSpec.classID)))
 			{
 				lclassSpec.nParams=0;
 				lclassSpec.params=NULL;
 				unsigned char tmpVar = lQuery->addVariable(&lclassSpec,1); 
-				lastvar = lQuery->setOp(lastvar,tmpVar,MVStore::QRY_INTERSECT);
+				lastvar = lQuery->setOp(lastvar,tmpVar,AfyDB::QRY_INTERSECT);
 				if( RC_OK == (rc =mSession->getClassID("hostingPinsNotShredded1",lclassSpec.classID)))
 				{
 					TIMESTAMP lTS;getTimestamp(lTS);
@@ -129,7 +129,7 @@ int testjoinorderby::execute()
 					lclassSpec.nParams=1;
 					lclassSpec.params=&lparam;
 					tmpVar = lQuery->addVariable(&lclassSpec,1); 
-					lastvar = lQuery->setOp(lastvar,tmpVar,MVStore::QRY_UNION);
+					lastvar = lQuery->setOp(lastvar,tmpVar,AfyDB::QRY_UNION);
 				}
 				else
 					bSuccess = false;
@@ -142,9 +142,9 @@ int testjoinorderby::execute()
 		
 	//Execution
 		int ncount=9;
-		MVStore::ICursor *lResult = NULL;
+		AfyDB::ICursor *lResult = NULL;
 		TVERIFYRC(lQuery->execute(&lResult,NULL, 0,(unsigned int)ncount,0,MODE_FORCED_SSV_AS_STREAM)) ;
-		//MVStore::ICursor *lResult = lQuery->execute();
+		//AfyDB::ICursor *lResult = lQuery->execute();
 		IPIN *pin;
 		const Value * rV;
 		uint16_t tempYear=0; i=0;

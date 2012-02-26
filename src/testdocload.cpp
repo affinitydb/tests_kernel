@@ -15,7 +15,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 
 using namespace std;
 
-// Test of Mvstore performance when dealing with large doc data.
+// Test of Affinity performance when dealing with large doc data.
 //
 // Work in progress!
 //
@@ -31,7 +31,7 @@ using namespace std;
 
 //#define MYSQL_COMPARE // Enable if you have MySQL installed 
 
-// MVStore and MySQL flags
+// AfyDB and MySQL flags
 //#define NO_FTINDEX // For comparison (queries obviously won't work)
 //#define DELAYED_INDEX // Build the index after the data is added (recommended approach for MySQL)
 #define CNT_QUERY 150 // Number of querys to perform, should be a multiple of query words in g_QueryVals

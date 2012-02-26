@@ -123,7 +123,7 @@ class PhotoScenario : public ITest, public IStoreNotification
 		*/
 
 		ISession * mSession;
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 		size_t mPinCount ; // Default number of pins added to the store
 		size_t mTagCount; // Default number of tags in the app
 		size_t mFolderCount; // Default number of folders
@@ -208,7 +208,7 @@ class PhotoScenario : public ITest, public IStoreNotification
 	
 };
 
-class PhotoScenarioStream : public MVStore::IStream
+class PhotoScenarioStream : public AfyDB::IStream
 {
 	protected:
 		size_t const mLength;

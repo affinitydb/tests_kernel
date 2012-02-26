@@ -42,7 +42,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include <vector>
 #include "MVTArgs.h"
 
-using namespace MVStore;
+using namespace AfyDB;
 
 typedef std::basic_string<char> Tstring;
 typedef std::basic_string<wchar_t> Wstring;

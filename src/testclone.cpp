@@ -31,7 +31,7 @@ class TestClone : public ITest
 		void ACLPinClone(ISession *session);
 		void PiExprTreeClone(ISession *session);
 	protected:
-		void comparePIN(ISession *session,IPIN *pin,const map<MVStore::PropertyID,MVStore::Value> &pvl,unsigned nLoops);
+		void comparePIN(ISession *session,IPIN *pin,const map<AfyDB::PropertyID,AfyDB::Value> &pvl,unsigned nLoops);
 		bool comparePIN2(IPIN* pin, IPIN* pin2,ISession *session ) ;
 		void reportResult(ICursor *result,ISession *session);
 };
@@ -71,7 +71,7 @@ void TestClone::pinClone(ISession *session)
 	PID pid;
 	char *p,buff[3000];
 
-	map<MVStore::PropertyID,MVStore::Value> pvl;
+	map<AfyDB::PropertyID,AfyDB::Value> pvl;
 	strcpy(buff,"");
 	//case 1: Uncommited pin clone.
 	pin = session->createUncommittedPIN();
@@ -84,7 +84,7 @@ void TestClone::pinClone(ISession *session)
 		strcpy(bufnew,buf.c_str());
 		pv.setURL(bufnew); pv.setPropID(lPropIDs[i]);
 		//insert prop value pair into the map
-		pvl.insert(map<MVStore::PropertyID,MVStore::Value>::value_type(lPropIDs[i],pv));
+		pvl.insert(map<AfyDB::PropertyID,AfyDB::Value>::value_type(lPropIDs[i],pv));
 		TVERIFYRC(pin->modify(&pv,1));
 	}
 	TVERIFYRC(session->commitPINs(&pin,1));
@@ -169,11 +169,11 @@ void TestClone::pinClone(ISession *session)
 	pin =  session->createUncommittedPIN();
 	SETVALUE(pvs[0], lPropIDs[1], "Jaanu meri jaan", OP_SET);
 	SETVALUE(pvs[1], lPropIDs[2], "Mein tere qurbaan", OP_SET);
-	pvl.insert(map<MVStore::PropertyID,MVStore::Value>::value_type(lPropIDs[2],pvs[1]));
+	pvl.insert(map<AfyDB::PropertyID,AfyDB::Value>::value_type(lPropIDs[2],pvs[1]));
 	pin->modify(pvs,2);
 	
 	SETVALUE(pvs[0], lPropIDs[1], "jeete hain Shaan se", OP_SET);
-	pvl.insert(map<MVStore::PropertyID,MVStore::Value>::value_type(lPropIDs[1],pvs[0]));
+	pvl.insert(map<AfyDB::PropertyID,AfyDB::Value>::value_type(lPropIDs[1],pvs[0]));
 	pin1= pin->clone(pvs,1,MODE_NEW_COMMIT);
 	comparePIN(session,pin1,pvl,2);
 	// The clone is committed but the original is not
@@ -569,10 +569,10 @@ void TestClone::PiExprTreeClone(ISession *session){
 	// Add more cases here...
 }
 
-void TestClone::comparePIN(ISession *session,IPIN *pin,const map<MVStore::PropertyID,MVStore::Value> &pvl,unsigned nLoops)
+void TestClone::comparePIN(ISession *session,IPIN *pin,const map<AfyDB::PropertyID,AfyDB::Value> &pvl,unsigned nLoops)
 {
 	const Value *pv;
-	map<MVStore::PropertyID,MVStore::Value>::const_iterator iter;
+	map<AfyDB::PropertyID,AfyDB::Value>::const_iterator iter;
 	size_t size = pvl.size();
 	unsigned npins = pin->getNumberOfProperties();
 	if(size != pin->getNumberOfProperties()) {

@@ -151,7 +151,7 @@ protected:
 };
 
 
-class MyStream : public MVStore::IStream
+class MyStream : public AfyDB::IStream
 {
 	// Similar to TestStringStream (it used to be cut and paste in several tests)
 	// This stream contains a predictable content and can test Values to see if they were generated
@@ -249,7 +249,7 @@ class MyStream : public MVStore::IStream
 };
 
 class CFileStream :
-	public MVStore::IStream
+	public AfyDB::IStream
 {
 public:
 	CFileStream(const std::string &pFilePath,bool pIsBinary = false)

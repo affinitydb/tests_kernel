@@ -12,7 +12,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include <stdio.h>
 #include <string>
 #include <vector>
-using namespace MVStore;
+using namespace AfyDB;
 using namespace std;
 
 typedef std::vector<std::string> TStrings;

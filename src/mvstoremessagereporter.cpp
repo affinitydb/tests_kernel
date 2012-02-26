@@ -69,7 +69,7 @@ void MvStoreMessageReporter::report(void *ns,int level,const char *str,const cha
 		return ;
 
 	if (mIgnoreMissingStoreWarning && 
-		0 == strncasecmp("MVStore not found in directory",str,30) )
+		0 == strncasecmp("AfyDB not found in directory",str,30) )
 	{
 		// This distracting warning is logged often by tests which 
 		// delete the store file to start from scratch

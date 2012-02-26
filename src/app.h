@@ -85,7 +85,7 @@ class MVTApp
 			Tstring					mSuiteName ; // A name for the suite, e.g. "Smoke"
 
 			Tstring					mDir;		// Directory for the store file
-			Tstring					mLogDir;	// Option different directory for MVStore.log files
+			Tstring					mLogDir;	// Option different directory for AfyDB.log files
 			Tstring					mIdentity;	// Name of owner (IPC requires each store has diff id)
 			Tstring					mPwd;		// Optional password
 			Tstring					mIdentPwd;  // Password for mvstore owner
@@ -120,7 +120,7 @@ class MVTApp
 			long volatile			mStarted;		// ref count for openstore calls
 			long volatile			mTestIndex;		// executing test index
 			MVTestsPortability::Mutex	*mLock;			// Protect state during concurrent store open/closing
-			MVStoreKernel::StoreCtx *mStoreCtx;		// Store context when the store is open
+			AfyKernel::StoreCtx *mStoreCtx;		// Store context when the store is open
 			THREADID				mThreadID;		// framework thread running this suite
 
 			TTestList				mTests;			// Tests to run in this suite
@@ -183,7 +183,7 @@ class MVTApp
 	    
 		static long sCommandCrashWithinMsAfterStartup;
 		static long sCommandCrashWithinMsBeforeStartup;
-		static MVStoreKernel::StoreCtx * sReplicaStoreCtx;
+		static AfyKernel::StoreCtx * sReplicaStoreCtx;
 		//static mvcore::DynamicLinkMvstore * sDynamicLinkMvstore;
 		//static mvcore::DynamicLinkMvstore * smartPtr;
 		static MVTestsPortability::Tls sThread2Session;
@@ -195,7 +195,7 @@ class MVTApp
 		static bool bRandomTests;
 		static void printStoreCreationParam();
 		static StoreCreationParameters mSCP;
-		static MVStoreKernel::StoreCtx *mStoreCtx;
+		static AfyKernel::StoreCtx *mStoreCtx;
 		static bool startStore(
 			IStoreNet * pNetCallback = NULL, 
 			IStoreNotification * pNotifier = NULL, 
@@ -215,10 +215,10 @@ class MVTApp
 		static bool isRunningSmokeTest() { return Suite().mbSmoke; }
 		static int getNBuffers() { return Suite().mNBuffer; }
 		enum eStartSessionFlags { kSSFTrackCurrentSession = (1 << 0), kSSFNoReplication = (1 << 1), };
-		static ISession * startSession(MVStoreKernel::StoreCtx * = 0, char const * = 0, char const * = 0, long pFlags = kSSFTrackCurrentSession);
+		static ISession * startSession(AfyKernel::StoreCtx * = 0, char const * = 0, char const * = 0, long pFlags = kSSFTrackCurrentSession);
 		static ISession * getSession() { return (ISession *)sThread2Session.get(); }
-		static MVStore::IStream * wrapClientStream(ISession * pSession, MVStore::IStream * pClientStream);
-		static MVStoreKernel::StoreCtx * getStoreCtx(const char * pIdentity = NULL);
+		static AfyDB::IStream * wrapClientStream(ISession * pSession, AfyDB::IStream * pClientStream);
+		static AfyKernel::StoreCtx * getStoreCtx(const char * pIdentity = NULL);
 		static unsigned int getPageSize() { return Suite().mPageSize ; }
 
 		static bool deleteStore() ;

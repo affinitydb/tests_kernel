@@ -33,7 +33,7 @@ public:
 	bool &fStarted;
 	long &mCounter;
 	MVTestsPortability::Event *mFinish;
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 	Tstring mIdentity;
 	Tstring mPassword;
 	Tstring mDirectory;	
@@ -156,7 +156,7 @@ protected:
 		StoreCreationParameters lSCP(0, MVTApp::Suite().mPageSize, 0x200, mIdentity.c_str(), mStoreID, mPassword.c_str(), false); 
 		lSCP.fEncrypted = !mPassword.empty();
 
-		MVStoreKernel::StoreCtx *& lStoreCtx = mStoreCtx;
+		AfyKernel::StoreCtx *& lStoreCtx = mStoreCtx;
 
 		RC lRC = RC_OK;		
 		{
@@ -215,7 +215,7 @@ protected:
 		if(mState == kSClosing || mState == kSClosed) return NULL;
 		assert(mState == kSOpened || mStoreCtx != NULL);
 		//ISession *lSession = MVTApp::sDynamicLinkMvstore->startSession(mStoreCtx, mIdentity.c_str(), mPassword.c_str());
-		ISession *lSession = MVStore::ISession::startSession(mStoreCtx, mIdentity.c_str(), mPassword.c_str());
+		ISession *lSession = AfyDB::ISession::startSession(mStoreCtx, mIdentity.c_str(), mPassword.c_str());
 		TV_R(lSession != NULL, mTest);
 		INTERLOCKEDI(&mSessionCount);
 		return lSession;

@@ -5,7 +5,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 **************************************************************************************/
 
 #include "app.h"
-using namespace MVStoreKernel; // InterLock
+using namespace AfyKernel; // InterLock
 
 // Publish this test.
 class TestCustom59 : public ITest
@@ -22,7 +22,7 @@ class TestCustom59 : public ITest
 		enum eSteps { kSWaiting = 0, kSSleepAndGo, kSSleep, kSLastSynchroStep = kSSleep, kSStartTx, kSCommitTx, kSRead1, kSRead2, kSRead3, kSWrite1, kSWrite2, kSWrite3, kSQuickCheckFTIndexingIsolation };
 		typedef std::vector<eSteps> TThreadProgram;
 		typedef std::vector<TThreadProgram> TDeadlockProgram;
-		MVStoreKernel::StoreCtx * mStoreCtx;
+		AfyKernel::StoreCtx * mStoreCtx;
 		MVTestsPortability::Mutex mSteppingL, mLoggingL;
 		PID mPID1, mPID2, mPID3;
 		PropertyID mPropIds[2];
@@ -279,13 +279,13 @@ int TestCustom59::execute()
 	return lSuccess ? 0 : 1;
 }
 
-static bool containsValue(MVStore::Value const & pV, long pValue)
+static bool containsValue(AfyDB::Value const & pV, long pValue)
 {
 	switch (pV.type)
 	{
-		case MVStore::VT_INT: return (int32_t)pValue == pV.i;
-		case MVStore::VT_ARRAY: { size_t i; for (i = 0; i < pV.length; i++) if (containsValue(pV.varray[i], pValue)) return true; } return false;
-		case MVStore::VT_COLLECTION: if (pV.nav) { Value const * lNext; for (lNext = pV.nav->navigate(GO_FIRST); NULL != lNext; lNext = pV.nav->navigate(GO_NEXT)) { if (containsValue(*lNext, pValue)) return true; } } return false;
+		case AfyDB::VT_INT: return (int32_t)pValue == pV.i;
+		case AfyDB::VT_ARRAY: { size_t i; for (i = 0; i < pV.length; i++) if (containsValue(pV.varray[i], pValue)) return true; } return false;
+		case AfyDB::VT_COLLECTION: if (pV.nav) { Value const * lNext; for (lNext = pV.nav->navigate(GO_FIRST); NULL != lNext; lNext = pV.nav->navigate(GO_NEXT)) { if (containsValue(*lNext, pValue)) return true; } } return false;
 		default: return false;
 	}
 }

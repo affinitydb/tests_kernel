@@ -32,7 +32,7 @@ class TestPurgeMode : public ITest
         ClassID classID;
         std::vector<PID> purged_PIDs;
         void doTest();
-        void testPurgeMode(unsigned int flag);
+        void testPurgeMode(bool fTmp);
 
     private:
         ISession * mSession;
@@ -59,7 +59,7 @@ void TestPurgeMode::doTest()
     for (int i = 0; i < 10; i++)
         ids[i] = pmaps[i].uid;
 
-    /* create a class as select * where exists $0 and exists $0 */
+    /* create a class as select * where exists $0 and exists $1 */
     IStmt * const iStmt = mSession->createStmt();
     TVERIFY(iStmt != NULL);
     QVarID var = iStmt->addVariable();
@@ -94,10 +94,10 @@ void TestPurgeMode::doTest()
         TVERIFYRC(qry_stmt->count(count));
         TVERIFY(count == 0);
         start = getTimeInMs();
-        testPurgeMode(MODE_PURGE_IDS);
+        testPurgeMode(true);
         end = getTimeInMs(); 
         purged_PIDs.clear();
-        cout << "testPurgeMode(MODE_PURGE_IDS) costs : " << (end - start) << " ms" << endl;
+        cout << "testPurgeMode(true) costs : " << (end - start) << " ms" << endl;
 
         TVERIFYRC(qry_stmt->count(count));
         TVERIFY(count == (NUMBER_PINS/2));    
@@ -106,9 +106,9 @@ void TestPurgeMode::doTest()
         TVERIFYRC(qry_stmt->count(count));
         TVERIFY(count == 0);
         start = getTimeInMs();
-        testPurgeMode(MODE_PURGE);
+        testPurgeMode(false);
         end = getTimeInMs();
-        cout << "testPurgeMode(MODE_PURGE) costs : " << (end - start) << " ms" << endl;
+        cout << "testPurgeMode(false) costs : " << (end - start) << " ms" << endl;
         end = getTimeInMs();
         purged_PIDs.clear();
         TVERIFYRC(qry_stmt->count(count));
@@ -127,21 +127,21 @@ void TestPurgeMode::doTest()
  *  while create PINs, half of them will be purged 
  *  the purge flag is either MODE_PURGE_IDS or MODE_PURGE
  */
-void TestPurgeMode::testPurgeMode(unsigned int flag) 
+void TestPurgeMode::testPurgeMode(bool fTmp) 
 {
     PID pid;
     int reused = 0, purged = 0;
     
     for (int i = 0; i < NUMBER_PINS; i++)  {  
         Value value[2];
-        Tstring str;
-        MVTApp::randomString(str, 1, MAX_STR_LEN);
-        value[0].set(str.c_str());
+        Tstring str1,str2;
+        MVTApp::randomString(str1, 1, MAX_STR_LEN);
+        value[0].set(str1.c_str());
         value[0].property = ids[0];
-        MVTApp::randomString(str, 1, MAX_STR_LEN);
-        value[1].set(str.c_str());
+        MVTApp::randomString(str2, 1, MAX_STR_LEN);
+        value[1].set(str2.c_str());
         value[1].property = ids[1];
-        TVERIFYRC(mSession->createPIN(pid,value,2));
+        TVERIFYRC(mSession->createPIN(pid,value,2,fTmp?MODE_TEMP_ID:0));
         vector<PID>::iterator it;
         for (it=purged_PIDs.begin();purged_PIDs.end() != it; it++) {
             /* if this PID is reused */
@@ -149,17 +149,17 @@ void TestPurgeMode::testPurgeMode(unsigned int flag)
                 reused++;
         }
         if (i % 2 == 1) {
-            TVERIFYRC(mSession->deletePINs(&pid, 1, flag));
+            TVERIFYRC(mSession->deletePINs(&pid, 1, MODE_PURGE));
             /* keep the purged PID into a vector */
             purged_PIDs.push_back(pid);
             purged++;
         }
     }
     
-    cout << "Purge mode : " << ((flag == MODE_PURGE_IDS)? "MODE_PURGE_IDS":"MODE_PURGE") << endl;
+    cout << "Purge mode : " << (fTmp? "MODE_TEMP_ID":"MODE_PURGE") << endl;
     cout << "Purged PID counts : " << purged << endl;
     cout << "Reused PID counts : " << reused << endl;
 
     /* If mode is MODE_PURGE_IDS, number of reused PID should be larger than zero */
-    (flag == MODE_PURGE_IDS)?(assert(reused > 0)):(assert(reused == 0));
+    fTmp?(assert(reused > 0)):(assert(reused == 0));
 }

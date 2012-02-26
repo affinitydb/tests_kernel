@@ -48,8 +48,8 @@ class TestMultiDimensionQuery : public ITest
         struct DescrCondition
         {
             size_t mPropIndex; // The index of the property involved in this condition (in mProps).
-            MVStore::ExprOp mCondType; // The operator that compares the property to the indexed parameter.
-            DescrCondition(size_t pPropIndex, MVStore::ExprOp pCondType) : mPropIndex(pPropIndex), mCondType(pCondType) {}
+            AfyDB::ExprOp mCondType; // The operator that compares the property to the indexed parameter.
+            DescrCondition(size_t pPropIndex, AfyDB::ExprOp pCondType) : mPropIndex(pPropIndex), mCondType(pCondType) {}
         };
         typedef std::vector<DescrCondition> DescrIndex; // Multi-column indexes are defined by multiple conditions.
         typedef std::vector<ClassID> ClassIDs;

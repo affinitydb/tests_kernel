@@ -30,7 +30,7 @@ public:
 		// For use by tests and other utilities that use the dynamic link mechanism
 		typedef IStoreIO* (*TgetMvStoreIO)();
 		#ifdef WIN32
-			HMODULE lMvstore = ::LoadLibrary("mvstore.dll");
+			HMODULE lMvstore = ::LoadLibrary("affinity.dll");
 			if (!lMvstore)
 				return NULL;
 			TgetMvStoreIO lGetIO = (TgetMvStoreIO)::GetProcAddress(lMvstore, "getStoreIO");
@@ -38,7 +38,7 @@ public:
 			::FreeLibrary(lMvstore);
 			return lResult;
 		#else
-			void * lMvstore = dlopen("libmvstore.so", RTLD_LAZY);
+			void * lMvstore = dlopen("libaffinity.so", RTLD_LAZY);
 			if (!lMvstore)
 				return NULL;
 			TgetMvStoreIO lGetIO = (TgetMvStoreIO)dlsym(lMvstore, "getStoreIO");

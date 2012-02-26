@@ -12,7 +12,7 @@ typedef std::bitset<MAX_PROPERTIES> Tbitset;
 // Publish this test.
 class TestIsolation : public ITest
 {
-        MVStoreKernel::StoreCtx *mStoreCtx;
+        AfyKernel::StoreCtx *mStoreCtx;
     public:
         TEST_DECLARE(TestIsolation);
         virtual char const * getName() const { return "testisolation"; }
@@ -36,12 +36,12 @@ class PITTestIsolation
         Tofstream mLog;
         MVTestsPortability::Mutex mLogLock;
         MVTestsPortability::Event mSynchro;
-        MVStoreKernel::StoreCtx *mStoreCtx;
+        AfyKernel::StoreCtx *mStoreCtx;
         volatile long mSynchroVal, mSynchroTarget, mFailure;
         volatile long mClock;
     public:
         PITTestIsolation() : mLog("testisolationlog.txt", std::ios::ate), mStoreCtx(NULL), mSynchroVal(0), mSynchroTarget(0), mFailure(0), mClock(0) {}
-        void setStoreCtx(MVStoreKernel::StoreCtx *pCtx) { mStoreCtx = pCtx; }
+        void setStoreCtx(AfyKernel::StoreCtx *pCtx) { mStoreCtx = pCtx; }
         long nextClock() { return INTERLOCKEDI(&mClock); }
         bool beginLog() { mLogLock.lock(); return true; }
         Tofstream & log() { return mLog; }

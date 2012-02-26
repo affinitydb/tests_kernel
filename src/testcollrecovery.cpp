@@ -10,7 +10,7 @@ class TestCollRecovery:  public ITest
 {
 		static const int sNumProps = 10;
 		PropertyID mPropIds[sNumProps];
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 	public:
 		TEST_DECLARE(TestCollRecovery);
 		virtual char const * getName() const { return "testcollrecovery"; }

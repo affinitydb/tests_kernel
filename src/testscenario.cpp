@@ -212,7 +212,7 @@ class TestScenarioBase : public ITest
 {		
 	public:
 		virtual void destroy() { delete this; }
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 	protected:
 		typedef std::vector<PITScenario *> TScenarii;
 		void cleanup(TScenarii & pScenarii);
@@ -379,7 +379,7 @@ class PITScenario
 	protected:
 		TestLogger & mLogger; // Log output.
 		long const mThreadAbstrID; // The "thread" id abstraction that identifies this scenario.
-		MVStoreKernel::StoreCtx *mStoreCtx; // The store ctx.
+		AfyKernel::StoreCtx *mStoreCtx; // The store ctx.
 		ISession * mSession; // The session through which this scenario is run.
 		TOperations mOperations; // The operations to run in this scenario.
 		TPIDs mPIDs; // The PINs resulting from those operations.
@@ -394,7 +394,7 @@ class PITScenario
 		long getThreadAbstrID() const { return mThreadAbstrID; }
 		void addOperation(PITOperation * pOp) { assert(!mThread); mOperations.push_back(pOp); }
 		size_t getNumOperations() { return mOperations.size(); }
-		void setStoreCtx(MVStoreKernel::StoreCtx *pStoreCtx){ mStoreCtx = pStoreCtx; }
+		void setStoreCtx(AfyKernel::StoreCtx *pStoreCtx){ mStoreCtx = pStoreCtx; }
 	public:
 		void run();
 		bool test();
@@ -764,7 +764,6 @@ void PITOperation::run(PITScenario & pContext)
 					}
 				delete[] lVal;
 			}
-			lPIN->destroy();
 			lElements.clear();
 			break;
 		}
@@ -1014,27 +1013,27 @@ PITOperation::eType PITOperation::TypeFromName(char const * pTypeName)
 }
 #if 0 // Review (XXX): This type of approach would give more control over failure, but does not work this way (thunks).  Could be done with generic macro at beginning of some mvstore functions...
 #define FAILURES_TXMGR \
-	&MVStoreKernel::TxMgr::startAction, &MVStoreKernel::TxMgr::update, &MVStoreKernel::TxMgr::endAction
+	&AfyKernel::TxMgr::startAction, &AfyKernel::TxMgr::update, &AfyKernel::TxMgr::endAction
 void * PITOperation::getFailure(eType pOp, int pIndex)
 {
 	void * lAddress = NULL;
-	static HMODULE const lMvstore = (HMODULE)GetModuleHandle("mvstore.dll");
-	static void * const lLogMgr_insert = ::GetProcAddress(lMvstore, "?insert@LogMgr@MVStoreKernel@@QAA?AVLSN@2@W4LRType@2@KKZZ");
+	static HMODULE const lMvstore = (HMODULE)GetModuleHandle("affinity.dll");
+	static void * const lLogMgr_insert = ::GetProcAddress(lMvstore, "?insert@LogMgr@AfyKernel@@QAA?AVLSN@2@W4LRType@2@KKZZ");
 	switch (pOp)
 	{
 		case kTBeginTransaction:
 		{
-			static void * sOps[] = {&MVStoreKernel::TxMgr::startTx, lLogMgr_insert, FAILURES_TXMGR};
+			static void * sOps[] = {&AfyKernel::TxMgr::startTx, lLogMgr_insert, FAILURES_TXMGR};
 			return sOps[pIndex < (sizeof(sOps) / sizeof(sOps[0])) ? pIndex : 0];
 		}
 		case kTCommit:
 		{
-			static void * sOps[] = {&MVStoreKernel::TxMgr::commitTx, lLogMgr_insert, FAILURES_TXMGR};
+			static void * sOps[] = {&AfyKernel::TxMgr::commitTx, lLogMgr_insert, FAILURES_TXMGR};
 			return sOps[pIndex < (sizeof(sOps) / sizeof(sOps[0])) ? pIndex : 0];
 		}
 		case kTRollback:
 		{
-			static void * sOps[] = {&MVStoreKernel::TxMgr::abortTx, lLogMgr_insert, FAILURES_TXMGR};
+			static void * sOps[] = {&AfyKernel::TxMgr::abortTx, lLogMgr_insert, FAILURES_TXMGR};
 			return sOps[pIndex < (sizeof(sOps) / sizeof(sOps[0])) ? pIndex : 0];
 		}
 		case kTCreatePIN:

@@ -363,7 +363,7 @@ protected:
 	{
 		switch( inType )
 		{
-		case(VT_ENUM ):
+		case(VT_RESERVED1):
 		case(VT_INT):
 		case(VT_UINT):
 		case(VT_INT64):

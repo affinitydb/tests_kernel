@@ -19,7 +19,7 @@ class TestCopyValue : public ITest
 		virtual void destroy() { delete this; }
 	protected:
 		void doTest() ;
-		void compareStrVals( const MVStore::Value & val, const MVStore::Value & expected );
+		void compareStrVals( const AfyDB::Value & val, const AfyDB::Value & expected );
 	private:	
 		ISession * mSession ;
 };
@@ -37,7 +37,7 @@ int TestCopyValue::execute()
 	return RC_OK ;
 }
 
-void TestCopyValue::compareStrVals( const MVStore::Value & val, const MVStore::Value & expected )
+void TestCopyValue::compareStrVals( const AfyDB::Value & val, const AfyDB::Value & expected )
 {
 	// Confirm they are different values but with same string content
 	TVERIFY(val.type==VT_STRING);
@@ -47,17 +47,17 @@ void TestCopyValue::compareStrVals( const MVStore::Value & val, const MVStore::V
 
 void TestCopyValue::doTest()
 {
-	MVStore::PropertyID id = MVTUtil::getProp(mSession,"TestCopyValue"); 
+	AfyDB::PropertyID id = MVTUtil::getProp(mSession,"TestCopyValue"); 
 
 	//
 	// Scenario 1
 	// 
 
-	MVStore::Value regularMemory;
+	AfyDB::Value regularMemory;
 	regularMemory.set("Orange"); 
 	regularMemory.property=id;
 
-	MVStore::Value copy1;
+	AfyDB::Value copy1;
 	TVERIFYRC(mSession->copyValue(regularMemory,copy1));
 	compareStrVals(copy1,regularMemory);
 	mSession->freeValue(copy1);
@@ -67,11 +67,11 @@ void TestCopyValue::doTest()
 	//
 	char * orange = (char *) mSession->alloc(strlen("Orange")+1);
 	strcpy(orange,"Orange");
-	MVStore::Value sessionVal;
+	AfyDB::Value sessionVal;
 	sessionVal.set(orange); 
 	sessionVal.property=id;
 
-	MVStore::Value copy2;
+	AfyDB::Value copy2;
 	TVERIFYRC(mSession->copyValue(sessionVal,copy2));
 	compareStrVals(copy2,sessionVal);
 	mSession->freeValue(copy2);
@@ -82,11 +82,11 @@ void TestCopyValue::doTest()
 	//
 	char * orange2 = (char *) mSession->alloc(strlen("Orange")+1);
 	strcpy(orange2,"Orange");
-	MVStore::Value * sessionVal2 = (MVStore::Value *)mSession->alloc(sizeof(Value));
+	AfyDB::Value * sessionVal2 = (AfyDB::Value *)mSession->alloc(sizeof(Value));
 	sessionVal2->set(orange); 
 	sessionVal2->property=id;
 
-	MVStore::Value copy3;
+	AfyDB::Value copy3;
 	TVERIFYRC(mSession->copyValue(*sessionVal2,copy3));
 	compareStrVals(copy3,*sessionVal2);
 	mSession->freeValue(copy3);

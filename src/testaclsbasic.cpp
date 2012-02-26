@@ -19,7 +19,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 class TestAclsBasic : public ITest
 {
 	public:
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 		TEST_DECLARE(TestAclsBasic);
 		virtual char const * getName() const { return "testaclsbasic"; }
 		virtual char const * getHelp() const { return ""; }

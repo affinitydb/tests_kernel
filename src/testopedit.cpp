@@ -37,14 +37,14 @@ class TestOpEdit : public ITest
 		void teststring(ISession *session,URIMap *pm,int npm, PID *pid);
 		void testbstr(ISession *session,URIMap *pm,int npm, PID *pid);
 		void teststream(ISession *session);
-		RC testCheckEdit(MVStore::Value const & val,string str, int startpos,ISession *session);
+		RC testCheckEdit(AfyDB::Value const & val,string str, int startpos,ISession *session);
 		void testExpectedString( const char * inExpected, IPIN* pin, PID & pid, PropertyID & inID ) ;
 		void compareStr( const char * inExpected, const char * inGot, const char * inDesc ) ;
 	protected:
 		ISession * mSession ;
 		string mCase ; 
 };
-class testOpEditStr : public MVStore::IStream
+class testOpEditStr : public AfyDB::IStream
 {
 	protected:
 		string & stream;
@@ -815,7 +815,7 @@ void TestOpEdit::teststream(ISession *session)
 return;
 }
 
-RC TestOpEdit::testCheckEdit(MVStore::Value const & val, string str,int startpos,ISession *session)
+RC TestOpEdit::testCheckEdit(AfyDB::Value const & val, string str,int startpos,ISession *session)
 {
 	char ch;
 	if(startpos !=0 || str != "")

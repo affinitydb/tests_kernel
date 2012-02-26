@@ -86,7 +86,7 @@ void TestLeftJoin::testLeftJoinEQ()
 	lV[0].setVarRef(lVar2,mPINPropID);
 	CmvautoPtr<IExprTree> lJoinET(mSession->expr(OP_EQ,2,lV));
 
-	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFTJOIN);
+	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFT_OUTER_JOIN);
 	uint64_t lCount = 0;
 	TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
 	TVERIFY(lCount == (uint64_t)mLHSPINs.size());
@@ -118,7 +118,7 @@ void TestLeftJoin::testLeftJoinIN()
 	lV[1].setVarRef(lVar1,mRefPropID);
 	lV[0].setVarRef(lVar2,mPINPropID);
 	CmvautoPtr<IExprTree> lJoinET(mSession->expr(OP_EQ,2,lV));
-	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFTJOIN);
+	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFT_OUTER_JOIN);
 	uint64_t lCount = 0;
 	TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
 	TVERIFY((int)lCount == mNumRHSPINs);
@@ -401,14 +401,14 @@ void TestLeftJoin::executeQuery(ClassSpec *pLHSCS, ClassSpec *pRHSCS, IExprTree 
 	lV[0].setVarRef(lVar2,mPINPropID);
 	CmvautoPtr<IExprTree> lJoinET(mSession->expr(OP_EQ,2,lV));
 
-	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFTJOIN);
+	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFT_OUTER_JOIN);
 	uint64_t lCount = 0;
 	TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
 	TVERIFY(lCount == (uint64_t)mLHSPINs.size());
 
 	OrderSeg lOrder = {NULL,mRHSPropID,ORD_DESC,0,0};
 	lQ->setOrder(&lOrder, 1); 
-	MVStore::ICursor *lR = NULL;
+	AfyDB::ICursor *lR = NULL;
 	lQ->execute(&lR, NULL, 0, ~0, 0, pMode|MODE_VERBOSE);
 	int lResultCount = 0;
 	if(lR)

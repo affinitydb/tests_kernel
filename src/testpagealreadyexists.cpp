@@ -13,7 +13,7 @@ class TestPageAlreadyExists : public ITest
 	static const int sNumProps = 20;
 	PropertyID lPropIDs[sNumProps];
 	std::vector<PID> pids;
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 	public:
 		TEST_DECLARE(TestPageAlreadyExists);
 		virtual char const * getName() const { return "testpagealreadyexists"; }

@@ -30,7 +30,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include <stdlib.h>
 #include <search.h>
 #include <assert.h>
-using namespace MVStore;
+using namespace AfyDB;
 
 #ifdef PSSER_NAMESPACE
 	#undef PSSER_NAMESPACE
@@ -66,7 +66,7 @@ using namespace MVStore;
  * This is our own internal protobuf ancestor.  Was used
  * for replication, remoting, dump&load, logging, pin comparisons,
  * serialization of parameters for async notifications,
- * and MVStore::Value-parameter passing in IPC (to support
+ * and AfyDB::Value-parameter passing in IPC (to support
  * values coming from the stack).  Still used by the tests,
  * and contains useful primitives (e.g. abstraction of
  * collection navigation etc.).
@@ -224,10 +224,10 @@ namespace PSSER_NAMESPACE
 		public:
 			inline static bool testType(Value const & pValue, ValueType pVT) { return pValue.type == pVT; }
 			inline static bool testProperty(Value const & pValue, PropertyID pPropID) { return pValue.property == pPropID; }
-			inline static bool isPointerType(Value const & pValue) { return (MVStore::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type) || (VT_RANGE == pValue.type) || (MVStore::VT_STREAM == pValue.type) || (VT_STRING == pValue.type) || (VT_URL == pValue.type) || (MVStore::VT_BSTR == pValue.type) || (VT_VARREF == pValue.type && pValue.length > 1) || (VT_STMT == pValue.type) || (VT_EXPR == pValue.type) || (VT_EXPRTREE == pValue.type); }
+			inline static bool isPointerType(Value const & pValue) { return (AfyDB::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type) || (VT_RANGE == pValue.type) || (AfyDB::VT_STREAM == pValue.type) || (VT_STRING == pValue.type) || (VT_URL == pValue.type) || (AfyDB::VT_BSTR == pValue.type) || (VT_VARREF == pValue.type && pValue.length > 1) || (VT_STMT == pValue.type) || (VT_EXPR == pValue.type) || (VT_EXPRTREE == pValue.type); }
 			inline static bool isRefType(Value const & pValue) { return (VT_REF == pValue.type || VT_REFID == pValue.type || VT_REFPROP == pValue.type || VT_REFIDPROP == pValue.type || VT_REFELT == pValue.type || VT_REFIDELT == pValue.type); }
 			inline static bool isRefPtrType(Value const & pValue) { return (VT_REF == pValue.type || VT_REFPROP == pValue.type || VT_REFELT == pValue.type); }
-			inline static bool isCollectionType(Value const & pValue) { return (MVStore::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type); }
+			inline static bool isCollectionType(Value const & pValue) { return (AfyDB::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type); }
 			inline static bool isAddOp(ExprOp pOp) { return (OP_ADD == pOp || OP_ADD_BEFORE == pOp); }
 			inline static bool isMoveOp(ExprOp pOp) { return (OP_MOVE == pOp || OP_MOVE_BEFORE == pOp); }
 			template <class TTest, class TContent> inline static bool contains(Value const & pValue, TTest const & pTest, TContent const & pContent);
@@ -247,17 +247,17 @@ namespace PSSER_NAMESPACE
 	class CollectionIterator
 	{
 		protected:
-			MVStore::Value const & mCollection;
+			AfyDB::Value const & mCollection;
 			unsigned long mI; // Note: May not be defined.
-			MVStore::ElementID mCurr;
+			AfyDB::ElementID mCurr;
 		public:
-			CollectionIterator(MVStore::Value const & pCollection) : mCollection(pCollection), mI((unsigned long)-1), mCurr(0) {}
+			CollectionIterator(AfyDB::Value const & pCollection) : mCollection(pCollection), mI((unsigned long)-1), mCurr(0) {}
 			inline Value const * beginAtIndex(unsigned long pIndex);
-			inline Value const * beginAtEid(MVStore::ElementID pEid);
+			inline Value const * beginAtEid(AfyDB::ElementID pEid);
 			inline Value const * next();
 			inline Value const * previous();
 			inline void reset();
-			inline static MVStore::Value const * findValue(MVStore::Value const & pCollection, MVStore::ElementID pEid, unsigned long * pIt = NULL);
+			inline static AfyDB::Value const * findValue(AfyDB::Value const & pCollection, AfyDB::ElementID pEid, unsigned long * pIt = NULL);
 		private:
 			CollectionIterator(CollectionIterator const &);
 			CollectionIterator & operator =(CollectionIterator const &);
@@ -355,7 +355,7 @@ namespace PSSER_NAMESPACE
 			inline static void outCvtString(ContextOut & pCtx, wchar_t const * pString, uint32_t pLenInB);
 			template <class T> inline static void outCvtString(ContextOut & pCtx, T const * pString, uint32_t pLenInB);
 			template <class T> inline static void outString(ContextOut & pCtx, T const * pString, uint32_t pLenInB);
-			template <class T> inline static void outStream(ContextOut & pCtx, MVStore::IStream & pStream, T *, uint64_t pLenInB = uint64_t(~0));
+			template <class T> inline static void outStream(ContextOut & pCtx, AfyDB::IStream & pStream, T *, uint64_t pLenInB = uint64_t(~0));
 			inline static void outQuery(ContextOut & pCtx, Value const & pValue);
 			inline static void outExpr(ContextOut & pCtx, Value const & pValue);
 			inline static void outIID(ContextOut & pCtx, IdentityID const & pIID);
@@ -422,7 +422,7 @@ namespace PSSER_NAMESPACE
 		switch (pValue.type)
 		{
 			// Collections.
-			case MVStore::VT_ARRAY:
+			case AfyDB::VT_ARRAY:
 			{
 				unsigned long i;
 				for (i = 0; i < pValue.length; i++)
@@ -454,15 +454,15 @@ namespace PSSER_NAMESPACE
 
 			// Streams.
 			// Note: For replication, a different strategy may be adopted depending on pinet...
-			case MVStore::VT_STREAM:
+			case AfyDB::VT_STREAM:
 			{
-				MVStore::IStream * lStream = pValue.stream.is;
+				AfyDB::IStream * lStream = pValue.stream.is;
 				bool lCloned = false;
 				if (RC_OK != lStream->reset())
 					{ lStream = pValue.stream.is->clone(); lCloned = true; }
 				switch (lStream->dataType())
 				{
-					case VT_STRING: case MVStore::VT_BSTR: TContextOut::TPrimitives::outStream(pCtx, *pValue.stream.is, (char *)0, pPersistedLen); break;
+					case VT_STRING: case AfyDB::VT_BSTR: TContextOut::TPrimitives::outStream(pCtx, *pValue.stream.is, (char *)0, pPersistedLen); break;
 					default: assert(false && "Unexisting stream format!"); break;
 				}
 				lCloned ? lStream->destroy() : (void)lStream->reset();
@@ -471,7 +471,7 @@ namespace PSSER_NAMESPACE
 
 			// Variable-length.
 			case VT_STRING: case VT_URL: TContextOut::TPrimitives::outString(pCtx, pValue.str, pValue.length); break;
-			case MVStore::VT_BSTR: TContextOut::TPrimitives::outString(pCtx, pValue.bstr, pValue.length); break;
+			case AfyDB::VT_BSTR: TContextOut::TPrimitives::outString(pCtx, pValue.bstr, pValue.length); break;
 			case VT_VARREF:
 			{
 				pCtx.os() << (int)pValue.refV.refN << " ";
@@ -488,9 +488,9 @@ namespace PSSER_NAMESPACE
 			//         instead of all usages, e.g. to limit the size of these values in a dump that would
 			//         contain lots of them; for the moment it doesn't sound dramatic though, and
 			//         backward compatibility should be trivial if we decide to change this later.
-			case VT_ENUM: pCtx.os() << pValue.i << " "; break;
-			case MVStore::VT_INT: pCtx.os() << pValue.i << " "; break;
-			case MVStore::VT_UINT: pCtx.os() << pValue.ui << " "; break;
+			case VT_RESERVED1: pCtx.os() << pValue.i << " "; break;
+			case AfyDB::VT_INT: pCtx.os() << pValue.i << " "; break;
+			case AfyDB::VT_UINT: pCtx.os() << pValue.ui << " "; break;
 			case VT_INT64: pCtx.os() << pValue.i64 << " "; break;
 			case VT_UINT64: pCtx.os() << pValue.ui64 << " "; break;
 			#ifdef SERIALIZATION_FOR_IPC
@@ -500,7 +500,7 @@ namespace PSSER_NAMESPACE
 				case VT_FLOAT: pCtx.os() << std::fixed << std::setprecision(pCtx.mFloatPrecision) << pValue.f << " "; break;
 				case VT_DOUBLE: pCtx.os() << std::fixed << std::setprecision(pCtx.mDoublePrecision) << pValue.d << " "; break;
 			#endif
-			case MVStore::VT_BOOL: pCtx.os() << pValue.b << " "; break;
+			case AfyDB::VT_BOOL: pCtx.os() << pValue.b << " "; break;
 			case VT_DATETIME: pCtx.os() << pValue.ui64 << " "; break;
 			case VT_INTERVAL: pCtx.os() << pValue.i64 << " "; break;
 			case VT_CURRENT: break;
@@ -517,10 +517,10 @@ namespace PSSER_NAMESPACE
 			case VT_URIID: TContextOut::TPrimitives::outPropertyID(pCtx, pValue.uid); break;
 
 			// Delete.
-			case MVStore::VT_ERROR: break;
+			case AfyDB::VT_ERROR: break;
 
 			// TODO
-			case VT_DECIMAL:
+			case VT_RESERVED2:
 			case VT_EXPRTREE:
 			default:
 				assert(!pCtx.mStrict && "Not yet implemented persistence required in real life!");
@@ -658,7 +658,7 @@ namespace PSSER_NAMESPACE
 		{
 			// Collections (both types are stored as VT_ARRAY, hence the pValue.length-independent mechanics for reload).
 			case VT_COLLECTION: assert(false);
-			case MVStore::VT_ARRAY:
+			case AfyDB::VT_ARRAY:
 			{
 				if(pValue.length == 0)
 					pValue.varray = NULL;
@@ -671,7 +671,7 @@ namespace PSSER_NAMESPACE
 				for (i = 0; i < pValue.length; i++)
 				{
 					value(pCtx, const_cast<Value&>(pValue.varray[i]));
-					if (MVStore::VT_ERROR == pValue.varray[i].type && lRealLength > i) // Note: Robustness for #5599 and potential similar issues (e.g. tx isolation issues).
+					if (AfyDB::VT_ERROR == pValue.varray[i].type && lRealLength > i) // Note: Robustness for #5599 and potential similar issues (e.g. tx isolation issues).
 						lRealLength = i;
 				}
 				if (lRealLength < pValue.length)
@@ -697,9 +697,9 @@ namespace PSSER_NAMESPACE
 			}
 
 			// Variable-length.
-			case MVStore::VT_STREAM: assert(false);
+			case AfyDB::VT_STREAM: assert(false);
 			case VT_STRING: TContextIn::TPrimitives::inString(pCtx, pValue, (char *)0); break;
-			case MVStore::VT_BSTR: TContextIn::TPrimitives::inString(pCtx, pValue, (unsigned char *)0); break;
+			case AfyDB::VT_BSTR: TContextIn::TPrimitives::inString(pCtx, pValue, (unsigned char *)0); break;
 			case VT_URL: TContextIn::TPrimitives::inURL(pCtx, pValue, (char *)0); break;
 			case VT_VARREF:
 			{
@@ -735,14 +735,14 @@ namespace PSSER_NAMESPACE
 			case VT_EXPR: TContextIn::TPrimitives::inExpr(pCtx, pValue); break;
 
 			// Fixed-length.
-			case VT_ENUM: pCtx.is() >> pValue.i; break;
-			case MVStore::VT_INT: pCtx.is() >> pValue.i; break;
-			case MVStore::VT_UINT: pCtx.is() >> pValue.ui; break;
+			case VT_RESERVED1: pCtx.is() >> pValue.i; break;
+			case AfyDB::VT_INT: pCtx.is() >> pValue.i; break;
+			case AfyDB::VT_UINT: pCtx.is() >> pValue.ui; break;
 			case VT_INT64: pCtx.is() >> pValue.i64; break;
 			case VT_UINT64: pCtx.is() >> pValue.ui64; break;
 			case VT_FLOAT: pCtx.is() >> pValue.f; break;
 			case VT_DOUBLE: pCtx.is() >> pValue.d; break;
-			case MVStore::VT_BOOL: pCtx.is() >> pValue.b; break;
+			case AfyDB::VT_BOOL: pCtx.is() >> pValue.b; break;
 			case VT_DATETIME: pCtx.is() >> pValue.ui64; break;
 			case VT_INTERVAL: pCtx.is() >> pValue.i64; break;
 			case VT_CURRENT: break;
@@ -758,10 +758,10 @@ namespace PSSER_NAMESPACE
 			case VT_URIID: TContextIn::TPrimitives::inPropertyID(pCtx, pValue.uid); break;
 
 			// Delete.
-			case MVStore::VT_ERROR: break;
+			case AfyDB::VT_ERROR: break;
 
 			// TODO
-			case VT_DECIMAL:
+			case VT_RESERVED2:
 			case VT_EXPRTREE:
 			default:
 				assert(false);
@@ -820,7 +820,7 @@ namespace PSSER_NAMESPACE
 				;
 			else if (pOverwrite && PROP_SPEC_UPDATED == lV.property && pPIN.getValue(lV.property))
 				;
-			else if (MVStore::VT_ARRAY == lV.type)
+			else if (AfyDB::VT_ARRAY == lV.type)
 			{
 				// Review with Mark: Should I need to do this?
 				size_t i;
@@ -890,7 +890,7 @@ namespace PSSER_NAMESPACE
 					{ assert(0 == pValue.nav->count() && "Unhealthy collection [bug #5599]"); return 0; }
 				return pValue.nav->count();
 			}
-			case MVStore::VT_STREAM:
+			case AfyDB::VT_STREAM:
 			{
 				if (!pValue.stream.is)
 					return 0;
@@ -907,8 +907,8 @@ namespace PSSER_NAMESPACE
 			return true;
 		switch (pValue.type)
 		{
-			case MVStore::VT_ARRAY: { size_t i; for (i = 0; i < pValue.length; i++) if (contains(pValue.varray[i], pTest, pContent)) return true; } return false;
-			case MVStore::VT_COLLECTION: if (pValue.nav) { Value const * lNext; for (lNext = pValue.nav->navigate(GO_FIRST); NULL != lNext; lNext = pValue.nav->navigate(GO_NEXT)) { if (contains(*lNext, pTest, pContent)) return true; } } return false;
+			case AfyDB::VT_ARRAY: { size_t i; for (i = 0; i < pValue.length; i++) if (contains(pValue.varray[i], pTest, pContent)) return true; } return false;
+			case AfyDB::VT_COLLECTION: if (pValue.nav) { Value const * lNext; for (lNext = pValue.nav->navigate(GO_FIRST); NULL != lNext; lNext = pValue.nav->navigate(GO_NEXT)) { if (contains(*lNext, pTest, pContent)) return true; } } return false;
 			default: break;
 		}
 		return false;
@@ -979,11 +979,11 @@ namespace PSSER_NAMESPACE
 		Value const * lV;
 		switch (mCollection.type)
 		{
-			case MVStore::VT_ARRAY:
+			case AfyDB::VT_ARRAY:
 				for (mI = 0; mI < pIndex && mI < mCollection.length; mI++);
 				mCurr = (mI < mCollection.length) ? mCollection.varray[mI].eid : 0;
 				return (mI < mCollection.length) ? &mCollection.varray[mI] : NULL;
-			case MVStore::VT_COLLECTION:
+			case AfyDB::VT_COLLECTION:
 				for (lV = mCollection.nav->navigate(GO_FIRST), mI = 0; mI < pIndex && lV; lV = mCollection.nav->navigate(GO_NEXT), mI++);
 				mCurr = lV ? lV->eid : 0;
 				return lV;
@@ -994,7 +994,7 @@ namespace PSSER_NAMESPACE
 		return NULL;
 	}
 
-	inline Value const * CollectionIterator::beginAtEid(MVStore::ElementID pEid)
+	inline Value const * CollectionIterator::beginAtEid(AfyDB::ElementID pEid)
 	{
 		reset();
 		Value const * const lV = findValue(mCollection, pEid, &mI);
@@ -1011,12 +1011,12 @@ namespace PSSER_NAMESPACE
 		Value const * lV;
 		switch (mCollection.type)
 		{
-			case MVStore::VT_ARRAY:
+			case AfyDB::VT_ARRAY:
 				mI++;
 				if (mI < mCollection.length)
 					{ mCurr = mCollection.varray[mI].eid; return &mCollection.varray[mI]; }
 				return NULL;
-			case MVStore::VT_COLLECTION:
+			case AfyDB::VT_COLLECTION:
 				lV = mCollection.nav->navigate(GO_NEXT);
 				mCurr = lV ? lV->eid : 0;
 				return lV;
@@ -1032,11 +1032,11 @@ namespace PSSER_NAMESPACE
 		Value const * lV;
 		switch (mCollection.type)
 		{
-			case MVStore::VT_ARRAY:
+			case AfyDB::VT_ARRAY:
 				if (mI > 0)
 					{--mI; mCurr = mCollection.varray[mI].eid; return &mCollection.varray[mI]; }
 				return NULL;
-			case MVStore::VT_COLLECTION:
+			case AfyDB::VT_COLLECTION:
 				lV = mCollection.nav->navigate(GO_PREVIOUS);
 				mCurr = lV ? lV->eid : 0;
 				return lV;
@@ -1051,7 +1051,7 @@ namespace PSSER_NAMESPACE
 		mCurr = 0;
 	}
 
-	inline MVStore::Value const * CollectionIterator::findValue(MVStore::Value const & pCollection, MVStore::ElementID pEid, unsigned long * pIt)
+	inline AfyDB::Value const * CollectionIterator::findValue(AfyDB::Value const & pCollection, AfyDB::ElementID pEid, unsigned long * pIt)
 	{
 		// Warning: Usage of this function can result in O(n.log(n)), or O(n^2) patterns
 		//          (the latter case would be expected for small collections only).
@@ -1060,7 +1060,7 @@ namespace PSSER_NAMESPACE
 		unsigned long i;
 		switch (pCollection.type)
 		{
-			case MVStore::VT_ARRAY:
+			case AfyDB::VT_ARRAY:
 				if(pEid == STORE_FIRST_ELEMENT)
 					i = 0;
 				else if(pEid == STORE_LAST_ELEMENT)
@@ -1070,8 +1070,8 @@ namespace PSSER_NAMESPACE
 				if (pIt)
 					*pIt = i;
 				return (i < pCollection.length) ? &pCollection.varray[i] : NULL;
-			case MVStore::VT_COLLECTION:
-				return pCollection.nav->navigate(MVStore::GO_FINDBYID, pEid);
+			case AfyDB::VT_COLLECTION:
+				return pCollection.nav->navigate(AfyDB::GO_FINDBYID, pEid);
 			default: break;
 		}
 		return (pCollection.eid == pEid || STORE_FIRST_ELEMENT == pEid || STORE_LAST_ELEMENT == pEid) ? &pCollection : NULL;
@@ -1118,7 +1118,7 @@ namespace PSSER_NAMESPACE
 	}
 
 	template <class T>
-	inline void PrimitivesOutRaw::outStream(ContextOut & pCtx, MVStore::IStream & pStream, T *, uint64_t pLenInB)
+	inline void PrimitivesOutRaw::outStream(ContextOut & pCtx, AfyDB::IStream & pStream, T *, uint64_t pLenInB)
 	{
 		// Note: If pLenInB is specified (i.e. != uint64_t(~0)), then we will truncate or fill to make sure
 		//       we write exactly that amount of bytes; normally pLenInB should be == lTotalReadInB, but
@@ -1315,10 +1315,10 @@ namespace PSSER_NAMESPACE
 	{
 		switch (pValue.type)
 		{
-			case VT_COLLECTION: return pValue.nav ? MVStore::VT_ARRAY : MVStore::VT_ERROR;
-			case MVStore::VT_STREAM: return pValue.stream.is ? pValue.stream.is->dataType() : MVStore::VT_ERROR;
-			case VT_EXPR: return pValue.expr ? VT_EXPR : MVStore::VT_ERROR;
-			case VT_STMT: return pValue.stmt ? VT_STMT : MVStore::VT_ERROR;
+			case VT_COLLECTION: return pValue.nav ? AfyDB::VT_ARRAY : AfyDB::VT_ERROR;
+			case AfyDB::VT_STREAM: return pValue.stream.is ? pValue.stream.is->dataType() : AfyDB::VT_ERROR;
+			case VT_EXPR: return pValue.expr ? VT_EXPR : AfyDB::VT_ERROR;
+			case VT_STMT: return pValue.stmt ? VT_STMT : AfyDB::VT_ERROR;
 			case VT_REF: return VT_REFID;
 			case VT_REFPROP: return VT_REFIDPROP;
 			case VT_REFELT: return VT_REFIDELT;
@@ -1461,7 +1461,7 @@ namespace PSSER_NAMESPACE
 
 	inline void PrimitivesInRaw::inRefIDVal(ContextIn & pCtx,Value & pValue)
 	{
-		MVStore::RefVID * lRVID = pCtx.mSession ? (RefVID *)(pCtx.mSession->alloc(sizeof(RefVID))) : new RefVID;
+		AfyDB::RefVID * lRVID = pCtx.mSession ? (RefVID *)(pCtx.mSession->alloc(sizeof(RefVID))) : new RefVID;
 		pValue.refId = lRVID;
 		if (pCtx.getVersion() < ContextIn::kVVTREFIDVALFix1)
 			inRef(pCtx, lRVID->id, lRVID->pid);
@@ -1586,7 +1586,7 @@ namespace PSSER_NAMESPACE
 		switch (pValue.type)
 		{
 			// Collections.
-			case MVStore::VT_ARRAY: 
+			case AfyDB::VT_ARRAY: 
 			{
 				unsigned int i;
 				for (i = 0; i < pValue.length && pValue.varray; i++)
@@ -1594,7 +1594,7 @@ namespace PSSER_NAMESPACE
 				freeArray(pValue.varray, pSession); pValue.varray = NULL; pValue.length = 0;
 				break;
 			}
-			case MVStore::VT_COLLECTION: if (pValue.nav) pValue.nav->destroy(); pValue.nav = NULL; break;
+			case AfyDB::VT_COLLECTION: if (pValue.nav) pValue.nav->destroy(); pValue.nav = NULL; break;
 			case VT_RANGE:
 			if(pValue.range)
 			{
@@ -1605,23 +1605,23 @@ namespace PSSER_NAMESPACE
 			}
 
 			// Streams.
-			case MVStore::VT_STREAM: if (pValue.stream.is) pValue.stream.is->destroy(); pValue.stream.is = NULL; break;
+			case AfyDB::VT_STREAM: if (pValue.stream.is) pValue.stream.is->destroy(); pValue.stream.is = NULL; break;
 
 			// Variable-length.
 			case VT_STRING: case VT_URL: if (0 != pValue.length && NULL != pValue.str) { freeArray(pValue.str, pSession); } pValue.str = NULL; pValue.length = 0; break;
-			case MVStore::VT_BSTR: if (0 != pValue.length && NULL != pValue.bstr) { freeArray(pValue.bstr, pSession); } pValue.bstr = NULL; pValue.length = 0; break;
+			case AfyDB::VT_BSTR: if (0 != pValue.length && NULL != pValue.bstr) { freeArray(pValue.bstr, pSession); } pValue.bstr = NULL; pValue.length = 0; break;
 			case VT_STMT: break; // Review (XXX): What if not consumed?
 			case VT_EXPR: break; // Review (XXX): What if not consumed?
 
 			// Fixed-length.
-			case VT_ENUM:
-			case MVStore::VT_INT:
-			case MVStore::VT_UINT:
+			case VT_RESERVED1:
+			case AfyDB::VT_INT:
+			case AfyDB::VT_UINT:
 			case VT_INT64:
 			case VT_UINT64:
 			case VT_FLOAT:
 			case VT_DOUBLE:
-			case MVStore::VT_BOOL:
+			case AfyDB::VT_BOOL:
 			case VT_DATETIME:
 			case VT_INTERVAL:
 			case VT_CURRENT:
@@ -1644,10 +1644,10 @@ namespace PSSER_NAMESPACE
 				break;
 
 			// Delete.
-			case MVStore::VT_ERROR: break;
+			case AfyDB::VT_ERROR: break;
 
 			// TODO
-			case VT_DECIMAL:
+			case VT_RESERVED2:
 			case VT_EXPRTREE:
 			default:
 				assert(false);
@@ -1830,7 +1830,7 @@ namespace PSSER_NAMESPACE
 	}
 	inline void PrimitivesInIPC::freeValue(ContextInIPC & pCtx, Value & pValue, ISession * pSession)
 	{
-		if (MVStore::VT_STREAM == pValue.type && pCtx.isSharedMem(pValue.stream.is))
+		if (AfyDB::VT_STREAM == pValue.type && pCtx.isSharedMem(pValue.stream.is))
 			return;
 		else if (Services::isRefPtrType(pValue) && pCtx.isSharedMem(pValue.pin))
 			return;
@@ -1844,7 +1844,7 @@ namespace PSSER_NAMESPACE
 	{
 		// Special handling for all pointer types...
 		// Review: Could refine further for collections...
-		if (MVStore::VT_STREAM == pValue.type)
+		if (AfyDB::VT_STREAM == pValue.type)
 		{
 			if (pCtx.isSharedMem(pValue.stream.is))
 			{
@@ -1899,8 +1899,8 @@ namespace PSSER_NAMESPACE
 			void * lAddr;
 			pCtx.is() >> lAddr;
 			lAddr = (void *)pCtx.S2C(lAddr);
-			if (MVStore::VT_STREAM == lTmp.type)
-				pValue.stream.is = (MVStore::IStream *)lAddr;
+			if (AfyDB::VT_STREAM == lTmp.type)
+				pValue.stream.is = (AfyDB::IStream *)lAddr;
 			else
 				pValue.str = (char *)lAddr;
 			if (OP_EDIT == lTmp.op)
@@ -2071,13 +2071,13 @@ namespace PSSER_NAMESPACE
 			// Ignore collections for now; collections of large streams are incomplete, and not used.
 			// If we need to support them later, then chunkStream should probably be invoked at
 			// valueContent() level rather than property() level.
-			case MVStore::VT_STREAM:
+			case AfyDB::VT_STREAM:
 			{
 				char * const lBuf = (char *)pSession.alloc(PINHASH_BLOCKSIZE);
 				if (lBuf)
 				{
 					size_t lRead, lTotalProcessed;
-					MVStore::IStream * lIs = pValue.stream.is;
+					AfyDB::IStream * lIs = pValue.stream.is;
 					bool lCloned = false;
 					if (RC_OK != lIs->reset())
 						{ lIs = lIs->clone(); lCloned = true; }
@@ -2119,7 +2119,7 @@ namespace PSSER_NAMESPACE
 				}
 				break;
 			}
-			case MVStore::VT_STRING: case MVStore::VT_URL: case MVStore::VT_BSTR:
+			case AfyDB::VT_STRING: case AfyDB::VT_URL: case AfyDB::VT_BSTR:
 			{
 				size_t iChunk;
 				size_t const lLastAvailableChunk = (pValue.length - 1) / pHSFact.getChunkSizeInB();
@@ -2179,12 +2179,12 @@ namespace PSSER_NAMESPACE
 		{
 			switch (pValue.type)
 			{
-				case MVStore::VT_ARRAY:
+				case AfyDB::VT_ARRAY:
 					ContextOutComparisons::TPrimitives::beginProperty(pCtx, pValue.property);
 					Out<ContextOutComparisons>::value(pCtx, pValue.varray[0]);
 					ContextOutComparisons::TPrimitives::endProperty(pCtx, pValue.property);
 					return;
-				case MVStore::VT_COLLECTION:
+				case AfyDB::VT_COLLECTION:
 				{
 					Value const * lNext = pValue.nav->navigate(GO_FIRST);
 					if (lNext)
@@ -2264,7 +2264,7 @@ namespace PSSER_NAMESPACE
 			inline static void outString(ContextOutDbg & pCtx, wchar_t const * pString, uint32_t pLenInB) ;
 			inline static void outString(ContextOutDbg & pCtx, unsigned char const * pString, uint32_t pLenInB) ;
 			template <class T> inline static void outString(ContextOutDbg & pCtx, T const * pString, uint32_t pLenInB) { if (pString) { std::basic_string<T> lString(pString, mymin(pCtx.mShowNumChars, size_t(pLenInB / sizeof(T)))); outString(pCtx, (unsigned char *)lString.c_str(), (uint32_t)lString.length() * sizeof(T)); } else pCtx.os() << "null"; }
-			template <class T> inline static void outStream(ContextOutDbg & pCtx, MVStore::IStream & pStream, T * pT, uint64_t pLenInB = uint64_t(~0));
+			template <class T> inline static void outStream(ContextOutDbg & pCtx, AfyDB::IStream & pStream, T * pT, uint64_t pLenInB = uint64_t(~0));
 			inline static void outQuery(ContextOutDbg & pCtx, Value const & pValue) { PrimitivesOutRaw::outQuery(pCtx, pValue); }
 			inline static void outExpr(ContextOutDbg & pCtx, Value const & pValue) { PrimitivesOutRaw::outExpr(pCtx, pValue); }
 			inline static void outIID(ContextOutDbg & pCtx, IdentityID const & pIID) { if (pCtx.mSession) PrimitivesOutRaw::outIID(pCtx, pIID); else { pCtx.os() << pIID << " "; } }
@@ -2318,18 +2318,18 @@ namespace PSSER_NAMESPACE
 	}
 
 	template <class T>
-	inline void PrimitivesOutDbg::outStream(ContextOutDbg & pCtx, MVStore::IStream & pStream, T *, uint64_t)
+	inline void PrimitivesOutDbg::outStream(ContextOutDbg & pCtx, AfyDB::IStream & pStream, T *, uint64_t)
 	{
 		static size_t const sBufSize = 0x1000;
 
-		MVStore::ValueType type = pStream.dataType() ;
+		AfyDB::ValueType type = pStream.dataType() ;
 		T lBuf[sBufSize];
 		size_t lMaxRemaining = pCtx.mShowNumChars;
 		size_t lRead = pStream.read(lBuf, mymin(sBufSize, lMaxRemaining));
 		while (lRead)
 		{
 			lMaxRemaining -= lRead;
-			if ( type == MVStore::VT_BSTR )
+			if ( type == AfyDB::VT_BSTR )
 			{
 				// Avoid any bad ascii characters
 				char safechar = '.' ;
@@ -2450,7 +2450,7 @@ namespace PSSER_NAMESPACE
 			*pLen = lPersistedLength;
 		pCtx.os() << std::dec << lPersistedLength << ") ";
 
-		if (MVStore::VT_ARRAY == pValue.type || VT_COLLECTION == pValue.type)
+		if (AfyDB::VT_ARRAY == pValue.type || VT_COLLECTION == pValue.type)
 		{
 			pCtx.mLevel++;
 			pCtx.mCollStack.push_back(ContextOutDbg::CollStackItem(pCtx.mLevel, pValue.property));
@@ -2460,7 +2460,7 @@ namespace PSSER_NAMESPACE
 
 	inline void PrimitivesOutDbg::endValue(ContextOutDbg & pCtx, Value const & pValue)
 	{
-		if (MVStore::VT_ARRAY == pValue.type || VT_COLLECTION == pValue.type)
+		if (AfyDB::VT_ARRAY == pValue.type || VT_COLLECTION == pValue.type)
 		{
 			pCtx.mCollStack.pop_back();
 			pCtx.mLevel--;

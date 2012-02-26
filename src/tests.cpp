@@ -72,7 +72,7 @@ int ITest::performTest(int argc, char * argv[], long * outTime, TIMESTAMP * outT
 
 	if (isStoreErrorFatal() &&  MVTApp::sReporter.wasErrorLogged())
 	{
-		out << "MVStore logged errors" << endl;
+		out << "AfyDB logged errors" << endl;
 		lResult = RC_FALSE;
 	}
 	out << "Test status: ";

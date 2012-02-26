@@ -15,7 +15,7 @@ class TestEncoding : public ITest
 		TEST_DECLARE(TestEncoding);
 		virtual char const * getName() const { return "testencoding"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "testing of encoding capabilities of the MVStore"; }
+		virtual char const * getDescription() const { return "testing of encoding capabilities of the AfyDB"; }
 		//Enabled the test for smoketest as it passes - Rohan (2/8/2006)
 		//virtual bool includeInSmokeTest(char const *& pReason) const { pReason = "till it passes..."; return false; }
 		

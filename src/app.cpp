@@ -497,7 +497,7 @@ int MVTApp::start(MVTArgs *args)
 int MVTApp::help() const
 {
 	// Output help.
-	std::cout << "  MVStore Kernel Test Suite ";
+	std::cout << "  AfyDB Kernel Test Suite ";
 	#ifdef _DEBUG
 		std::cout << "[Debug]" << std::endl;
 	#else
@@ -582,7 +582,7 @@ int MVTApp::help() const
 	std::cout << "  -----" << std::endl;
 	std::cout << "  -ioinit=CONFIG Use s3, traceio or other drivers" << std::endl;
 	std::cout << "          examples:"<<std::endl;
-	std::cout << "          \"-ioinit={stdio}{s3io,user:abc,secret:12345,remotepath:'/www.mvdocs.com/test'}\""<< std::endl;
+	std::cout << "          \"-ioinit={stdio}{s3io,user:abc,secret:12345,remotepath:'/www.pidocs.com/test'}\""<< std::endl;
 	std::cout << "          \"-ioinit={stdio}{iotracer,tracelogio:1,pagesize:32768}{ioprofiler}\""<< std::endl;
 	std::cout << "  -----" << std::endl;
 	std::cout << "  -client=client host address (now ignored: the host address is now inferred from ident), use the clientapi library to connect over http" << std::endl;
@@ -1330,7 +1330,7 @@ void MVTApp::makeMultiStoreReport(bool bPopResults)
 	if ( NULL != localtime_r(&lTimeNow, &lNow) )
 	{
 		sprintf(lCompl,"%02u/%02u/%04u %02u:%02u:%02u",
-			lNow.tm_mon,lNow.tm_mday,lNow.tm_year,lNow.tm_hour,lNow.tm_min,lNow.tm_sec);		
+			lNow.tm_mon+1,lNow.tm_mday,lNow.tm_year+1900,lNow.tm_hour,lNow.tm_min,lNow.tm_sec);		
 		lCmplTime = lCompl;
 	}
 #endif
@@ -1465,7 +1465,7 @@ void MVTApp::makeMultiStoreReport(bool bPopResults)
 		<< dTotal
 		<< " seconds)</li></font>";
 
-	lHTML << "<html><head><title>MVStore Test Results</title></head><body>"
+	lHTML << "<html><head><title>AfyDB Test Results</title></head><body>"
 		<< lSummary.str() 
 		<< lTable.str() 
 		<< lResults.str()
@@ -1498,7 +1498,7 @@ void MVTApp::makeHTMLResultFile(TestSuiteCtx &suite, bool inbPopResults /*whethe
 	if ( NULL != localtime_r(&lTimeNow, &lNow) )
 	{
 		sprintf(lCompl,"%02u/%02u/%04u %02u:%02u:%02u",
-			lNow.tm_mon,lNow.tm_mday,lNow.tm_year,lNow.tm_hour,lNow.tm_min,lNow.tm_sec);		
+			lNow.tm_mon+1,lNow.tm_mday,lNow.tm_year+1900,lNow.tm_hour,lNow.tm_min,lNow.tm_sec);		
 		lCmplTime = lCompl;
 	}
 #endif
@@ -1519,7 +1519,7 @@ void MVTApp::makeHTMLResultFile(TestSuiteCtx &suite, bool inbPopResults /*whethe
 	std::stringstream lHTML, lSummary,lTable ;
 	std::vector<Tstring> lFailedTests;
 
-	lTable << "\n<table border=""3"" cellpadding=""5"" font=""Times New Roman""><caption><b><u>MVStore Test Results</u></b></caption>";
+	lTable << "\n<table border=""3"" cellpadding=""5"" font=""Times New Roman""><caption><b><u>AfyDB Test Results</u></b></caption>";
 	lTable << "<tr bgcolor=""SILVER""><th>No.</th><th align=""center"">Name</th><th align=""center"">Description</th><th align=""center"">Status</th><th align=""center"">Time in ms ";
 	lTable << "</th><th align=""center"">Time</th></tr>\n";
 	for(i = 0; i < lTResult.size(); i++)
@@ -1617,7 +1617,7 @@ void MVTApp::makeHTMLResultFile(TestSuiteCtx &suite, bool inbPopResults /*whethe
 	}
 	lSummary << "</ul></font>";
 
-	lHTML << "<html><head><title>MVStore Test Results</title></head><body>"
+	lHTML << "<html><head><title>AfyDB Test Results</title></head><body>"
 		<< lSummary.str() 
 		<< lTable.str() 
 		<< "</body></html>";
@@ -1672,7 +1672,7 @@ class ReplicationEventProcessor
 		static void * sTheDstToken;
 	protected:
 		IReplicationController * mOrg, * mDst;
-		MVStoreKernel::StoreCtx * mStoreCtxReplica;
+		AfyKernel::StoreCtx * mStoreCtxReplica;
 	protected:
 		HTHREAD mThread;
 		long volatile mFinishing;
@@ -1696,7 +1696,7 @@ class ReplicationEventProcessor
 		}
 		void setOrg(IReplicationController * pOrg) { mOrg = pOrg; }
 		void setDst(IReplicationController * pDst) { mDst = pDst; }
-		void setStoreCtxReplica(MVStoreKernel::StoreCtx * pStoreCtxReplica) { mStoreCtxReplica = pStoreCtxReplica; }
+		void setStoreCtxReplica(AfyKernel::StoreCtx * pStoreCtxReplica) { mStoreCtxReplica = pStoreCtxReplica; }
 		virtual bool sendEvents(ReplicationID const *pRIDs,size_t pNumRIDs)
 		{
 			if (!mOrg || !mDst)
@@ -1795,7 +1795,7 @@ class ReplicationEventProcessor
 			return lCompleted;
 		}
 		virtual RET_CODE getSource(const char *, std::string &) {return 0l;}
-		virtual RET_CODE getSerializedRemoteValue(ISession *, const char *, MVStore::PID const &, const char *, MVStore::ElementID, MVStore::IStream **) {return 0;}
+		virtual RET_CODE getSerializedRemoteValue(ISession *, const char *, AfyDB::PID const &, const char *, AfyDB::ElementID, AfyDB::IStream **) {return 0;}
 	protected:
 		static THREAD_SIGNATURE threadDeliverCIDs(void * pThis) { ((ReplicationEventProcessor *)pThis)->threadDeliverCIDsImpl(); return 0; }
 		void threadDeliverCIDsImpl()
@@ -2001,7 +2001,7 @@ bool MVTApp::startStore(
 	StoreCreationParameters lSCP(NCTLFILES, lPageSize, PAGESPEREXTENT, lIdentity, lStoreID, lPassword, false); 
 	lSCP.fEncrypted = ((lPassword != NULL) && (strlen(lPassword)>0));
 
-	MVStoreKernel::StoreCtx *& lStoreCtx = suite.mStoreCtx;
+	AfyKernel::StoreCtx *& lStoreCtx = suite.mStoreCtx;
 	mSCP = lSCP; mStoreCtx = lStoreCtx;
 	RC rc = RC_NOACCESS;
 	while (rc==RC_NOACCESS)
@@ -2041,7 +2041,7 @@ bool MVTApp::startStore(
 				{
 					// Temporary session to establish to password for new store
 					//ISession * setPwdSession=sDynamicLinkMvstore->startSession(suite.mStoreCtx,suite.mIdentity.c_str(),NULL);
-					ISession * setPwdSession=MVStore::ISession::startSession(suite.mStoreCtx,suite.mIdentity.c_str(),NULL);
+					ISession * setPwdSession=AfyDB::ISession::startSession(suite.mStoreCtx,suite.mIdentity.c_str(),NULL);
 					if ( setPwdSession ) {
 						rc = setPwdSession->changePassword(STORE_OWNER,NULL/*no previous pwd*/,suite.mIdentPwd.c_str());
 						setPwdSession->terminate();
@@ -2168,7 +2168,7 @@ RC MVTApp::createStoreWithDumpSession(ISession *& outSession, IStoreNet * pNetCa
 	StoreCreationParameters lSCP(NCTLFILES, lPageSize, PAGESPEREXTENT, lIdentity, lStoreID, lPassword, false); 
 	lSCP.fEncrypted = ((lPassword != NULL) && (strlen(lPassword)>0));
 
-	MVStoreKernel::StoreCtx *& lStoreCtx = suite.mStoreCtx;
+	AfyKernel::StoreCtx *& lStoreCtx = suite.mStoreCtx;
 
 	RC rc ;
 	//if (RC_OK != ( rc = (RC)sDynamicLinkMvstore->createStore(lSCP, lSP, lStoreCtx,&outSession, lAdditionalParams )))
@@ -2249,7 +2249,7 @@ void MVTApp::stopStore()
 	if (suite.mbTestDurability)
 	{
 		printf("\n\n{\nProducing durability snapshot before shutdown...\n\n");
-		MVStoreKernel::StoreCtx * const lStoreCtx = Suite().mStoreCtx;
+		AfyKernel::StoreCtx * const lStoreCtx = Suite().mStoreCtx;
 		ISession * const lSession = lStoreCtx ? startSession(lStoreCtx) : NULL;
 		ICursor * lCursor;
 		if (lSession && RC_OK == CmvautoPtr<IStmt>(lSession->createStmt("SELECT *;"))->execute(&lCursor))
@@ -2321,7 +2321,7 @@ void MVTApp::stopStore()
 		printf("\nTesting durability snapshot after shutdown...\n\n");
 		bool lDurabilityOk = true;
 		StartupParameters const lSP(0, suite.mDir.c_str(), DEFAULT_MAX_FILES, suite.mNBuffer, DEFAULT_ASYNC_TIMEOUT, NULL, NULL, suite.mPwd.c_str(), suite.mLogDir.c_str(), NULL);
-		MVStoreKernel::StoreCtx * lStoreCtx = NULL;
+		AfyKernel::StoreCtx * lStoreCtx = NULL;
 		size_t const lNumChecked = lMD5s.size();
 		if (RC_OK == openStore(lSP, lStoreCtx))
 		{
@@ -2379,7 +2379,7 @@ void MVTApp::stopStore()
 	suite.mLock->unlock() ;
 }
 
-ISession * MVTApp::startSession(MVStoreKernel::StoreCtx * pStoreCtx, char const * pIdentity, char const * pPassword, long pFlags)
+ISession * MVTApp::startSession(AfyKernel::StoreCtx * pStoreCtx, char const * pIdentity, char const * pPassword, long pFlags)
 {
 	if (  pStoreCtx == NULL )
 	{
@@ -2409,7 +2409,7 @@ ISession * MVTApp::startSession(MVStoreKernel::StoreCtx * pStoreCtx, char const 
 		}		
 	}
 	//ISession * const lSession = sDynamicLinkMvstore->startSession(pStoreCtx, pIdentity, pPassword);
-	ISession * const lSession = MVStore::ISession::startSession(pStoreCtx, pIdentity, pPassword);
+	ISession * const lSession = AfyDB::ISession::startSession(pStoreCtx, pIdentity, pPassword);
 	/* assert(lSession); disabled because TestIdentity Expects failure */
 
 	//For Replication smoke tests which runs select kernel tests in IPC mode on a normal mv node installation (i.e. local node to hosting node replication)
@@ -2430,25 +2430,25 @@ ISession * MVTApp::startSession(MVStoreKernel::StoreCtx * pStoreCtx, char const 
 	return lSession;
 }
 
-MVStore::IStream * MVTApp::wrapClientStream(ISession * pSession, MVStore::IStream * pClientStream)
+AfyDB::IStream * MVTApp::wrapClientStream(ISession * pSession, AfyDB::IStream * pClientStream)
 {
 	// Note: We don't use nkadaptor.h's definition in mvstore/tests, because we don't want to
 	//		 impose the link dependency on mvstoreclient.dll in the inproc case...
 #if 0 // remove IPC	
 	if (sDynamicLinkMvstore->isInProc())
 		return pClientStream;
-	typedef MVStore::IStream * (*TWrapStream)(MVStore::ISession *, MVStore::IStream *);
+	typedef AfyDB::IStream * (*TWrapStream)(AfyDB::ISession *, AfyDB::IStream *);
 	static TWrapStream sWrapStream = NULL;
 	#ifdef WIN32
 		if (!sWrapStream)
 		{
-			void * const lMvStoreClient = ::LoadLibrary("mvstoreclient.dll");
+			void * const lMvStoreClient = ::LoadLibrary("affinityclient.dll");
 			sWrapStream = lMvStoreClient ? (TWrapStream)::GetProcAddress((HMODULE)lMvStoreClient, "clientWrapStream") : NULL;
 		}
 	#else
 		if (!sWrapStream)
 		{
-			void * const lMvStoreClient = dlopen("libmvstoreclient.so", RTLD_LAZY);
+			void * const lMvStoreClient = dlopen("libaffinityclient.so", RTLD_LAZY);
 			sWrapStream = lMvStoreClient ? (TWrapStream)dlsym(lMvStoreClient, "clientWrapStream") : NULL;
 		}
 	#endif
@@ -2475,7 +2475,7 @@ bool MVTApp::deleteStore()
 			Suite().mbArchiveLogs) ;
 }
 
-MVStoreKernel::StoreCtx * MVTApp::getStoreCtx(const char * pIdentity)
+AfyKernel::StoreCtx * MVTApp::getStoreCtx(const char * pIdentity)
 {
 	if(pIdentity == NULL)
 	{
@@ -2499,7 +2499,7 @@ bool MVTApp::compareReplicaStore(TestLogger & pLogger)
 #if 0
 	pLogger.out() << "Performing store comparison after replication..." << std::endl << std::flush;
 
-	MVStoreKernel::StoreCtx * lStoreCtx = Suite().mStoreCtx ;
+	AfyKernel::StoreCtx * lStoreCtx = Suite().mStoreCtx ;
 
 	if (!lStoreCtx || !sReplicaStoreCtx)
 		{ assert(false); return false; }

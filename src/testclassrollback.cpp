@@ -53,7 +53,7 @@ class scenariobase
 class TestClassRollBack : public ITest
 {
 	std::vector<PID> pidMap;
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 	
 	public:		
 		PropertyID mPropIDs[sNumProps];

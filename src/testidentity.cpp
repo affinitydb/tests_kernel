@@ -32,7 +32,7 @@ struct IdentityInfo
 class TestIdentity : public ITest
 {
 	public:
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 		TEST_DECLARE(TestIdentity);
 		virtual char const * getName() const { return "testidentity"; }
 		virtual char const * getHelp() const { return ""; }

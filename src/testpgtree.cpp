@@ -735,7 +735,7 @@ void TestPGTree::enumKeysFT_str(ISession & pSession, Tstrings & pResult, char pL
 	lBuf[0] = pLetter;
 	lBuf[1] = 0;
 
-	MVStore::StringEnum * lSE = NULL;
+	AfyDB::StringEnum * lSE = NULL;
 	TVERIFYRC(pSession.listWords(lBuf, lSE));
 	if (lSE)
 	{
@@ -806,7 +806,7 @@ void TestPGTree::checkAllKeysByFamily1(ISession & pSession, Keys const & pKeys, 
 	mLogger.out() << "  === checkAllKeysByFamily1 (ISession::listValues) (prop " << pPropIndex << ", pass " << pPassIndex << ", type " << Keys::key_compare::getType() << ")" << std::endl;
 	Tvalues lKeys;
 
-	MVStore::IndexNav * lVE;
+	AfyDB::IndexNav * lVE;
 	TVERIFYRC(pSession.listValues(mFamilies[pPassIndex][pPropIndex], mProps[pPropIndex], lVE));
 	if (lVE)
 	{

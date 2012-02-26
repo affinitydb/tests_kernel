@@ -36,7 +36,7 @@ class TestAcls : public ITest
 		std::vector<IdentityID> mIdentities;
 		TPINsInfo mPINs;
 		MVTestsPortability::Mutex mLock;
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 		long volatile mFinalResult; // Non-zero means test failed
 };
 TEST_IMPLEMENT(TestAcls, TestLogger::kDStdOut);

@@ -14,7 +14,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
  * based on MVSTORE_IFACE_VER.
  */
 
-namespace MVStore { typedef Value PropValue; }
+namespace AfyDB { typedef Value PropValue; }
 #define INITLOCALPID(PID) (PID).ident = STORE_OWNER
 #define LOCALPID(PID) (PID).pid
 #define SETVATTR(vs, propid, op) \

@@ -21,7 +21,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "mvstoreapi.h"
 #include "serialization.h"
 
-using namespace MVStore ;
+using namespace AfyDB ;
 using namespace std ; 
 
 #define MAX_PINS_FOR_CLASS_TEST 200000
@@ -60,7 +60,7 @@ public:
 		IStmt * const lQ = inSession->createStmt(sop);
 		if (!lQ)
 			return NULL;
-		MVStore::ClassSpec lCS;
+		AfyDB::ClassSpec lCS;
 		lCS.classID = inClassID;
 		lCS.nParams = inCntParams;
 		lCS.params = inParams;

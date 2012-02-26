@@ -33,7 +33,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 // One interesting question here is when to use PID references instead of keys.  Relational databases 
 // don't directly support references from one row to another, whereas the MV store supports PIN references.
 // On the other hand relational databases have explicit support for unique, primary keys in a table,
-// data integrity etc, whereas the MVStore does not.  This test demonstrates both key and reference approach
+// data integrity etc, whereas the AfyDB does not.  This test demonstrates both key and reference approach
 // based on the following #ifdef
 #define USE_PIN_REF 1
 
@@ -474,7 +474,7 @@ class TestRDBMS : public ITest
 		TEST_DECLARE(TestRDBMS);
 		virtual char const * getName() const { return "testrdbms"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "Test MVStore As Relational Database"; }
+		virtual char const * getDescription() const { return "Test AfyDB As Relational Database"; }
 		
 		virtual int execute();
 		virtual void destroy() { delete this; }

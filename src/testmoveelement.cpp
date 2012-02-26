@@ -58,7 +58,7 @@ void TestMoveElement::doTest()
 	// Create original pin, which has a collection with 9 elements
 	static const int cntElements=9;
 
-	MVStore::Value lVal[cntElements];
+	AfyDB::Value lVal[cntElements];
 	for(int idx= 0 ; idx < cntElements ; idx++)
 	{
 		lVal[idx].set(idx); // Value matches the original position in the array

@@ -9,7 +9,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 
 #include "rc.h"
 
-using namespace MVStoreRC;
+using namespace AfyRC;
 
 #ifdef WIN32
 
@@ -147,7 +147,7 @@ typedef uint64_t	off64_t;   //??int:
 #endif
 
 #ifdef __arm__
-#define stat64 stat
+//#define stat64 stat
 #endif
 
 #ifdef __x86_64__

@@ -8,7 +8,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "teststream.h"
 #include "mvauto.h"
 using namespace std;
-using namespace MVStoreKernel; // Interlock
+using namespace AfyKernel; // Interlock
 
 #ifdef WIN32
 #include <Psapi.h>
@@ -59,8 +59,8 @@ class TestMultiStore : public ITest
 			bool mbCreateStore ;
 		} ;
 
-		MVStoreKernel::StoreCtx * createStoreInDir(ThreadInfo * inCtx, const char * inDir, const char * inIdentity, unsigned short inStoreID) ;
-		MVStoreKernel::StoreCtx * openStoreInDir(const char * inDir) ;
+		AfyKernel::StoreCtx * createStoreInDir(ThreadInfo * inCtx, const char * inDir, const char * inIdentity, unsigned short inStoreID) ;
+		AfyKernel::StoreCtx * openStoreInDir(const char * inDir) ;
 		void doStuffInStore( ISession* inS  ) ;
 		void doGuestStuffInStore( ISession* inS  ) ;
 		void simulateDumpload(ISession* session, unsigned short inStoreID) ;
@@ -242,7 +242,7 @@ void TestMultiStore::threadImpl( ThreadInfo * inInfo )
 {
 	srand(inInfo->mStoreID + mRandomSeed ) ;
 
-	MVStoreKernel::StoreCtx *storeCtx = NULL ;
+	AfyKernel::StoreCtx *storeCtx = NULL ;
 
 	if ( inInfo->mbCreateStore )
 	{
@@ -270,7 +270,7 @@ void TestMultiStore::threadImpl( ThreadInfo * inInfo )
 	while ( s1 == NULL ) 
 	{ 
 		//s1 = MVTApp::sDynamicLinkMvstore->startSession(storeCtx, identity, NULL /*password*/);
-		s1 = MVStore::ISession::startSession(storeCtx, identity, NULL /*password*/);
+		s1 = AfyDB::ISession::startSession(storeCtx, identity, NULL /*password*/);
 		if ( s1 != NULL ) break ;
 
 		if (inInfo->mbCreateStore) 
@@ -324,13 +324,13 @@ void TestMultiStore::threadImpl( ThreadInfo * inInfo )
 	}
 }
 
-MVStoreKernel::StoreCtx * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,const char * inDir, const char * inIdentity, unsigned short inStoreID)
+AfyKernel::StoreCtx * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,const char * inDir, const char * inIdentity, unsigned short inStoreID)
 {
 	// Note: we can't use MVTApp::startStore helper because it assumes only one store open at a time
 	MVTUtil::ensureDir( inDir ) ;
 
 	//Flush any existing store files
-	MVStoreKernel::StoreCtx *lStoreCtx = NULL;
+	AfyKernel::StoreCtx *lStoreCtx = NULL;
 
 	// Using different page sizes for the stores
 #ifdef TEST_VARIABLE_PAGE_SIZE
@@ -354,7 +354,7 @@ MVStoreKernel::StoreCtx * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,co
 	//		mUseDumpload?&lLoadStore:NULL,lAdditionalParams))
 	if (RC_OK != createStore(lSCP,lSP,lStoreCtx,mUseDumpload?&lLoadStore:NULL))
 	{
-		string msg("Could not create MVStore ") ;
+		string msg("Could not create AfyDB ") ;
 		msg += inDir ;
 		TVERIFY2(0,msg.c_str()) ;
 		return NULL ;
@@ -385,7 +385,7 @@ MVStoreKernel::StoreCtx * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,co
 			//if (RC_OK != MVTApp::sDynamicLinkMvstore->openStore(lSP,lStoreCtx,lAdditionalParams))
 			if (RC_OK != openStore(lSP,lStoreCtx))
 			{
-				string msg("Could not re-open existing MVStore ") ;
+				string msg("Could not re-open existing AfyDB ") ;
 				msg += inDir ;
 				TVERIFY2(0,msg.c_str()) ; // Unexpected
 				return NULL ;
@@ -396,11 +396,11 @@ MVStoreKernel::StoreCtx * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,co
 	return lStoreCtx ;
 }
 
-MVStoreKernel::StoreCtx * TestMultiStore::openStoreInDir(const char * inDir)
+AfyKernel::StoreCtx * TestMultiStore::openStoreInDir(const char * inDir)
 {
 	// Open existing store
 
-	MVStoreKernel::StoreCtx *lStoreCtx = NULL;
+	AfyKernel::StoreCtx *lStoreCtx = NULL;
 	StartupParameters const lSP(0, inDir, MAXFILES, NBUFFERS, DEFAULT_ASYNC_TIMEOUT, NULL, NULL, NULL /*password*/);  
 
 	while(1)

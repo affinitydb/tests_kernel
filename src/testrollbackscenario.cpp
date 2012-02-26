@@ -27,7 +27,7 @@ class testrollbackscenario : public ITest
 	protected:
 		static const unsigned int nProps = 10;
 		PropertyID mPropIDs[nProps];
-		MVStoreKernel::StoreCtx *mCtx;
+		AfyKernel::StoreCtx *mCtx;
 		ISession *mSession[NSESSION];
 		ClassID clsid,familyid;
 		MVTestsPortability::Mutex *lck;

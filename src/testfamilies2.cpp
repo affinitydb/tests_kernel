@@ -34,7 +34,7 @@ class TestFamilies2 : public ITest{
 		int mStartHistogram;
 		int mEndHistogram;
 		int mBoundaryHistogram;
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 
 		// For performance test of import
 #if TEST_IMPORT_PERF
@@ -110,14 +110,14 @@ struct CreatePINThreadInfo
 	PropertyID *mPropIds;
 	int mNumProps;
 	MVTestsPortability::Mutex * mLock;
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 	ITest* mTest ;
 };
 struct GetStreamThreadInfo
 {
 	std::vector<PID> mPIDs;
 	PropertyID mPropID;
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 };
 
 struct RunFamilyThreadInfo
@@ -127,7 +127,7 @@ struct RunFamilyThreadInfo
 	ClassID mFamilyID;
 	int mExpNumPINs;
 	PropertyID mPropID;
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 };
 THREAD_SIGNATURE TestFamilies2::createPINsAsync(void * pInfo)
 {

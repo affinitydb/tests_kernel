@@ -69,7 +69,7 @@ int TestCleanup::execute()
 	
 		while (NULL != (lNext = lR->next() ) )
 		{	++lTotalPinCount;
-			MVStore::PID lPid = lNext->getPID();
+			AfyDB::PID lPid = lNext->getPID();
 			RC lRC = RC_OK; 
 			
 			if( NULL != strstr(pMode.c_str(), "purge") )
@@ -79,7 +79,7 @@ int TestCleanup::execute()
 
 			if(RC_OK != lRC)
 			{
-				mLogger.out() << "ERROR while trying to delete pid:"<<std::hex<<((MVStore::PID) lNext->getPID()).pid<<", RC="<<lRC<<std::dec;
+				mLogger.out() << "ERROR while trying to delete pid:"<<std::hex<<((AfyDB::PID) lNext->getPID()).pid<<", RC="<<lRC<<std::dec;
 			}
 			else 
 				++lDeletedPinCount;

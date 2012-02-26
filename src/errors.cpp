@@ -17,7 +17,7 @@ static const int msgLevel[] = {100,4,3,2,1,0};
 
 void setReport(IReport *ir)
 {
-	if ((iReport=ir)!=NULL && reportNS==NULL) reportNS=ir->declareNamespace("mvstore");
+	if ((iReport=ir)!=NULL && reportNS==NULL) reportNS=ir->declareNamespace("affinity");
 }
 
 #ifdef WIN32
@@ -235,7 +235,7 @@ void MVTestsPortability::initReport()
 	if (iReport==NULL) {
 		facility = LOG_USER;
 		setlogmask(LOG_UPTO(LOG_DEBUG));
-		openlog("mvstore",LOG_PERROR,facility);
+		openlog("affinity",LOG_PERROR,facility);
 		fSyslogOpen=true;
 	}
 }

@@ -109,7 +109,7 @@ void PhotoScenario::registerProperties()
 	photo_count_id= getProp("photo_count");
 	album_count_id= getProp("album_count");
 	tagcount_id = getProp("tagcount");
-	mvstoreexTS_id = getProp("mvstoreex.timestamp");
+	mvstoreexTS_id = getProp("affinityex.timestamp");
 }
 
 PropertyID PhotoScenario::getProp( const char * inAppName )

@@ -33,7 +33,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "../../kernel/include/rc.h"
 		
 // Main mvstore API
-#include "../../kernel/include/mvstore.h"
+#include "../../kernel/include/affinity.h"
 
 // notification structures etc
 #include "../../kernel/include/startup.h"

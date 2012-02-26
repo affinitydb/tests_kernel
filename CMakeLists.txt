@@ -1,7 +1,7 @@
 IF(CMAKE_SYSTEM_NAME MATCHES Windows)
         cmake_minimum_required(VERSION 2.8)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES Windows)
-message ("Processing mvstore tests ")
+message ("Processing affinity tests ")
 project (tests)
 SET(TESTS_TARGET_NAME "tests")
 add_subdirectory(src)

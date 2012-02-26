@@ -8,7 +8,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "app.h"
 #include "md5stream.h"
 #include "mvauto.h"
-namespace MVStoreKernel { typedef uint8_t FileID; };
+namespace AfyKernel { typedef uint8_t FileID; };
 #include "../../kernel/include/storeio.h"
 
 #define STORE_DYNAMIC_LINK
@@ -1251,6 +1251,7 @@ int MVTUtil::executeProcess(
 				cout << "cwd " << getcwd(cwd, 128) << endl;
 				return 1;	
 			}
+			cout << " I think I'll never see this... \n";
 			lAft = getTimeInMs(); getTimestamp(lAftTS);
 			if ( outTimeTaken ) { *outTimeTaken = lAft-lBef; }
 			if ( outTS ) { *outTS = lAftTS - lBefTS; }
@@ -1283,7 +1284,10 @@ int MVTUtil::executeProcess(
 				lAft = getTimeInMs(); getTimestamp(lAftTS);			
 				if ( outTimeTaken ) { *outTimeTaken = lAft-lBef; }
 				if ( outTS ) { *outTS = lAftTS - lBefTS; }
+				if(WIFSIGNALED(lExitCode))
+					cout << "By signal:" << WTERMSIG(lExitCode) << endl;
 			}				
+			cout << " Got exit code: " << lExitCode << endl;				
 			return lExitCode;
 		}
 	#endif
@@ -1612,7 +1616,7 @@ ClassID MVTUtil::createUniqueClass(ISession* inS, const char* inPrefix, IStmt* i
 	return clsid;
 }
 
-//Encoding fucntions. adapted from MVStore::utils.cpp and testosstringperfromance
+//Encoding fucntions. adapted from AfyDB::utils.cpp and testosstringperfromance
 
 /*
  * There is still open question within implementation below: 
@@ -1848,18 +1852,20 @@ void MVTUtil::backupStoreFiles(
 	}
 	lCmd = "/C del " ;
 	lCmd += lDestDir ;
-	lCmd += "\\" MVSTOREPREFIX "*.* " ;
+	lCmd += "\\" STOREPREFIX "*.* " ;
+	lCmd += lDestDir ;
+	lCmd += "\\" LOGPREFIX "*.* " ;
 	MVTUtil::executeProcess("cmd.exe", lCmd.c_str());
 
 	lCmd = "/C copy /Y " ;
 	lCmd += lDir ;
-	lCmd += "\\" MVSTOREPREFIX "*" DATAFILESUFFIX " " ;
+	lCmd += "\\" STOREPREFIX "*" DATAFILESUFFIX " " ;
 	lCmd += lDestDir ;
 	MVTUtil::executeProcess("cmd.exe", lCmd.c_str());
 
 	lCmd = "/C copy /Y " ;
 	lCmd += lDir ;
-	lCmd += "\\" MVSTOREPREFIX "*" LOGFILESUFFIX " " ;
+	lCmd += "\\" LOGPREFIX "*" LOGFILESUFFIX " " ;
 	lCmd += lDestDir ;
 	MVTUtil::executeProcess("cmd.exe", lCmd.c_str());
 
@@ -1884,7 +1890,7 @@ void MVTUtil::backupStoreFiles(
 
 	lCmd = "bash -c \"cp " ;
 	lCmd += lDir ;
-	lCmd += "/" MVSTOREPREFIX "*" DATAFILESUFFIX " " ;
+	lCmd += "/" STOREPREFIX "*" DATAFILESUFFIX " " ;
 	lCmd += lDestDir ;
 	lCmd += "\"" ;
 	if (-1 == system(lCmd.c_str()))
@@ -1892,7 +1898,7 @@ void MVTUtil::backupStoreFiles(
 
 	lCmd = "bash -c \"cp " ;
 	lCmd += lDir ;
-	lCmd += "/" MVSTOREPREFIX "*" LOGFILESUFFIX " " ;
+	lCmd += "/" STOREPREFIX "*" LOGFILESUFFIX " " ;
 	lCmd += lDestDir ;
 	lCmd += "\"" ;
 	if (-1 == system(lCmd.c_str()))
@@ -1935,10 +1941,10 @@ bool MVTUtil::deleteStoreFiles(const char* inDir)
 	}
 
 	string pathDatFile = lDir ;
-	pathDatFile += MVSTOREPREFIX DATAFILESUFFIX ;
+	pathDatFile += STOREPREFIX DATAFILESUFFIX ;
 
 	#ifdef WIN32
-		//Note: this avoids deleting MVStore*.dll!
+		//Note: this avoids deleting AfyDB*.dll!
 		if ( INVALID_FILE_ATTRIBUTES != ::GetFileAttributes(pathDatFile.c_str()) )
 		{
 			bRetVal = 0 != ::DeleteFile(pathDatFile.c_str());
@@ -1958,10 +1964,10 @@ bool MVTUtil::deleteStoreFiles(const char* inDir)
 			// Also any log files (left if store crashed)
 			lCmd = "/C if EXIST " ;
 			lCmd += lDir ;
-			lCmd += "MVStore*.mv*"; // Catches LOGFILESUFFIX, but also s3io files like pirmap, piwmap
+			lCmd += "AfyDB*.mv*"; // Catches LOGFILESUFFIX, but also s3io files like pirmap, piwmap
 			lCmd += " ( del " ;
 			lCmd += lDir ;
-			lCmd += "MVStore*.mv*";
+			lCmd += "AfyDB*.mv*";
 			lCmd += " )" ;
 			MVTUtil::executeProcess("cmd.exe", lCmd.c_str());
 
@@ -1993,7 +1999,7 @@ bool MVTUtil::deleteStoreFiles(const char* inDir)
 			// -f means silent if file not present
 			lCmd = "bash -c \"rm -f " ;
 			lCmd += lDir ;
-			lCmd += "MVStore*.mv*"; // Catches LOGFILESUFFIX, but also s3io files like pirmap, piwmap
+			lCmd += "AfyDB*.mv*"; // Catches LOGFILESUFFIX, but also s3io files like pirmap, piwmap
 			lCmd += "\"" ;
 			if (-1 == system(lCmd.c_str()))
 			  { assert(false); }
@@ -2019,7 +2025,7 @@ bool MVTUtil::deleteStore(const char * inIOInit, const char * inStoreDir, const 
 #ifdef Darwin        
         string pathDat = inStoreDir ;
         pathDat += "/" ;
-        string rm = "rm " +  pathDat + "mv.store; rm -rf " + pathDat + "*.txlog";
+        string rm = "rm " +  pathDat + "affinity.db; rm -rf " + pathDat + "*.txlog";
         
 	//int ersh = system( "rm mv.store; rm -rf *.txlog;");
 	int ersh = system( rm.c_str());
@@ -2039,7 +2045,7 @@ bool MVTUtil::deleteStore(const char * inIOInit, const char * inStoreDir, const 
 	pathDat += "/" ;
 #endif
 
-	string datFile = pathDat + MVSTOREPREFIX DATAFILESUFFIX ;
+	string datFile = pathDat + STOREPREFIX DATAFILESUFFIX ;
 
 	RC rc = pStoreIO->deleteFile(datFile.c_str());
 	if ( rc != RC_OK && rc != RC_NOTFOUND ) return false;
@@ -2058,9 +2064,9 @@ bool MVTUtil::deleteStore(const char * inIOInit, const char * inStoreDir, const 
 
 	// This files should be relatively harmless but probably safer to delete them
 	// if they are present
-	string s3iofile = pathDat + MVSTOREPREFIX "pimap";
+	string s3iofile = pathDat + STOREPREFIX "afmap";
 	pStoreIO->deleteFile(s3iofile.c_str());
-	s3iofile = pathDat + MVSTOREPREFIX "piwmap";
+	s3iofile = pathDat + STOREPREFIX "afwmap";
 	pStoreIO->deleteFile(s3iofile.c_str());
 
 	removeReplicationFiles(pathDat.c_str());

@@ -15,7 +15,7 @@ class TestProps;
 
 struct ThreadInfoProps
 {	
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 	unsigned int mSeed;
 	TestProps * pTest;
 	MVTestsPortability::Mutex *lock;
@@ -32,7 +32,7 @@ static const int sNumPropInd = sNumProps-1; //max index within array, counting f
 // Publish this test.
 class TestProps : public ITest
 {
-		MVStoreKernel::StoreCtx *mStoreCtx;		
+		AfyKernel::StoreCtx *mStoreCtx;		
 	public:
 		TEST_DECLARE(TestProps);
 		virtual char const * getName() const { return "testprops"; }
@@ -48,7 +48,7 @@ class TestProps : public ITest
                 
         RC addPINTag(IPIN *ppin);
 		void genValue(const IPIN * const *PINs,int nPINs,Value& val, PropertyID pid=STORE_INVALID_PROPID, bool fCElt=false, ISession *pSession = NULL);
-		virtual bool  mapURIs(MVStoreKernel::StoreCtx *);
+		virtual bool  mapURIs(AfyKernel::StoreCtx *);
 		virtual bool  removePins(); 
 	public:
 		PropertyID mPropIDs[sNumProps];      //properties array, index starts with 0; 
@@ -94,7 +94,7 @@ RC TestProps::addPINTag(IPIN *ppin)
  * Be noted, that the last property is reserved for tagging each pin, in order to delete them all  at 
  * the end of the test...  
  */
-bool TestProps::mapURIs(MVStoreKernel::StoreCtx * pctx)
+bool TestProps::mapURIs(AfyKernel::StoreCtx * pctx)
 {
 	ISession *ses = MVTApp::startSession(pctx);
     

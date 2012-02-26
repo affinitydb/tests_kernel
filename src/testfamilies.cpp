@@ -22,7 +22,7 @@ class TestFamilies : public ITest{
 		long volatile mFinalResult; // thread will set non-zero if failure
 		MVTestsPortability::Mutex mLock; // REVIEW: not really necessary in its current usage
 		clock_t mTimeTaken;
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 	public:
 		TEST_DECLARE(TestFamilies);
 		virtual char const * getName() const { return "testfamilies"; }

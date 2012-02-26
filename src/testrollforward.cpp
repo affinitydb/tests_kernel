@@ -102,7 +102,7 @@ void TestRollforward::doTest( bool bFromScratch )
 #ifdef WIN32
 	lCmd = "/C del " ;
 	lCmd += MVTApp::Suite().mDir ;
-	lCmd += "\\" MVSTOREPREFIX DATAFILESUFFIX " " ;
+	lCmd += "\\" STOREPREFIX DATAFILESUFFIX " " ;
 	MVTUtil::executeProcess("cmd.exe", lCmd.c_str());
 
 	if ( !bFromScratch )
@@ -110,14 +110,14 @@ void TestRollforward::doTest( bool bFromScratch )
 		// Restore the dat file that contained one pin
 		lCmd = "/C copy /Y " ;
 		lCmd += backupLocation ;
-		lCmd += "\\" MVSTOREPREFIX DATAFILESUFFIX " " ;
+		lCmd += "\\" STOREPREFIX DATAFILESUFFIX " " ;
 		lCmd += MVTApp::Suite().mDir ;
 		MVTUtil::executeProcess("cmd.exe", lCmd.c_str());
 	}
 #else
 	lCmd = "bash -c \"rm " ;
 	lCmd += MVTApp::Suite().mDir ;
-	lCmd += "/" MVSTOREPREFIX DATAFILESUFFIX " " ;
+	lCmd += "/" STOREPREFIX DATAFILESUFFIX " " ;
 	lCmd += "\"" ;
 	TVERIFY(-1 != system(lCmd.c_str()));
 
@@ -125,7 +125,7 @@ void TestRollforward::doTest( bool bFromScratch )
 	{
 		lCmd = "bash -c \"cp " ;
 		lCmd += backupLocation ;
-		lCmd += "/" MVSTOREPREFIX "*" DATAFILESUFFIX " " ;
+		lCmd += "/" STOREPREFIX "*" DATAFILESUFFIX " " ;
 		lCmd += MVTApp::Suite().mDir ;
 		lCmd += "\"" ;
 		TVERIFY(-1 != system(lCmd.c_str()));

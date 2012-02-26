@@ -387,7 +387,7 @@ public:
 
 			if ( m_isstring )
 			{
-				if ( l_driver->setParam( m_symbol, m_value, false ) != MVStoreRC::RC_OK )
+				if ( l_driver->setParam( m_symbol, m_value, false ) != AfyRC::RC_OK )
 				{
 					error( "driver reported bad param" );
 					return RC_PARAM;

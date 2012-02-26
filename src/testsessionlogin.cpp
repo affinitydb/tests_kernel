@@ -21,7 +21,7 @@ class TestSessionLogin : public ITest
 		std::vector<bool> mMayInsert;
 		URIMap lPM[4];		
 		std::vector<PID> mPID;
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 
 		TEST_DECLARE(TestSessionLogin);
 		virtual char const * getName() const { return "testsessionlogin"; }

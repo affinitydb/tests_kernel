@@ -104,7 +104,7 @@ public:
 #ifdef WIN32
 		// Todo: get number of bytes, e.g. from store file itself
 		WIN32_FILE_ATTRIBUTE_DATA lData;
-		::GetFileAttributesEx( MVSTOREPREFIX DATAFILESUFFIX, GetFileExInfoStandard, &lData );
+		::GetFileAttributesEx( STOREPREFIX DATAFILESUFFIX, GetFileExInfoStandard, &lData );
 
 		return lData.nFileSizeLow + ((uint64_t)lData.nFileSizeHigh<<32);
 #else
@@ -298,7 +298,7 @@ public:
 	void modifyPINValues()
 	{
 		// Perform updates to the PIN values (which will adjust the index)
-		*mOut << "MVStore size before value modifications: " << getStoreFileSize() << endl;
+		*mOut << "AfyDB size before value modifications: " << getStoreFileSize() << endl;
 		startTimer(); 
 		int cntModifsRemaining = CNT_VALUE_MODIFICATIONS;
 
@@ -353,7 +353,7 @@ public:
 
 	void addRemovePINs()
 	{
-		*mOut << "MVStore size before add/remove: " << getStoreFileSize() << endl;
+		*mOut << "AfyDB size before add/remove: " << getStoreFileSize() << endl;
 		startTimer();
 
 		int cntRemoveRemaining = CNT_PIN_REMOVE;

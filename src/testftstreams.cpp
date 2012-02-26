@@ -27,7 +27,7 @@ using namespace std;
 // Publish this test.
 class TestFTStreams : public ITest
 {
-		MVStoreKernel::StoreCtx *mStoreCtx;
+		AfyKernel::StoreCtx *mStoreCtx;
 	public:
 		TEST_DECLARE(TestFTStreams);
 		virtual char const * getName() const { return "testftstreams"; }
@@ -45,7 +45,7 @@ class TestFTStreams : public ITest
 		int getFTMatches(ISession *session, PropertyID prop, const char *keyword, vector<PID>& outMatches);
 		void purgeTestPins( ISession* session, PropertyID prop ) ;
 };
-class testStream : public MVStore::IStream
+class testStream : public AfyDB::IStream
 {
 	// testStream builds random streams of characters with a specific 
 	// search string embedded somewhere in the characters.  The challenge is for the FT search to find the

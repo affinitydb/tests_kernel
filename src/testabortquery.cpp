@@ -63,7 +63,7 @@ class TestAbortQuery : public ITest
 		void resetAbortQ();
 		
 		ISession * mSession ;
-		MVStoreKernel::StoreCtx *mStoreCtx;	
+		AfyKernel::StoreCtx *mStoreCtx;	
 		void quickTest();
 };
 TEST_IMPLEMENT(TestAbortQuery, TestLogger::kDStdOut);

@@ -55,8 +55,8 @@ start1:
 	{
 		//first time run this test...
 		
-		MVStore::PropertyID prop;
-		MVStore::URIMap pmap;
+		AfyDB::PropertyID prop;
+		AfyDB::URIMap pmap;
 	  
 		pmap.URI = "TestClassification1.PROP1";
 		pmap.uid = STORE_INVALID_PROPID;

@@ -23,7 +23,7 @@ class TestBasic : public ITest
 		TEST_DECLARE(TestBasic);
 		virtual char const * getName() const { return "testbasic"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "Basic MVStore Test"; }
+		virtual char const * getDescription() const { return "Basic AfyDB Test"; }
 		virtual bool isPerformingFullScanQueries() const { return true; }
 		virtual int execute();
 		virtual void destroy() { delete this; }
@@ -588,7 +588,7 @@ void TestBasic::RecordChild( char * inMother, char * inChild )
 	}
 	else
 	{
-		// Because we specify OP_ADD, MVStore will automatically
+		// Because we specify OP_ADD, AfyDB will automatically
 		// insert this item to the existing collection, we don't need to manually
 		// modify the structure
 		TVERIFYRC( pMother->modify( &childElem, 1 ) ) ;

@@ -26,7 +26,7 @@ class TestNoCaseFamily : public ITest
 		void testNoCaseMeta(ISession *session);
 		void testNoCasePins(ISession *session);
 		void testNoCaseQueries(ISession *session);
-		MVStore::Value testNoCaseString(Tstring &str,int x, int op);
+		AfyDB::Value testNoCaseString(Tstring &str,int x, int op);
 };
 TEST_IMPLEMENT(TestNoCaseFamily, TestLogger::kDStdOut);
 
@@ -187,7 +187,7 @@ void TestNoCaseFamily::testNoCaseQueries(ISession *session)
 	mLogger.out()<<"Done"<<std::endl;
 }
 
-MVStore::Value TestNoCaseFamily::testNoCaseString(Tstring &str,int x,int op)
+AfyDB::Value TestNoCaseFamily::testNoCaseString(Tstring &str,int x,int op)
 {
 	Value args;
 	size_t i,y;

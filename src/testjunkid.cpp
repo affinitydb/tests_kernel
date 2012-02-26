@@ -52,7 +52,7 @@ void TestJunkID::doGetPIN()
 	{
 		PID lPID; INITLOCALPID(lPID);
 		lPID.pid = ( uint64_t(mSession->getLocalStoreID()) << STOREID_SHIFT ) + ( lPageID << PAGE_SHIFT ) + i ; 
-		if(!MVTApp::isRunningSmokeTest()) { IPIN *lPIN = mSession->getPIN(lPID);  TVERIFY(lPIN == NULL); }
+		if(!MVTApp::isRunningSmokeTest()) {lPID.pid+=1; IPIN *lPIN = mSession->getPIN(lPID);  TVERIFY(lPIN == NULL); }
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
 		unsigned char lVar = lQ->addVariable();
 		{

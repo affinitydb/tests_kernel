@@ -136,10 +136,10 @@ class TestStreamsReplCheck : public IStoreNotification
 {
 	protected:
 		ITest * mTest;
-		MVStore::IStream * mCurInputStream;
+		AfyDB::IStream * mCurInputStream;
 	public:
 		TestStreamsReplCheck(ITest * pTest) : mTest(pTest), mCurInputStream(NULL) {}
-		void setCurInputStream(MVStore::IStream * pStream) { mCurInputStream = pStream; }
+		void setCurInputStream(AfyDB::IStream * pStream) { mCurInputStream = pStream; }
 		virtual	void notify(NotificationEvent *events,unsigned nEvents,uint64_t txid) {}
 		virtual	void replicationNotify(NotificationEvent *events,unsigned nEvents,uint64_t txid)
 		{

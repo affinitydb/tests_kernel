@@ -145,7 +145,7 @@ void TestJoinExcept::runJoinQuery(ClassID pLeftCLSID, ClassID pRightCLSID, QUERY
 {
 	// storejoin /pin[pin is class()] as A, [pin is family()] as B were A except|intersects B
 	//mLogger.out() << ">>> " << std::endl;
-	assert(pJoinOp != QRY_JOIN);	
+	assert(pJoinOp != QRY_SEMIJOIN && pJoinOp != QRY_JOIN);	
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());			
 		ClassSpec lCS[2]; 
@@ -264,14 +264,14 @@ void TestJoinExcept::doTest()
 	createMeta();
 	
 	//mLogger.out() << "Case #1 : " << std::endl;
-	runJoinQuery(mSmallAlbumPID, mPostsPropID, mFamilyID, QRY_JOIN, sNumExceptPINs);
-	runJoinQuery(mSmallAlbumPID, mPostsPropID, mClassID, QRY_JOIN, sNumExceptPINs);
+	runJoinQuery(mSmallAlbumPID, mPostsPropID, mFamilyID, QRY_SEMIJOIN, sNumExceptPINs);
+	runJoinQuery(mSmallAlbumPID, mPostsPropID, mClassID, QRY_SEMIJOIN, sNumExceptPINs);
 	runJoinQuery(mSmallAlbumPID, mPostsPropID, mFamilyID, QRY_EXCEPT, sNumExceptPINs);
 	runJoinQuery(mSmallAlbumPID, mPostsPropID, mFamilyID, QRY_EXCEPT, sNumExceptPINs);
 
 	//mLogger.out() << "Case #2 : " << std::endl;
-	runJoinQuery(mBigAlbumPID, mPostsPropID, mFamilyID, QRY_JOIN, sNumPINs);
-	runJoinQuery(mBigAlbumPID, mPostsPropID, mClassID, QRY_JOIN, sNumPINs);
+	runJoinQuery(mBigAlbumPID, mPostsPropID, mFamilyID, QRY_SEMIJOIN, sNumPINs);
+	runJoinQuery(mBigAlbumPID, mPostsPropID, mClassID, QRY_SEMIJOIN, sNumPINs);
 	runJoinQuery(mBigAlbumPID, mPostsPropID, mFamilyID, QRY_EXCEPT, 0);
 	runJoinQuery(mBigAlbumPID, mPostsPropID, mFamilyID, QRY_EXCEPT, 0);
 

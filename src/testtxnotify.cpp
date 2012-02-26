@@ -474,7 +474,7 @@ txNotify 20502 Commit
 // stolen and adapted from testtran.cpp
 struct DeadlockThreadInfo
 {
-	DeadlockThreadInfo( TestTxNotify * inCtxt, volatile long * inSyncPoint , MVStoreKernel::StoreCtx *pStoreCtx, int idx)
+	DeadlockThreadInfo( TestTxNotify * inCtxt, volatile long * inSyncPoint , AfyKernel::StoreCtx *pStoreCtx, int idx)
 	{
 		ctxt = inCtxt ;
 		syncPoint = inSyncPoint ;
@@ -489,7 +489,7 @@ struct DeadlockThreadInfo
 	PID pids[2] ;    // Two pids that will get the threads into deadlock trouble
 	TestTxNotify * ctxt ;  // TestTransactions object
 	volatile long * syncPoint ;
-	MVStoreKernel::StoreCtx *mStoreCtx;
+	AfyKernel::StoreCtx *mStoreCtx;
 	int index ;  // Gives a readable name to the thread
 	bool bLoser; // Whether this thread failed
 	PID unrelatedPID; // An unrelated PIN that doesn't contribute to deadlock

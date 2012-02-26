@@ -6,7 +6,7 @@ set (CMAKE_BUILD_TYPE "Debug")
 #SET (CMAKE_BUILD_TYPE "Release")
 endif(NOT CMAKE_BUILD_TYPE)
 
-message ( "Processing mvstore tests ...")
+message ( "Processing affinity tests ...")
 message ("System: ${CMAKE_SYSTEM}")
 message ("CPU type: ${CMAKE_SYSTEM_PROCESSOR}")
 message ( "CMAKE_BUILD_TYPE: " ${CMAKE_BUILD_TYPE} )
@@ -26,11 +26,11 @@ ELSE (${CPUTYPE} MATCHES "86")
 	message ("CPU: " ${CPUTYPE} )
 ENDIF(${CPUTYPE} MATCHES "86")
 
-#specifying location of mvstore lib
+#specifying location of affinity lib
 #for now, it is just hard coded in, assuming that both project are located side by side... 
-SET(MVSTORE_PRJ "${PROJECT_SOURCE_DIR}/../kernel")
+SET(AFFINITY_PRJ "${PROJECT_SOURCE_DIR}/../kernel")
 
-INCLUDE_DIRECTORIES(  "./" "${MVSTORE_PRJ}/include" )
+INCLUDE_DIRECTORIES(  "./" "${AFFINITY_PRJ}/include" )
 
 
 #setting the name of the output executable
@@ -45,7 +45,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES Windows)
 #	ADD_DEFINITIONS(-D_DEBUG)
 	ADD_DEFINITIONS(-D_WINDOWS)
 	ADD_DEFINITIONS(-D_USRDLL)
-	ADD_DEFINITIONS(-DMVSTORE_EXPORTS)
+	ADD_DEFINITIONS(-DAFFINITY_EXPORTS)
 	ADD_DEFINITIONS(-DMVCORE_PROJECT)
 	ADD_DEFINITIONS(-D_WINDLL)
 	ADD_DEFINITIONS(-D_MBCS)
@@ -133,9 +133,9 @@ FILE(GLOB TESTS_SRCS_C  "*.c")
 #source_group(src FILES ${KERNEL_SRCS} FILES ${KERNEL_SRCS_H} )
 
 ##link_directories(../../kernel/lib)
-link_directories(${MVSTORE_PRJ}/lib)
+link_directories(${AFFINITY_PRJ}/lib)
   
-#adding the build target - mvstore dynamic library...
+#adding the build target - affinity dynamic library...
 add_executable (${TESTS_TARGET_NAME}  ${TESTS_SRCS_H} ${TESTS_SRCS} ${TESTS_SRCS_C})
 
 #it is possible to have no source files the first time cmake is running... 
@@ -144,13 +144,13 @@ add_executable (${TESTS_TARGET_NAME}  ${TESTS_SRCS_H} ${TESTS_SRCS} ${TESTS_SRCS
 SET_TARGET_PROPERTIES(${TESTS_TARGET_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 IF(CMAKE_SYSTEM_NAME MATCHES Linux)
-target_link_libraries (${TESTS_TARGET_NAME} mvstore rt dl pthread)
+target_link_libraries (${TESTS_TARGET_NAME} affinity rt dl pthread)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES Linux)
 
 IF(CMAKE_SYSTEM_NAME MATCHES Windows)
-target_link_libraries (${TESTS_TARGET_NAME} mvstore)
+target_link_libraries (${TESTS_TARGET_NAME} affinity)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES Windows)
 
 IF(CMAKE_SYSTEM_NAME MATCHES Darwin)
-target_link_libraries (${TESTS_TARGET_NAME} mvstore)
+target_link_libraries (${TESTS_TARGET_NAME} affinity)
 ENDIF(CMAKE_SYSTEM_NAME MATCHES Darwin)

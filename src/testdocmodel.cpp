@@ -43,7 +43,7 @@ class TestDocModel : public ITest
 		TEST_DECLARE(TestDocModel);
 		virtual char const * getName() const { return "testdocmodel"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "Basic MVStore Test"; }
+		virtual char const * getDescription() const { return "Basic AfyDB Test"; }
 		
 		virtual int execute();
 		virtual void destroy() { delete this; }

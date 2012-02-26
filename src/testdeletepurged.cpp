@@ -30,22 +30,22 @@ int testdeletepurged::execute()
 	unsigned int const lOldMode = session->getInterfaceMode();
 	session->setInterfaceMode(lOldMode | ITF_REPLICATION);
 
-	MVStore::Value *lVal = (MVStore::Value *)session->alloc(2*sizeof(MVStore::Value));
+	AfyDB::Value *lVal = (AfyDB::Value *)session->alloc(2*sizeof(AfyDB::Value));
 	lVal[0].set(1);lVal[0].property=0;
 	lVal[1].set(2);lVal[1].property=1; 
 
-	MVStore::Value *lVal2 = (MVStore::Value *)session->alloc(2*sizeof(MVStore::Value));
+	AfyDB::Value *lVal2 = (AfyDB::Value *)session->alloc(2*sizeof(AfyDB::Value));
 	lVal2[0].set(1);lVal2[0].property=0;
 	lVal2[1].set(2);lVal2[1].property=1; 
 
 	unsigned int lMode = 0;
-	MVStore::PID lpid;
+	AfyDB::PID lpid;
 	lpid.pid = 0xe5940000000b0017LL; lpid.ident = STORE_OWNER;
 
-	MVStore::IPIN *lPin1 = session->createUncommittedPIN(lVal,2);
+	AfyDB::IPIN *lPin1 = session->createUncommittedPIN(lVal,2);
 
 	lMode = MODE_FORCE_EIDS | PIN_REPLICATED;
-	MVStore::IPIN *lPin2 = session->createUncommittedPIN(lVal2,2,lMode,&lpid);
+	AfyDB::IPIN *lPin2 = session->createUncommittedPIN(lVal2,2,lMode,&lpid);
 	
 	session->commitPINs(&lPin1,1,0);
 	session->commitPINs(&lPin2,1,lMode);
@@ -54,7 +54,7 @@ int testdeletepurged::execute()
 	RC rc =session->deletePINs(&lpid,1,MODE_PURGE);
 	rc = session->deletePINs(&lpid,1,MODE_PURGE);
 	TVERIFY(RC_OK!=rc);
-	MVStore::PID lpid1;
+	AfyDB::PID lpid1;
 	lpid1 = lPin2->getPID();
 	lPin2->destroy();
 	rc =session->deletePINs(&lpid1,1,MODE_PURGE); 

@@ -2125,7 +2125,7 @@ IExprTree * TestQueries::createCompExpr(ISession *session,unsigned var,int Op, i
 			val[0].setVarRef(0,*pids);
 			val[1].set(b);
 			break;
-		case VT_ENUM:
+		case VT_RESERVED1:
 		case VT_URIID:
 		case VT_IDENTITY:
 		default:
@@ -2446,7 +2446,7 @@ IExprTree * TestQueries::createConvExpr(ISession *session,unsigned var,int Op, i
 				case VT_CLASS:
 				case VT_PROPERTY:
 				case VT_IDENTITY:
-				case VT_ENUM:
+				case VT_RESERVED1:
 				case VT_REFIDPROP:
 				case VT_REFIDELT:
 				case VT_REFPROP:
@@ -2608,7 +2608,7 @@ IExprTree * TestQueries::createMinMaxExpr(ISession *session,unsigned var,int Op,
 					val[102].setDateTime(dt);
 					expr1 =  session->expr(ExprOp(Op),103,val);
 					break;		
-				case VT_ENUM:		
+				case VT_RESERVED1:		
 				default:
 					logResult("Datatype not supported",RC_OTHER);
 			}
@@ -2738,7 +2738,7 @@ IExprTree * TestQueries::createMinMaxExpr(ISession *session,unsigned var,int Op,
 					val[102].setDateTime(dt);
 					expr1 =  session->expr(ExprOp(Op),103,val);
 					break;		
-				case VT_ENUM:		
+				case VT_RESERVED1:		
 				default:
 					logResult("Datatype not supported",RC_OTHER);
 			}

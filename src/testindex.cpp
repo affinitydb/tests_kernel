@@ -14,9 +14,9 @@ class CStoreClass
 {
 	public:	
 		// Represent a single class in the store	
-		MVStore::ISession * mSession;
-		MVStore::IStmt* mClassQuery;
-		MVStore::ClassID mClassID;
+		AfyDB::ISession * mSession;
+		AfyDB::IStmt* mClassQuery;
+		AfyDB::ClassID mClassID;
 		std::string mClassName;
 		int mPinCnt; // To cache result if calculated
 		bool mFamily;
@@ -24,7 +24,7 @@ class CStoreClass
 		PropertyID mIndexedProp;
 		bool mbIsRange;
 
-		CStoreClass(MVStore::ISession* inSession)
+		CStoreClass(AfyDB::ISession* inSession)
 			: mSession(inSession)
 			, mClassQuery(NULL)
 			, mClassID(STORE_INVALID_CLASSID)
@@ -41,12 +41,12 @@ class CStoreClass
 			if ( mClassQuery ) { mClassQuery->destroy() ; } 
 			mSession = NULL ; // Not belonging to this object
 		}
-		MVStore::IStmt* getQueryUsingClass() const 
+		AfyDB::IStmt* getQueryUsingClass() const 
 		{
 			return ClassHelper::getQueryUsingClass(mSession, mClassID);
 		}
 
-		void init( const char * inClassName, MVStore::ClassID inClsid, MVStore::IStmt * inQuery ) 
+		void init( const char * inClassName, AfyDB::ClassID inClsid, AfyDB::IStmt * inQuery ) 
 		{
 			mClassName = inClassName ;
 			mClassID = inClsid ;
@@ -100,14 +100,14 @@ class CStoreClass
 class CStoreInfo
 {
 	private:
-		MVStore::ISession * mSession;
+		AfyDB::ISession * mSession;
 		#if 0
 			IStoreInspector * mStoreInspector;
 		#endif
 	
 	public:
 		std::vector<CStoreClass*> mClasses ;
-		CStoreInfo(MVStore::ISession * inSession)
+		CStoreInfo(AfyDB::ISession * inSession)
 			:mSession(inSession)
 			#if 0
 				,mStoreInspector(NULL)

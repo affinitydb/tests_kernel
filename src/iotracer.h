@@ -167,11 +167,11 @@ public:
 			}
 			else if( strstr(fname,DATAFILESUFFIX) != NULL) mDatFile=fid;
 			else {
-				const char * pJustFilename=strstr(fname,MVSTOREPREFIX);
+				const char * pJustFilename=strstr(fname,STOREPREFIX);
 				if (pJustFilename!=NULL){
 					char whichLogSeries ; // A,B....
 					ulong nLogFile = 0;
-					sscanf(pJustFilename,MVSTOREPREFIX"%c%08lX"LOGFILESUFFIX, &whichLogSeries, &nLogFile) ;
+					sscanf(pJustFilename,LOGPREFIX"%c%08lX"LOGFILESUFFIX, &whichLogSeries, &nLogFile) ;
 					mLogIndex[fid]=nLogFile;
 				}
 			}

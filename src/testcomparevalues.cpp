@@ -40,7 +40,7 @@ int TestCompareValues::execute()
 
 void TestCompareValues::doTest()
 {
-	MVStore::Value v1, v2;
+	AfyDB::Value v1, v2;
 
 	v1.set(1); v2.set(1);
 	TVERIFY(0==mSession->compareValues(v1,v2,true));
@@ -58,7 +58,7 @@ void TestCompareValues::doTest()
 	TVERIFY(0!=mSession->compareValues(v1,v2,true));
 	TVERIFY(0!=mSession->compareValues(v2,v1,true));
 
-	MVStore::PID pid;
+	AfyDB::PID pid;
 	TVERIFYRC(mSession->createPIN(pid,NULL,0));
 	v1.set(pid); v2.set(pid);
 	TVERIFY(0==mSession->compareValues(v1,v2,true));

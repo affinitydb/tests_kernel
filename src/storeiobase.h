@@ -7,7 +7,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #ifndef _STOREIOBASE_H
 #define _STOREIOBASE_H
 
-namespace MVStoreKernel { typedef uint8_t FileID; };
+namespace AfyKernel { typedef uint8_t FileID; };
 #include "../../kernel/include/storeio.h"
 
 
@@ -82,7 +82,6 @@ public:
 		return mIO->listIO(mode,nent,pcbs);
 	}
 
-	bool	asyncIOEnabled() const { return mIO->asyncIOEnabled(); }
 	RC deleteFile(const char *fname) { return mIO->deleteFile(fname); }
 	void deleteLogFiles(ulong maxFile,const char *lDir,bool fArchived) 	{ return mIO->deleteLogFiles(maxFile,lDir,fArchived); }
 	void destroy() { 
