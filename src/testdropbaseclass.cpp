@@ -17,6 +17,7 @@ class TestDropBaseClass:  public ITest
 		virtual char const * getName() const { return "testdropbaseclass"; }
 		virtual char const * getHelp() const { return ""; }
 		virtual char const * getDescription() const { return " test to check working of derived class if base class is dropped"; }
+		virtual bool includeInSmokeTest(char const *& pReason) const { return false; }
 		virtual void destroy() { delete this; }
 		virtual int execute();		
 	private:

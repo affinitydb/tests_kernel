@@ -16,6 +16,7 @@ class TestReadProto : public ITest
 		virtual char const * getName() const { return "testreadproto"; }
 		virtual char const * getHelp() const { return "args(optional): --fname={name of input file}, --inbufsize={streaming buffer size}"; }
 		virtual char const * getDescription() const { return "Basic test of Google Protocol Buffers streaming-in interface"; }
+		virtual bool includeInSmokeTest(char const *& pReason) const { return false; }
 		virtual int execute();
 		virtual void destroy() { delete this; }
 

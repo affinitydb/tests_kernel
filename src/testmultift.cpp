@@ -282,12 +282,13 @@ class TestMultiFT : public ITest
 		PropertyID mPropIds[mNumProps];
 		static const int mNumPINs = 200;	
 		ISession *mSession;
-	public:		
+	public:
 		TEST_DECLARE(TestMultiFT);
 		virtual char const * getName() const { return "testmultift"; }
 		virtual char const * getHelp() const { return ""; }
 		virtual char const * getDescription() const { return "Tests ANDing of multiple FT conditions in query"; }
-		
+		virtual bool includeInSmokeTest(char const *& pReason) const { return false; }
+
 		virtual int execute();
 		virtual void destroy() { delete this; }
 	protected:
