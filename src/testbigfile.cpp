@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -29,7 +29,7 @@ TEST_IMPLEMENT(TestBigFile, TestLogger::kDStdOut);
 // Implement this test.
 #define	HUGE_STREAM_SIZE	10000000000LL
 
-class HugeStream : public AfyDB::IStream
+class HugeStream : public Afy::IStream
 {
 	protected:
 		uint64_t mLength;
@@ -54,8 +54,8 @@ int TestBigFile::execute()
 		HugeStream hs; PID id;		
 		PropertyID lPropIDs[1];	
 		MVTApp::mapURIs(session,"TestBigFile.execute",1,lPropIDs);
-		Value v; v.set((AfyDB::IStream*)&hs); v.setPropID(lPropIDs[0]);
-		session->createPIN(id,&v,1,MODE_COPY_VALUES);
+		Value v; v.set((Afy::IStream*)&hs); v.setPropID(lPropIDs[0]);
+		session->createPINAndCommit(id,&v,1,MODE_COPY_VALUES);
 		session->terminate();
 		MVTApp::stopStore();
 	}

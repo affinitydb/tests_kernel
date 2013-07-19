@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -41,7 +41,7 @@ class TestLeftJoin : public ITest
 		void createMeta();
 		void createData();
 		ClassID getClassID(int pClassIndex);
-		void executeQuery(ClassSpec *pLHSCS, ClassSpec *pRHSCS, IExprTree *pET = NULL, unsigned pMode = 0);
+		void executeQuery(SourceSpec *pLHSCS, SourceSpec *pRHSCS, IExprTree *pET = NULL, unsigned pMode = 0);
 	protected:
 		void testLeftJoinEQ();
 		void testLeftJoinIN();
@@ -64,16 +64,16 @@ void TestLeftJoin::testLeftJoinEQ()
 	Value lLHSValue[1]; 
 	lLHSValue[0].set(mLHSStr.c_str());
 	
-	ClassSpec lLHSCS[1];
-	lLHSCS[0].classID = getClassID(0);
+	SourceSpec lLHSCS[1];
+	lLHSCS[0].objectID = getClassID(0);
 	lLHSCS[0].nParams = 1;
 	lLHSCS[0].params = lLHSValue;		
 
 	Value lRHSValue[1]; 
 	lRHSValue[0].set(sRHSStr[0]);
 	
-	ClassSpec lRHSCS[1];
-	lRHSCS[0].classID = getClassID(1);
+	SourceSpec lRHSCS[1];
+	lRHSCS[0].objectID = getClassID(1);
 	lRHSCS[0].nParams = 1;
 	lRHSCS[0].params = lRHSValue;
 	
@@ -88,7 +88,7 @@ void TestLeftJoin::testLeftJoinEQ()
 
 	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFT_OUTER_JOIN);
 	uint64_t lCount = 0;
-	TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
+	TVERIFYRC(lQ->count(lCount, 0, 0, ~0));
 	TVERIFY(lCount == (uint64_t)mLHSPINs.size());
 	lQ->destroy();
 }
@@ -97,8 +97,8 @@ void TestLeftJoin::testLeftJoinIN()
 {
 	Value lVal[2]; lVal[0].set(mLHSStr.c_str()); lVal[1].set(mLHSStr.c_str());
 	Value lLHSVal[1]; lLHSVal[0].setRange(lVal);
-	ClassSpec lLHSCS[1];
-	lLHSCS[0].classID = getClassID(2);
+	SourceSpec lLHSCS[1];
+	lLHSCS[0].objectID = getClassID(2);
 	lLHSCS[0].nParams = 1;
 	lLHSCS[0].params = lLHSVal;
 
@@ -106,8 +106,8 @@ void TestLeftJoin::testLeftJoinIN()
 	char lEnd[2]; lEnd[0] = (char)255; lEnd[1] = '\0';
 	Value lVal2[2]; lVal2[0].set(lStart); lVal2[1].set(lEnd);
 	Value lRHSVal[1]; lRHSVal[0].setRange(lVal2);
-	ClassSpec lRHSCS[1];
-	lRHSCS[0].classID = getClassID(3);
+	SourceSpec lRHSCS[1];
+	lRHSCS[0].objectID = getClassID(3);
 	lRHSCS[0].nParams = 1;
 	lRHSCS[0].params = lRHSVal;
 
@@ -120,7 +120,7 @@ void TestLeftJoin::testLeftJoinIN()
 	CmvautoPtr<IExprTree> lJoinET(mSession->expr(OP_EQ,2,lV));
 	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFT_OUTER_JOIN);
 	uint64_t lCount = 0;
-	TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
+	TVERIFYRC(lQ->count(lCount, 0, 0, ~0));
 	TVERIFY((int)lCount == mNumRHSPINs);
 	lQ->destroy();
 }
@@ -391,7 +391,7 @@ int TestLeftJoin::execute()
 	return lSuccess ? 0 : 1;
 }
 
-void TestLeftJoin::executeQuery(ClassSpec *pLHSCS, ClassSpec *pRHSCS, IExprTree *pET, unsigned pMode)
+void TestLeftJoin::executeQuery(SourceSpec *pLHSCS, SourceSpec *pRHSCS, IExprTree *pET, unsigned pMode)
 {
 	IStmt * lQ = mSession->createStmt();		
 	unsigned char lVar1 = lQ->addVariable(pLHSCS, 1);
@@ -403,13 +403,13 @@ void TestLeftJoin::executeQuery(ClassSpec *pLHSCS, ClassSpec *pRHSCS, IExprTree 
 
 	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFT_OUTER_JOIN);
 	uint64_t lCount = 0;
-	TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
+	TVERIFYRC(lQ->count(lCount, 0, 0, ~0));
 	TVERIFY(lCount == (uint64_t)mLHSPINs.size());
 
 	OrderSeg lOrder = {NULL,mRHSPropID,ORD_DESC,0,0};
 	lQ->setOrder(&lOrder, 1); 
-	AfyDB::ICursor *lR = NULL;
-	lQ->execute(&lR, NULL, 0, ~0, 0, pMode|MODE_VERBOSE);
+	Afy::ICursor *lR = NULL;
+	lQ->execute(&lR, NULL, 0, ~0, 0, pMode);
 	int lResultCount = 0;
 	if(lR)
 	{		

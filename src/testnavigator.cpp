@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -35,7 +35,7 @@ void testnavigator::createPINs()
 	mLogger.out()<<"Creating "<<nPINs<<"PINs(with collection)"<<std::endl;
 	for(int i=0;i<nPINs;i++)
 	{
-		IPIN *pin = mSession->createUncommittedPIN();
+		IPIN *pin = mSession->createPIN();
 		Value val;
 		Tstring str;
 		for(int k=lPropIDs[0];k<nProps;k++)

@@ -1,25 +1,26 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
 #include "app.h"
 
 // Publish this test.
-class TestUncommittedPins : public ITest
+class TestBatch : public ITest
 {
 	public:
-		TEST_DECLARE(TestUncommittedPins);
-		virtual char const * getName() const { return "testuncommittedpins"; }
+		TEST_DECLARE(TestBatch);
+		virtual char const * getName() const { return "testbatch"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "bashes on uncommitted pins"; }
+		virtual char const * getDescription() const { return "bashes on pin batch insert"; }
 		virtual bool includeInPerfTest() const { return true; }
-		
 		virtual int execute();
 		virtual void destroy() { delete this; }
+	protected:
+		void createBatchPIN(IBatch & pBatch, PropertyID const * pPropIDs, int pNumProps);
 };
-TEST_IMPLEMENT(TestUncommittedPins, TestLogger::kDStdOut);
+TEST_IMPLEMENT(TestBatch, TestLogger::kDStdOut);
 
 // Implement this test.
 static bool isExpectedRelationship(Value const & pV, PID const & pPIDTo)
@@ -50,10 +51,10 @@ static bool isExpectedRelationship(Value const & pV, PID const & pPIDTo)
 	return false;
 }
 
-struct Relationship { IPIN * mFromPtr, * mToPtr; PID mTo; PropertyID mPropID; };
+struct Relationship { int mFromIdx, mToIdx; IPIN * mToPtr; PID mTo; PropertyID mPropID; Relationship() : mFromIdx(-1), mToIdx(-1), mToPtr(NULL), mPropID(STORE_INVALID_URIID) { INITLOCALPID(mTo); LOCALPID(mTo) = STORE_INVALID_PID; } };
 struct CommittedRelationship { PID mFrom, mTo; PropertyID mPropID; };
 
-int TestUncommittedPins::execute()
+int TestBatch::execute()
 {
 	bool lSuccess = true;
 	if (MVTApp::startStore())
@@ -61,8 +62,9 @@ int TestUncommittedPins::execute()
 		ISession * const lSession =	MVTApp::startSession();
 		static const int sNumProps = 3;
 		PropertyID lPropIDs[sNumProps];// = {1000, 1001, 1002};
-		MVTApp::mapURIs(lSession,"TestUncommittedPins.prop",sNumProps, lPropIDs);
+		MVTApp::mapURIs(lSession,"TestBatch.prop",sNumProps, lPropIDs);
 		int const lNumProps = sizeof(lPropIDs) / sizeof(lPropIDs[0]);
+		RC lRC;
 
 		#define HOLD_RELATIONSHIPS_BY_PID 1
 		#if HOLD_RELATIONSHIPS_BY_PID
@@ -75,21 +77,22 @@ int TestUncommittedPins::execute()
 		std::set<uint64_t> lGlobalBucketS;
 		
 		// Create increasingly large clouds of inter-related pins.
-		int i, j, k, lCloudSize;
+		int i, j, lCloudSize;
 		for (i = 0, lCloudSize = 10; i < 50; i++, lCloudSize += 10)
 		{
 			int lNewRels = 0;
-			std::vector<IPIN *> lLocalBucket;
+			int lLocalBucketSize = 0;
+			IBatch * lBatch = lSession->createBatch();
 			#if HOLD_RELATIONSHIPS_BY_PID
 				std::vector<Relationship> lTmpRelationships;
 			#endif
 
-			#define TEST_FORWARD_REFERENCES 1
+			#define TEST_FORWARD_REFERENCES 0
 			#if TEST_FORWARD_REFERENCES
 			for (j = 0; j < lCloudSize; j++)
 			{
-				IPIN * const lPIN = lSession->createUncommittedPIN();
-				lLocalBucket.push_back(lPIN);
+				createBatchPIN(*lBatch, lPropIDs, lNumProps);
+				lLocalBucketSize++;
 			}
 			#endif
 
@@ -97,65 +100,46 @@ int TestUncommittedPins::execute()
 			for (j = 0; j < lCloudSize; j++)
 			{
 				// Create an uncommitted pin.
-				#if TEST_FORWARD_REFERENCES
-					IPIN * const lPIN = lLocalBucket[j];
-				#else
-					IPIN * const lPIN = lSession->createUncommittedPIN();
+				#if !TEST_FORWARD_REFERENCES
+					createBatchPIN(*lBatch, lPropIDs, lNumProps);
+					lLocalBucketSize++;
 				#endif
-
-				// Set a few bogus properties on it.
-				for (k = 0; k < lNumProps; k++)
-				{
-					Value lV;
-					Tstring lS;
-					MVTRand::getString(lS, 100, 0, true);
-					// Note: Avoid FT-indexing slowdown by using VT_BSTR...
-					lV.set((unsigned char *)lS.c_str(), (uint32_t)lS.length()); lV.setPropID(lPropIDs[k]); lV.setOp(OP_ADD);
-					if (RC_OK != lPIN->modify(&lV, 1))
-					{
-						lSuccess = false;
-						assert(false);
-					}
-
-					Value const * const lVCheck = lPIN->getValue(lPropIDs[k]);
-					if (!lVCheck || lVCheck->type != VT_BSTR || lVCheck->length != lS.length())
-					{
-						lSuccess = false;
-						assert(false);
-					}
-				}
 
 				// Randomly assign references to some other uncommitted/committed pins.
 				int const lIndexPropRef = (int)(lNumProps * rand() / RAND_MAX);
 				bool const lUncommittedRef = (100.0 * rand() / RAND_MAX) > 33.0;
 				if (lIndexPropRef < lNumProps &&
-					((lUncommittedRef && !lLocalBucket.empty()) ||
+					((lUncommittedRef && lLocalBucketSize > 0) ||
 					(!lUncommittedRef && !lGlobalBucket.empty())))
 				{
-					int const lMaxElms = (int)(lUncommittedRef ? lLocalBucket.size() : lGlobalBucket.size());
+					int const lMaxElms = (int)(lUncommittedRef ? lLocalBucketSize : lGlobalBucket.size());
 					int const lIndexRef = (int)((double)lMaxElms * rand() / RAND_MAX);
 					int const lNumElms = min(lMaxElms, 5);
 					int m;
 					for (m = 0; m < lNumElms && (lIndexRef + m < lMaxElms); m++)
 					{
-						Value lV; IPIN *lTo=NULL; PID lToPID;
-						INITLOCALPID(lToPID); lToPID.pid = STORE_INVALID_PID;
-						#if HOLD_RELATIONSHIPS_BY_PID
-							if (lUncommittedRef) {
-								lTo = lLocalBucket[lIndexRef + m];
-								SETVALUE_C(lV, lPropIDs[lIndexPropRef], lTo, OP_ADD, STORE_LAST_ELEMENT);
-							} else {
+						Value lV; int lToIdx = -1; PID lToPID;
+                        INITLOCALPID(lToPID); lToPID.pid = STORE_INVALID_PID;
+						if (lUncommittedRef)
+						{
+							lToIdx = lIndexRef + m;
+							SETVALUE_C(lV, lPropIDs[lIndexPropRef], lToIdx, OP_ADD, STORE_LAST_ELEMENT);
+						}
+						else
+						{
+							#if HOLD_RELATIONSHIPS_BY_PID
 								lToPID = lGlobalBucket[lIndexRef + m];
 								SETVALUE_C(lV, lPropIDs[lIndexPropRef], lToPID, OP_ADD, STORE_LAST_ELEMENT);
-							}
-						#else
-							IPIN * const lTo = lUncommittedRef ? lLocalBucket[lIndexRef + m] : lGlobalBucket[lIndexRef + m];
-							SETVALUE_C(lV, lPropIDs[lIndexPropRef], lTo, OP_ADD, STORE_LAST_ELEMENT);
-						#endif
-						if (RC_OK != lPIN->modify(&lV, 1))
+							#else
+								lTo = lGlobalBucket[lIndexRef + m];
+								SETVALUE_C(lV, lPropIDs[lIndexPropRef], lTo, OP_ADD, STORE_LAST_ELEMENT);
+							#endif
+						}
+						if (RC_OK != (lRC = lBatch->addRef(unsigned(j), lV)))
 						{
+							mLogger.out() << "Failed to addRef from batch element #" << j << " to "; MVTApp::output(lV, mLogger.out(), lSession); mLogger.out() << " with RC=" << lRC << std::endl;
 							lSuccess = false;
-							assert(false);
+							TVERIFY(false);
 						}
 						else
 						{
@@ -163,60 +147,52 @@ int TestUncommittedPins::execute()
 								mLogger.out() << "*";
 							#endif
 
-							#if HOLD_RELATIONSHIPS_BY_PID
-								Relationship lR;
-								lR.mFromPtr = lPIN;
-								if (lUncommittedRef)
-								{
-									assert(lTo!=NULL);
-									lR.mToPtr = lTo;
-									INITLOCALPID(lR.mTo);
-									LOCALPID(lR.mTo) = STORE_INVALID_PID;
-								}
-								else
-								{
-									lR.mToPtr = NULL;
+							Relationship lR;
+							lR.mFromIdx = j;
+							lR.mPropID = lPropIDs[lIndexPropRef];
+							if (lUncommittedRef)
+							{
+								TVERIFY(lToIdx >= 0);
+								lR.mToIdx = lToIdx;
+							}
+							else
+							{
+								#if HOLD_RELATIONSHIPS_BY_PID
+									TVERIFY(STORE_INVALID_PID != LOCALPID(lToPID));
 									lR.mTo = lToPID;
-								}
-								lR.mPropID = lPropIDs[lIndexPropRef];
-								lTmpRelationships.push_back(lR);
-							#else
-								assert(lTo!=NULL);
-								Relationship lR;
-								lR.mFromPtr = lPIN;
-								lR.mToPtr = lTo;
-								lR.mPropID = lPropIDs[lIndexPropRef];
-								lRelationships.push_back(lR);
-							#endif
+									lTmpRelationships.push_back(lR);
+								#else
+									TVERIFY(lTo);
+									lR.mToPtr = lTo;
+									lRelationships.push_back(lR);
+								#endif
+							}
 							lNewRels++;
 						}
 					}
 				}
-
-				// Maintenance of new pin.
-				#if !TEST_FORWARD_REFERENCES
-					lLocalBucket.push_back(lPIN);
-				#endif
 			}
 			mLogger.out() << " (" << lNewRels << " new relationships)" << std::endl;
 
 			// Commit the new cloud of pins.
-			assert((unsigned)lCloudSize == lLocalBucket.size());
+			TVERIFY(lBatch->getNumberOfPINs() == size_t(lLocalBucketSize));
 			mLogger.out() << "  Committing the cloud." << std::endl;
-			if (RC_OK != lSession->commitPINs(&lLocalBucket[0], (unsigned)lLocalBucket.size()))
+			if (RC_OK != lBatch->process(false))
 			{
 				lSuccess = false;
-				mLogger.out() << "commitPINs failed!" << std::endl;
-				assert(false);
+				mLogger.out() << "IBatch::process failed!" << std::endl;
+				TVERIFY(false);
 			}
 			else
 			{
 				// Check that all were committed properly.
-				std::vector<IPIN *>::iterator lIter;
-				for (lIter = lLocalBucket.begin(); lIter != lLocalBucket.end(); lIter++)
+				// Note: invoking IBatch::getPIDs so many times like this is a bit funny,
+				//       but this is a test after all :)
+				for (j = 0; j < lLocalBucketSize; j++)
 				{
-					IPIN * const lPIN = *lIter;
-					PID const lPID = lPIN->getPID();
+					PID lPID; unsigned nP = 1;
+					TVERIFYRC(lBatch->getPIDs(&lPID, nP, j));
+					TVERIFY(1 == nP);
 					if (LOCALPID(lPID) == STORE_INVALID_PID)
 					{
 						lSuccess = false;
@@ -234,7 +210,7 @@ int TestUncommittedPins::execute()
 						#if HOLD_RELATIONSHIPS_BY_PID
 							lGlobalBucket.push_back(lPID);
 						#else
-							lGlobalBucket.push_back(lPIN);
+							lGlobalBucket.push_back(lSession->getPIN(lPID));
 						#endif
 						lGlobalBucketS.insert(LOCALPID(lPID));
 					}
@@ -247,15 +223,14 @@ int TestUncommittedPins::execute()
 					{
 						Relationship const & lUR = *lIterUR;
 						CommittedRelationship lCR;
-						lCR.mFrom = lUR.mFromPtr->getPID();
+						PID lPID; unsigned nP = 1;
+						TVERIFYRC(lBatch->getPIDs(&lPID, nP, lUR.mFromIdx));
+						TVERIFY(1 == nP);
+						lCR.mFrom = lPID;
 						lCR.mTo = lUR.mToPtr ? lUR.mToPtr->getPID() : lUR.mTo;
 						lCR.mPropID = lUR.mPropID;
 						lRelationships.push_back(lCR);
 					}
-
-					// Cleanup.
-					for (lIter = lLocalBucket.begin(); lIter != lLocalBucket.end(); lIter++)
-						(*lIter)->destroy();
 				#endif
 			}
 		}
@@ -317,3 +292,25 @@ int TestUncommittedPins::execute()
 	else { TVERIFY(!"Unable to start store"); }
 	return lSuccess ? 0 : 1;
 }
+
+void TestBatch::createBatchPIN(IBatch & pBatch, PropertyID const * pPropIDs, int pNumProps)
+{
+	// Setup a few bogus properties.
+	// Note: Avoid FT-indexing slowdown by using VT_BSTR...
+	Value * const lNewVs = pBatch.createValues(pNumProps);
+	int k;
+	for (k = 0; k < pNumProps; k++)
+	{
+		Tstring tstr;
+		MVTRand::getString(tstr, 100, 0, true);
+		size_t l=tstr.length();
+		unsigned char *str=(unsigned char*)pBatch.malloc(l+1);
+		memcpy (str,tstr.c_str(),l); str[l]=0;
+		lNewVs[k].set(str, (uint32_t)l); lNewVs[k].setPropID(pPropIDs[k]); lNewVs[k].setOp(OP_ADD);
+	}
+
+	// Create the in-memory PIN.
+	TVERIFYRC(pBatch.createPIN(lNewVs, pNumProps));
+}
+
+

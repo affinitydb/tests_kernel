@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -23,7 +23,7 @@ class TestBasic : public ITest
 		TEST_DECLARE(TestBasic);
 		virtual char const * getName() const { return "testbasic"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "Basic AfyDB Test"; }
+		virtual char const * getDescription() const { return "Basic Afy Test"; }
 		virtual bool isPerformingFullScanQueries() const { return true; }
 		virtual int execute();
 		virtual void destroy() { delete this; }
@@ -186,7 +186,7 @@ void TestBasic::InitProperties()
 	mProps.resize( CountProps ) ;
 	for ( size_t i = 0 ; i < CountProps ; i++ )
 	{	
-		mProps[i].uid = STORE_INVALID_PROPID ;
+		mProps[i].uid = STORE_INVALID_URIID ;
 	}
 
 	mProps[NameIndex].URI = "basictest.name" ;
@@ -200,14 +200,14 @@ void TestBasic::InitProperties()
 	//Expected results is that all the PropertyIDs have been assigned
 	for ( size_t i = 0 ; i < CountProps ; i++ )
 	{
-		TVERIFY( mProps[i].uid != STORE_INVALID_PROPID );
+		TVERIFY( mProps[i].uid != STORE_INVALID_URIID );
 	}
 
 	// Sanity check 
 	TVERIFY( mProps[AgeIndex].uid != mProps[NameIndex].uid ) ;
 
 	//To request the same URI again will retrieve the same ID
-	URIMap testInfo = { "basictest.name", STORE_INVALID_PROPID } ;
+	URIMap testInfo = { "basictest.name", STORE_INVALID_URIID } ;
 	TVERIFYRC( mSession->mapURIs( 1, &testInfo ) );
 	TVERIFY( testInfo.uid == mProps[NameIndex].uid ) ;
 
@@ -286,14 +286,14 @@ IStmt * TestBasic::GetPeopleQuery2(STMT_OP sop)
 	// Another implementation, building a new Query
 	// matching on class membership
 
-	// Look up the classID
+	// Look up the objectID
 	ClassID lClsid = STORE_INVALID_CLASSID ;
 	TVERIFYRC( mSession->getClassID("testbasic.allpeople", lClsid) );
 
 	//Query that matches by ClassID
 	IStmt * query = mSession->createStmt(sop);
-	ClassSpec lCS;
-	lCS.classID = lClsid ;
+	SourceSpec lCS;
+	lCS.objectID = lClsid ;
 	lCS.nParams = 0;
 	lCS.params = NULL;
 	query->addVariable(&lCS, 1);
@@ -337,7 +337,7 @@ void TestBasic::CreateAlbertPIN()
 	PID pid1 ; memset( &pid1, 0, sizeof( pid1 ) ) ;
 
 	// If database locked you this can fail, e.g. RC_READTX
-	TVERIFYRC( mSession->createPIN( pid1, NULL, 0 ) ) ;
+	TVERIFYRC( mSession->createPINAndCommit( pid1, NULL, 0 ) ) ;
 	TVERIFY( pid1.pid != STORE_INVALID_PID ) ;
 	TVERIFY( pid1.ident != STORE_INVALID_IDENTITY ) ;	
 
@@ -384,31 +384,31 @@ void TestBasic::CreateSaraPIN()
 	// Similar to CreateAlbertPIN, but using different methods
 	// Creates a woman named Sara, age 47
 	//
-	// Demonstrates ISession::alloc, createUncommittedPIN, commitPINs, modifyPIN etc
+	// Demonstrates ISession::alloc, createPIN, commitPINs, modifyPIN etc
 	// Focuses on the tricky memory handling considerations
 
 	// Strings have to be allocated using store allocator
-	char * pSaraMisspelledNameBuffer = (char*)mSession->alloc( strlen( "SaRRra" ) + 1 ) ;
+	char * pSaraMisspelledNameBuffer = (char*)mSession->malloc( strlen( "SaRRra" ) + 1 ) ;
 	strcpy(pSaraMisspelledNameBuffer, "SaRRra" ) ; 
 
 	// Create the pin and set the name immediately
-	// Note: createUncommittedPIN is a special case.  
+	// Note: createPIN is a special case.  
 	// We have to allocate the memory for the store because
 	// it doesn't copy the data.  (otherwise you will see a crash 
 	// when we call IPin->modify below).  See coverage of MODE_COPY_VALUES elsewhere.
-	Value * pName = (Value*)mSession->alloc( sizeof(Value) ) ;;
+	Value * pName = (Value*)mSession->malloc( sizeof(Value) ) ;;
 	pName->set( pSaraMisspelledNameBuffer ) ;
 	pName->property = mProps[NameIndex].uid ;
 
-	IPIN * pSaraPin = mSession->createUncommittedPIN( pName, 1 ) ;
+	IPIN * pSaraPin = mSession->createPIN( pName, 1 ) ;
 	TVERIFY( pSaraPin != NULL ) ;
-	TVERIFY( !pSaraPin->isCommitted() ) ;
+	TVERIFY( !pSaraPin->isPersistent() ) ;
 	TVERIFY( pSaraPin->getNumberOfProperties() == 1 ) ;
 	
 	PID saraPID = pSaraPin->getPID() ;
 
 	// PID isn't valid yet, because not committed
-	TVERIFY( saraPID.pid == 0 ) ; // REVIEW: it isn't STORE_INVALID_PROPID - is that by design
+	TVERIFY( saraPID.pid == 0 ) ; // REVIEW: it isn't STORE_INVALID_URIID - is that by design
 	TVERIFY( saraPID.ident == STORE_INVALID_IDENTITY ) ;
 
 	// Add the age as a second call
@@ -424,11 +424,11 @@ void TestBasic::CreateSaraPIN()
 	// commitPINs will copy the information into database
 	// so we will own the memory again
 	TVERIFYRC( mSession->commitPINs( &pSaraPin, 1 ) );
-	TVERIFY( pSaraPin->isCommitted() ) ;
+	TVERIFY( pSaraPin->isPersistent() ) ;
 
 	// Now PID should be valid
 	saraPID = pSaraPin->getPID() ;
-	TVERIFY( saraPID.pid != STORE_INVALID_PROPID ) ;
+	TVERIFY( saraPID.pid != STORE_INVALID_URIID ) ;
 	TVERIFY( saraPID.ident != STORE_INVALID_IDENTITY ) ;
 
 	// We own the memory again
@@ -454,7 +454,7 @@ void TestBasic::CreateSaraPIN()
 
 void TestBasic::CreateFredPIN()
 {
-	// Simpler usage of createUncommittedPIN
+	// Simpler usage of createPIN
 
 	// Create the pin and set the name immediately
 	//
@@ -463,7 +463,7 @@ void TestBasic::CreateFredPIN()
 
 	Value name ; name.set( "Fred" ) ; name.property = mProps[NameIndex].uid ;
 
-	IPIN * pFredPin = mSession->createUncommittedPIN( &name, 1, MODE_COPY_VALUES ) ;
+	IPIN * pFredPin = mSession->createPIN( &name, 1, MODE_COPY_VALUES ) ;
 	TVERIFY( pFredPin != NULL ) ;
 	
 	// Add the age as a second call
@@ -473,10 +473,10 @@ void TestBasic::CreateFredPIN()
 	TVERIFYRC( pFredPin->modify( moreInfo, 2 ) );
 
 	TVERIFYRC( mSession->commitPINs( &pFredPin, 1 ) );
-	TVERIFY( pFredPin->isCommitted() ) ;
+	TVERIFY( pFredPin->isPersistent() ) ;
 
 	PID fredPID = pFredPin->getPID() ;
-	TVERIFY( fredPID.pid != STORE_INVALID_PROPID ) ;
+	TVERIFY( fredPID.pid != STORE_INVALID_URIID ) ;
 	TVERIFY( fredPID.ident != STORE_INVALID_IDENTITY ) ;
 
 	pFredPin->destroy() ;
@@ -490,7 +490,7 @@ void TestBasic::AddPerson( char * inName, int inAge, bool inMale )
 
 	/*
 	// It is not necessary to copy the string buffer, in fact it would leak
-	char * pNameBuffer = (char*)mSession->alloc( strlen( inName ) + 1 ) ;
+	char * pNameBuffer = (char*)mSession->malloc( strlen( inName ) + 1 ) ;
 	strcpy(pNameBuffer, inName ) ; 
 	*/
 
@@ -500,7 +500,7 @@ void TestBasic::AddPerson( char * inName, int inAge, bool inMale )
 	vals[2].set( inMale ) ; vals[2].property = mProps[GenderIndex].uid ;
 
 	PID pid1 ; memset( &pid1, 0, sizeof( pid1 ) ) ;
-	TVERIFYRC( mSession->createPIN( pid1, vals, 3 ) ) ;
+	TVERIFYRC( mSession->createPINAndCommit( pid1, vals, 3 ) ) ;
 }
 
 void TestBasic::RecordMarriage( char * inHusband, char * inWife )
@@ -588,7 +588,7 @@ void TestBasic::RecordChild( char * inMother, char * inChild )
 	}
 	else
 	{
-		// Because we specify OP_ADD, AfyDB will automatically
+		// Because we specify OP_ADD, Afy will automatically
 		// insert this item to the existing collection, we don't need to manually
 		// modify the structure
 		TVERIFYRC( pMother->modify( &childElem, 1 ) ) ;
@@ -697,8 +697,8 @@ IPIN * TestBasic::FindPerson( char * inName, bool bAllowMissing )
 	// Specify the ClassID of the data we want to search.  (Otherwise a "WARNING: Full scan query!!!" is logged)
 	ClassID lClsid = STORE_INVALID_CLASSID ;
 	TVERIFYRC( mSession->getClassID("testbasic.allpeople", lClsid) );
-	ClassSpec lCS;
-	lCS.classID = lClsid ;
+	SourceSpec lCS;
+	lCS.objectID = lClsid ;
 	lCS.nParams = 0;
 	lCS.params = NULL;
 
@@ -766,9 +766,9 @@ IPIN * TestBasic::FindPerson( char * inName, bool bAllowMissing )
 	// should belong to the class of people
 	if ( pin )
 	{
-		ClassID classID = STORE_INVALID_CLASSID; 
-		TVERIFYRC( mSession->getClassID( "testbasic.allpeople", classID ) );
-		TVERIFY( pin->testClassMembership( classID ) );
+		ClassID objectID = STORE_INVALID_CLASSID; 
+		TVERIFYRC( mSession->getClassID( "testbasic.allpeople", objectID ) );
+		TVERIFY( pin->testClassMembership( objectID ) );
 	}
 
 	return pin ;
@@ -799,8 +799,8 @@ unsigned long TestBasic::FindBachelors( )
 
 	ClassID lClsid = STORE_INVALID_CLASSID ;
 	TVERIFYRC( mSession->getClassID("testbasic.allpeople", lClsid) );
-	ClassSpec lCS;
-	lCS.classID = lClsid ;
+	SourceSpec lCS;
+	lCS.objectID = lClsid ;
 	lCS.nParams = 0;
 	lCS.params = NULL;
 

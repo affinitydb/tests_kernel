@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -27,7 +27,7 @@ class testrollbackscenario : public ITest
 	protected:
 		static const unsigned int nProps = 10;
 		PropertyID mPropIDs[nProps];
-		AfyKernel::StoreCtx *mCtx;
+		Afy::IAffinity *mCtx;
 		ISession *mSession[NSESSION];
 		ClassID clsid,familyid;
 		MVTestsPortability::Mutex *lck;
@@ -105,7 +105,7 @@ void testrollbackscenario::commit_pins()
 		TVERIFYRC(lSession->attachToCurrentThread());
 		
 		int pCnt = (MVTRand::getRange(1,10)%nProps)+1;
-		Value *lV = (Value *)lSession->alloc(pCnt * sizeof(Value));
+		Value *lV = (Value *)lSession->malloc(pCnt * sizeof(Value));
 		PID pid;
 
 		//mLogger.out()<<"Start transaction\n";
@@ -114,7 +114,6 @@ void testrollbackscenario::commit_pins()
 		//Stream
 		if(pCnt > 0) {
 			SETVALUE(lV[0], mPropIDs[0], MVTApp::wrapClientStream(lSession, new TestStringStream(30000)), OP_SET);
-			lV[0].meta = META_PROP_NOFTINDEX;
 		}
 
 		//String
@@ -140,9 +139,9 @@ void testrollbackscenario::commit_pins()
 
 		//Commit half of the pins without indexing.
 		if(i < NPINS/2)
-			TVERIFYRC(lSession->createPIN(pid,lV,pCnt,PIN_NO_INDEX));
+			TVERIFYRC(lSession->createPINAndCommit(pid,lV,pCnt,PIN_HIDDEN));
 		else
-			TVERIFYRC(lSession->createPIN(pid,lV,pCnt));
+			TVERIFYRC(lSession->createPINAndCommit(pid,lV,pCnt));
 
 		TVERIFYRC(lSession->commit());
 		lSession->free(lV);

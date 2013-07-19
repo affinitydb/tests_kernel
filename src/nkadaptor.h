@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -14,7 +14,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
  * based on MVSTORE_IFACE_VER.
  */
 
-namespace AfyDB { typedef Value PropValue; }
+namespace Afy { typedef Value PropValue; }
 #define INITLOCALPID(PID) (PID).ident = STORE_OWNER
 #define LOCALPID(PID) (PID).pid
 #define SETVATTR(vs, propid, op) \
@@ -25,6 +25,8 @@ namespace AfyDB { typedef Value PropValue; }
 	{ (vs).set(value); SETVATTR(vs, propid, op) }
 #define SETVALUE_C(vs, propid, value, op, elementid) \
 	{ (vs).set(value); SETVATTR_C(vs, propid, op, elementid) }
+#define SETVALUE_STRUCT_C(vs, propid, value, len, op, elementid) \
+	{ (vs).setStruct(value, len); SETVATTR_C(vs, propid, op, elementid) }
 
 #ifdef WIN32
 	#define INTERLOCKEDI(val) InterlockedIncrement(val)

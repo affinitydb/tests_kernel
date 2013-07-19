@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -220,7 +220,7 @@ void TestMergeSimple::createPins()
 			v[1].set(strRandWords.c_str()); 
 			v[1].property=mTextProp; // For FT lookup
 
-			IPIN * lP = mSession->createUncommittedPIN(v,2,MODE_COPY_VALUES);
+			IPIN * lP = mSession->createPIN(v,2,MODE_COPY_VALUES);
 			if (lP)
 				lPINs.push_back(lP);
 		}
@@ -252,7 +252,7 @@ unsigned long TestMergeSimple::doMerge(uint64_t startDate, uint64_t endDate, con
 		range.setRange(minmax);
 		range.property=mDateProp;
 
-		ClassSpec cs={mClassFamily,1,&range};
+		SourceSpec cs={mClassFamily,1,&range};
 		vL = q->addVariable(&cs, 1);
 	}
 
@@ -288,7 +288,7 @@ unsigned long TestMergeSimple::doSimpleQuery(uint64_t startDate, uint64_t endDat
 	range.setRange(minmax);
 	range.property=mDateProp;
 
-	ClassSpec cs={mClassFamily,1,&range};
+	SourceSpec cs={mClassFamily,1,&range};
 	unsigned char singleVar = q->addVariable(&cs, 1);
 
 	q->addConditionFT(singleVar,inFT);

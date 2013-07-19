@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -58,7 +58,7 @@ void TestMoveElement::doTest()
 	// Create original pin, which has a collection with 9 elements
 	static const int cntElements=9;
 
-	AfyDB::Value lVal[cntElements];
+	Afy::Value lVal[cntElements];
 	for(int idx= 0 ; idx < cntElements ; idx++)
 	{
 		lVal[idx].set(idx); // Value matches the original position in the array
@@ -66,7 +66,7 @@ void TestMoveElement::doTest()
 		lVal[idx].setPropID(prop);
 	}
 
-	CmvautoPtr<IPIN> lNewPIN(mSession->createUncommittedPIN(lVal, cntElements,MODE_COPY_VALUES));
+	CmvautoPtr<IPIN> lNewPIN(mSession->createPIN(lVal, cntElements,MODE_COPY_VALUES));
 	TVERIFYRC(mSession->commitPINs(&lNewPIN.Get(), 1));
 	lNewPIN->refresh();
 

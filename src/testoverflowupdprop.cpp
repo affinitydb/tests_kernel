@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -37,12 +37,11 @@ int TestOverflowUpdProp::execute()
 		//create a normal pin
 		for (i=0; i < 100; i ++)
 		{
-			IPIN *lPIN = lSession->createUncommittedPIN();
+			IPIN *lPIN = lSession->createPIN();
 			MVTApp::randomString(lStr,100,0,false);				
 			for (j = 0; j < 40; j++)
 			{
 				SETVALUE(lV[j], mPropIds[j], lStr.c_str(), OP_SET); 
-				lV[j].meta = META_PROP_NOFTINDEX;				
 			}
 			
 			int lIndex = 0;
@@ -65,7 +64,6 @@ int TestOverflowUpdProp::execute()
 			for (j = 0; j < 20; j++)
 			{
 				SETVALUE(lV[j], mPropIds[j], lStr.c_str(), OP_SET); 
-				lV[j].meta = META_PROP_NOFTINDEX;				
 			}
 
 			for (k = 0; k < 20; k++) SETVALUE(lV[k+j], mPropIds[k+j], 0, OP_SET);

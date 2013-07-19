@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -31,7 +31,7 @@ using namespace std;
 
 //#define MYSQL_COMPARE // Enable if you have MySQL installed 
 
-// AfyDB and MySQL flags
+// Afy and MySQL flags
 //#define NO_FTINDEX // For comparison (queries obviously won't work)
 //#define DELAYED_INDEX // Build the index after the data is added (recommended approach for MySQL)
 #define CNT_QUERY 150 // Number of querys to perform, should be a multiple of query words in g_QueryVals
@@ -40,7 +40,7 @@ using namespace std;
 // MVSTORE ONLY
 //#define NBUFFERS 3000  // USE -nbuf argument to specify now 
 #define	PAGESIZE 0x8000 // WARNING: As set in app.cpp, not currently set by this test
-#define CNT_PIN_COMMIT_SIZE 1000 // Number of PINs to commit in each batch.  Set to 1 to use straightfoward ISession::createPIN()
+#define CNT_PIN_COMMIT_SIZE 1000 // Number of PINs to commit in each batch.  Set to 1 to use straightfoward ISession::createPINAndCommit()
 #define PROFILE_IO 0
 
 // Strings from the source text.
@@ -242,7 +242,7 @@ public:
 		// timed
 
 		// Copy string text into store memory
-		mMsgs[mPos] = (char*) mSession->alloc( strlen(inMsg) + 1 ) ;  // Will be destroy later by IPin->destroy() call
+		mMsgs[mPos] = (char*) mSession->malloc( strlen(inMsg) + 1 ) ;  // Will be destroy later by IPin->destroy() call
 		memcpy( mMsgs[mPos], inMsg, strlen(inMsg) + 1 ) ;
 
 		if ( mPos == int( mBatchSize - 1 )  )
@@ -269,11 +269,11 @@ public:
 		size_t i  ;
 		for ( i = 0 ; i < mBatchSize ; i++ )
 		{	
-			Value * mMsgWrapper = (Value*) mSession->alloc( sizeof( Value ) ) ;
+			Value * mMsgWrapper = (Value*) mSession->malloc( sizeof( Value ) ) ;
 			mMsgWrapper->set( mMsgs[i] ) ; mMsgWrapper->property = mPropID ;		
 			mMsgWrapper->meta = mMeta ; 
 
-			newPINs[i] = mSession->createUncommittedPIN( mMsgWrapper,1 ) ; 
+			newPINs[i] = mSession->createPIN( mMsgWrapper,1 ) ; 
 		}
 
 		unsigned int mode = 0 ; /*MODE_SYNC_FTINDEX doesn't currently make a difference*/
@@ -495,11 +495,11 @@ void TestDocLoad::doTest(bool inQuery,bool inDelete)
 uint8_t TestDocLoad::getMetaFlags()
 {
 #if defined NO_FTINDEX
-	return META_PROP_NOFTINDEX ; // To turn off FT indexing for this property
+	return 0 ; // To turn off FT indexing for this property
 #elif defined DELAYED_INDEX
-	return META_PROP_NOFTINDEX ; 
+	return 0; 
 #else
-	return META_PROP_STOPWORDS ; // Make sure stop words aren't indexed
+	return META_PROP_FTINDEX;//META_PROP_STOPWORDS ; // Make sure stop words aren't indexed - now it's done always
 #endif
 }
 
@@ -535,7 +535,7 @@ void TestDocLoad::generateData()
 				Value msg ; msg.set( lMsgBody.c_str() ) ; msg.property = emailBody ;
 				msg.meta = getMetaFlags() ;
 				PID newpid ;
-				TVERIFYRC(mSession->createPIN( newpid, &msg, 1 )) ;
+				TVERIFYRC(mSession->createPINAndCommit( newpid, &msg, 1 )) ;
 			}
 			else
 			{
@@ -635,7 +635,7 @@ void TestDocLoad::indexExistingStringProp( PropertyID inProp )
 
 		// All existing pins should have this flag set, unless test has been
 		// run with an existing store
-		if ( 0 != (emailBodyText->meta & META_PROP_NOFTINDEX) )
+		if ( 0 == (emailBodyText->meta & META_PROP_FTINDEX) )
 		{
 			// REVIEW: Unless there is some clever trick to change
 			// the flag, I found that it is necessary to make a copy of the string,
@@ -647,7 +647,7 @@ void TestDocLoad::indexExistingStringProp( PropertyID inProp )
 			std::string strCopy = emailBodyText->str ; 
 			updatedEmailBodyText.set(&(strCopy[0])) ;
 
-			updatedEmailBodyText.meta = META_PROP_STOPWORDS ;
+			//updatedEmailBodyText.meta = META_PROP_STOPWORDS ;
 			updatedEmailBodyText.property = inProp ; 
 
 			Value lDeleteOp ; lDeleteOp.setDelete(inProp) ;

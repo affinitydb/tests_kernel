@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -383,7 +383,7 @@ void TestOrToIN::testClass(int pIndex, unsigned long pExpCount)
 	if(STORE_INVALID_CLASSID != lCLSID)
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
-		ClassSpec lCS; lCS.classID = lCLSID; lCS.nParams = 0; lCS.params = NULL;
+		SourceSpec lCS; lCS.objectID = lCLSID; lCS.nParams = 0; lCS.params = NULL;
 		lQ->addVariable(&lCS, 1);
 		uint64_t lCount = 0;
 		TVERIFYRC(lQ->count(lCount));
@@ -398,7 +398,7 @@ void TestOrToIN::testFamily(int pIndex, unsigned long pExpCount, unsigned int pN
 	if(STORE_INVALID_CLASSID != lCLSID)
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
-		ClassSpec lCS; lCS.classID = lCLSID; lCS.nParams = pNumParams; lCS.params = pParams;
+		SourceSpec lCS; lCS.objectID = lCLSID; lCS.nParams = pNumParams; lCS.params = pParams;
 		lQ->addVariable(&lCS, 1);
 		uint64_t lCount = 0;
 		TVERIFYRC(lQ->count(lCount));

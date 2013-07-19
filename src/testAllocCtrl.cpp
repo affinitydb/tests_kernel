@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -102,7 +102,7 @@ int TestAllocCtrl::execute()
 	mSession = MVTApp::startSession();
 	TVERIFY( mSession != NULL ) ;
 
-	mPinPageAllocCtrl = (AllocCtrl *) mSession->alloc(sizeof(AllocCtrl) * 1);
+	mPinPageAllocCtrl = (AllocCtrl *) mSession->malloc(sizeof(AllocCtrl) * 1);
 	mPinPageAllocCtrl->arrayThreshold = ~0ul ; // Use internal ARRAY_THRESHOLD (256)
 	mPinPageAllocCtrl->ssvThreshold = ~0ul ;  // REVIEW: what is default
 	mPinPageAllocCtrl->pctPageFree = (float) atof(inPageFree.c_str()) ;  
@@ -112,8 +112,6 @@ int TestAllocCtrl::execute()
 		mLogger.out() << "Invalid argument for pctPageFree, specify value between 0 and 1" << endl ;
 		return RC_FALSE ;
 	}
-
-	TVERIFYRC(mSession->setPINAllocationParameters(mPinPageAllocCtrl)) ;
 
 	MVTApp::mapURIs(mSession,"TestAllocCtrl.propX",1,&mPropX) ;	
 
@@ -135,7 +133,7 @@ int TestAllocCtrl::execute()
 	{
 		if ( mBatchSize == 1 )
 		{
-			TVERIFYRC(mSession->createPIN(mPINs[iBatch],&valProp,1,MODE_NO_EID ) );
+			TVERIFYRC(mSession->createPINAndCommit(mPINs[iBatch],&valProp,1,MODE_NO_EID ) );
 #if ADD_EXTRA_PROP			
 			TVERIFYRC(mSession->modifyPIN(mPINs[iBatch],&extra,1,MODE_NO_EID));
 #endif
@@ -147,13 +145,13 @@ int TestAllocCtrl::execute()
 			int iPinInBatch ;
 			for ( iPinInBatch = 0 ; iPinInBatch < mBatchSize ; iPinInBatch++ )
 			{
-				batchPins[iPinInBatch] = mSession->createUncommittedPIN( &valProp, 1, MODE_NO_EID | MODE_COPY_VALUES ) ;
+				batchPins[iPinInBatch] = mSession->createPIN( &valProp, 1, MODE_NO_EID | MODE_COPY_VALUES ) ;
 			}
 
 			if ( mBatchSize > 10 || (0 == (iBatch % 10)))
 				mLogger.out() << "." ;
 
-			TVERIFYRC(mSession->commitPINs( &(batchPins[0]), mBatchSize ) );
+			TVERIFYRC(mSession->commitPINs( &(batchPins[0]), mBatchSize, 0, mPinPageAllocCtrl ) );
 
 			for ( iPinInBatch = 0 ; iPinInBatch < mBatchSize ; iPinInBatch++ )
 			{

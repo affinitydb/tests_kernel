@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -22,7 +22,7 @@ class TestFamilies : public ITest{
 		long volatile mFinalResult; // thread will set non-zero if failure
 		MVTestsPortability::Mutex mLock; // REVIEW: not really necessary in its current usage
 		clock_t mTimeTaken;
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 	public:
 		TEST_DECLARE(TestFamilies);
 		virtual char const * getName() const { return "testfamilies"; }
@@ -91,7 +91,7 @@ int	TestFamilies::execute(){
 		{
 			char lB2[64];
 			sprintf(lB2, "TestFamilies.prop%s.%d", lPropName.c_str(), i);
-			lData.URI = lB2; lData.uid = /*lBasePropID++;//*/STORE_INVALID_PROPID; 
+			lData.URI = lB2; lData.uid = /*lBasePropID++;//*/STORE_INVALID_URIID; 
 			lSession->mapURIs(1, &lData);
 			mPropIds[i] = lData.uid;
 		}
@@ -183,7 +183,7 @@ bool TestFamilies::createPINs(ISession *pSession){
 	{
 		if (0 == i % 100)
 			mLogger.out() << ".";
-		lPIN = pSession->createUncommittedPIN();
+		lPIN = pSession->createPIN();
 
 		// Remember time at which 1/3rd of pins were created
 		if(i == mNumPINs/3) {TIMESTAMP dt; getTimestamp(dt); mUI64a = dt;}
@@ -461,10 +461,10 @@ bool TestFamilies::executeFamilies(ISession *pSession, const int pCase){
 	bool lSuccess = true;
 	long lBef, lAft;
 	Value lParam[10];
-	ClassSpec lCS;
+	SourceSpec lCS;
 	IStmt * lQ = pSession->createStmt();
 	getParams(lParam, pCase);
-	lCS.classID = mCLSIDs[pCase];
+	lCS.objectID = mCLSIDs[pCase];
 	lCS.nParams = mNumParams[pCase];
 	lCS.params = lParam;
 	lQ->addVariable(&lCS, 1);
@@ -585,7 +585,7 @@ bool TestFamilies::quickTest(ISession *pSession){
 	SETVALUE(lV[0],mPropIds[0],"quickTest",OP_SET);
 	SETVALUE(lV[1],mPropIds[1],"quickTest",OP_SET);
 	SETVALUE(lV[2],mPropIds[2],1000,OP_SET);
-	if(RC_OK!=pSession->createPIN(lPID,lV,3)){
+	if(RC_OK!=pSession->createPINAndCommit(lPID,lV,3)){
 		mLogger.out() << "ERROR(quickTest): Failed to create PIN" << std::endl;
 		return false;
 	}
@@ -640,9 +640,9 @@ bool TestFamilies::quickTest(ISession *pSession){
 
 	uint64_t lCCount = 0;
 	{
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lCQ = pSession->createStmt();
-		lCS.classID = lCLSID;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 2;
 		lCS.params = lParam;
 		lCQ->addVariable(&lCS, 1);

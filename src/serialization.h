@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -30,7 +30,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include <stdlib.h>
 #include <search.h>
 #include <assert.h>
-using namespace AfyDB;
+using namespace Afy;
 
 #ifdef PSSER_NAMESPACE
 	#undef PSSER_NAMESPACE
@@ -66,7 +66,7 @@ using namespace AfyDB;
  * This is our own internal protobuf ancestor.  Was used
  * for replication, remoting, dump&load, logging, pin comparisons,
  * serialization of parameters for async notifications,
- * and AfyDB::Value-parameter passing in IPC (to support
+ * and Afy::Value-parameter passing in IPC (to support
  * values coming from the stack).  Still used by the tests,
  * and contains useful primitives (e.g. abstraction of
  * collection navigation etc.).
@@ -224,20 +224,16 @@ namespace PSSER_NAMESPACE
 		public:
 			inline static bool testType(Value const & pValue, ValueType pVT) { return pValue.type == pVT; }
 			inline static bool testProperty(Value const & pValue, PropertyID pPropID) { return pValue.property == pPropID; }
-			inline static bool isPointerType(Value const & pValue) { return (AfyDB::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type) || (VT_RANGE == pValue.type) || (AfyDB::VT_STREAM == pValue.type) || (VT_STRING == pValue.type) || (VT_URL == pValue.type) || (AfyDB::VT_BSTR == pValue.type) || (VT_VARREF == pValue.type && pValue.length > 1) || (VT_STMT == pValue.type) || (VT_EXPR == pValue.type) || (VT_EXPRTREE == pValue.type); }
+			inline static bool isPointerType(Value const & pValue) { return (Afy::VT_STRUCT == pValue.type) || (Afy::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type) || (VT_RANGE == pValue.type) || (Afy::VT_STREAM == pValue.type) || (VT_STRING == pValue.type) || (VT_URL == pValue.type) || (Afy::VT_BSTR == pValue.type) || (VT_VARREF == pValue.type && pValue.length > 1) || (VT_STMT == pValue.type) || (VT_EXPR == pValue.type) || (VT_EXPRTREE == pValue.type); }
 			inline static bool isRefType(Value const & pValue) { return (VT_REF == pValue.type || VT_REFID == pValue.type || VT_REFPROP == pValue.type || VT_REFIDPROP == pValue.type || VT_REFELT == pValue.type || VT_REFIDELT == pValue.type); }
 			inline static bool isRefPtrType(Value const & pValue) { return (VT_REF == pValue.type || VT_REFPROP == pValue.type || VT_REFELT == pValue.type); }
-			inline static bool isCollectionType(Value const & pValue) { return (AfyDB::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type); }
+			inline static bool isCollectionType(Value const & pValue) { return (Afy::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type); }
 			inline static bool isAddOp(ExprOp pOp) { return (OP_ADD == pOp || OP_ADD_BEFORE == pOp); }
 			inline static bool isMoveOp(ExprOp pOp) { return (OP_MOVE == pOp || OP_MOVE_BEFORE == pOp); }
 			template <class TTest, class TContent> inline static bool contains(Value const & pValue, TTest const & pTest, TContent const & pContent);
 			template <class TTest, class TContent> inline static bool contains(IPIN const & pPIN, TTest const & pTest, TContent const & pContent);
 		public:
 			inline static void cvtUnicode(void * pString, uint32_t pLenInC, uint32_t pDstCharSize, uint32_t pOrgCharSize);
-		public:
-			enum ePINFlags { kPINFAnnotation = (1 << 0), kPINFReadonly = (1 << 1), kPINFNotifies = (1 << 2), kPINFCantBeReplicated = (1 << 3), kPINFHidden = (1 << 4),kPINFDeleted = (1 << 5)  };
-			inline static uint32_t getPINFlags(IPIN const & pPIN);
-			inline static uint32_t PINFlags2Mode(uint32_t pFlags);
 	};
 
 	/**
@@ -247,17 +243,17 @@ namespace PSSER_NAMESPACE
 	class CollectionIterator
 	{
 		protected:
-			AfyDB::Value const & mCollection;
+			Afy::Value const & mCollection;
 			unsigned long mI; // Note: May not be defined.
-			AfyDB::ElementID mCurr;
+			Afy::ElementID mCurr;
 		public:
-			CollectionIterator(AfyDB::Value const & pCollection) : mCollection(pCollection), mI((unsigned long)-1), mCurr(0) {}
+			CollectionIterator(Afy::Value const & pCollection) : mCollection(pCollection), mI((unsigned long)-1), mCurr(0) {}
 			inline Value const * beginAtIndex(unsigned long pIndex);
-			inline Value const * beginAtEid(AfyDB::ElementID pEid);
+			inline Value const * beginAtEid(Afy::ElementID pEid);
 			inline Value const * next();
 			inline Value const * previous();
 			inline void reset();
-			inline static AfyDB::Value const * findValue(AfyDB::Value const & pCollection, AfyDB::ElementID pEid, unsigned long * pIt = NULL);
+			inline static Afy::Value const * findValue(Afy::Value const & pCollection, Afy::ElementID pEid, unsigned long * pIt = NULL);
 		private:
 			CollectionIterator(CollectionIterator const &);
 			CollectionIterator & operator =(CollectionIterator const &);
@@ -355,7 +351,7 @@ namespace PSSER_NAMESPACE
 			inline static void outCvtString(ContextOut & pCtx, wchar_t const * pString, uint32_t pLenInB);
 			template <class T> inline static void outCvtString(ContextOut & pCtx, T const * pString, uint32_t pLenInB);
 			template <class T> inline static void outString(ContextOut & pCtx, T const * pString, uint32_t pLenInB);
-			template <class T> inline static void outStream(ContextOut & pCtx, AfyDB::IStream & pStream, T *, uint64_t pLenInB = uint64_t(~0));
+			template <class T> inline static void outStream(ContextOut & pCtx, Afy::IStream & pStream, T *, uint64_t pLenInB = uint64_t(~0));
 			inline static void outQuery(ContextOut & pCtx, Value const & pValue);
 			inline static void outExpr(ContextOut & pCtx, Value const & pValue);
 			inline static void outIID(ContextOut & pCtx, IdentityID const & pIID);
@@ -363,14 +359,14 @@ namespace PSSER_NAMESPACE
 			inline static void outRef(ContextOut & pCtx, PID const & pPID, PropertyID const & pPropID);
 			inline static void outRef(ContextOut & pCtx, PID const & pPID, PropertyID const & pPropID, ElementID const & pEid);
 			inline static void outCLSID(ContextOut & pCtx, ClassID const & pCLSID);
-			inline static void outClassSpec(ContextOutRaw & pCtx, ClassSpec const & pClassSpec);
+			inline static void outClassSpec(ContextOutRaw & pCtx, SourceSpec const & pClassSpec);
 			inline static void outDateTime(ContextOutRaw & pCtx, DateTime const & pDateTime);
 			inline static void outPropertyID(ContextOut & pCtx, PropertyID const & pPropID);
 			inline static void beginValue(ContextOut & pCtx, Value const & pValue, uint64_t * pLen);
 			inline static void endValue(ContextOut &, Value const &) {}
 			inline static void beginProperty(ContextOut & pCtx, PropertyID const & pPropID) { outPropertyID(pCtx, pPropID); }
 			inline static void endProperty(ContextOut &, PropertyID const &) {}
-			inline static bool beginPIN(ContextOut & pCtx, IPIN const & pPIN) { pCtx.os() << pPIN.getNumberOfProperties() << " " << Services::getPINFlags(pPIN) << " "; return true; }
+			inline static bool beginPIN(ContextOut & pCtx, IPIN const & pPIN) { pCtx.os() << pPIN.getNumberOfProperties() << " " << pPIN.getFlags() << " "; return true; }
 			inline static void endPIN(ContextOut &, IPIN const &) {}
 		public:
 			static ValueType normalizeVT(Value const & pValue);
@@ -391,7 +387,7 @@ namespace PSSER_NAMESPACE
 			inline static void inRefIDVal(ContextIn & pCtx,Value & pValue);
 			inline static void inRefIDELT(ContextIn & pCtx,Value & pValue);
 			inline static void inCLSID(ContextIn & pCtx, ClassID & pCLSID);
-			inline static void inClassSpec(ContextInRaw & pCtx, ClassSpec & pClassSpec);
+			inline static void inClassSpec(ContextInRaw & pCtx, SourceSpec & pClassSpec);
 			inline static void inDateTime(ContextInRaw & pCtx, DateTime & pDateTime);
 			template <class TContextIn> inline static void value(TContextIn & pCtx, Value & pValue){In<TContextIn>::value(pCtx,pValue);};
 			inline static void inPropertyID(ContextIn & pCtx, PropertyID & pPropID);
@@ -406,7 +402,7 @@ namespace PSSER_NAMESPACE
 			template <class T> inline static void freeArray(T const * pArray, ISession * pSession) { pSession ? pSession->free((void *)pArray) : delete [] pArray; }
 			inline static void freeValue(Value & pValue, ISession * pSession);
 			inline static void freeValues(Value * pValue, size_t iNum, ISession * pSession);
-			inline static void freeClassSpec(ClassSpec & pClassSpec, ISession * pSession);
+			inline static void freeClassSpec(SourceSpec & pClassSpec, ISession * pSession);
 	};
 
 	/*************************************************************************/
@@ -422,7 +418,14 @@ namespace PSSER_NAMESPACE
 		switch (pValue.type)
 		{
 			// Collections.
-			case AfyDB::VT_ARRAY:
+			case Afy::VT_STRUCT:
+			{
+				unsigned long i;
+				for (i = 0; i < pValue.length; i++)
+					property(pCtx, pValue.varray[i]);
+				break;
+			}
+			case Afy::VT_ARRAY:
 			{
 				unsigned long i;
 				for (i = 0; i < pValue.length; i++)
@@ -438,7 +441,7 @@ namespace PSSER_NAMESPACE
 					value(pCtx, *lNext);
 				if (iV < pPersistedLen) // Note: Robustness for #5599 and potential similar issues (e.g. tx isolation issues).
 				{
-					Value lEmpty; lEmpty.setError(STORE_INVALID_PROPID);
+					Value lEmpty; lEmpty.setError(STORE_INVALID_URIID);
 					for (; iV < pPersistedLen; iV++)
 						value(pCtx, lEmpty);
 				}
@@ -454,15 +457,15 @@ namespace PSSER_NAMESPACE
 
 			// Streams.
 			// Note: For replication, a different strategy may be adopted depending on pinet...
-			case AfyDB::VT_STREAM:
+			case Afy::VT_STREAM:
 			{
-				AfyDB::IStream * lStream = pValue.stream.is;
+				Afy::IStream * lStream = pValue.stream.is;
 				bool lCloned = false;
 				if (RC_OK != lStream->reset())
 					{ lStream = pValue.stream.is->clone(); lCloned = true; }
 				switch (lStream->dataType())
 				{
-					case VT_STRING: case AfyDB::VT_BSTR: TContextOut::TPrimitives::outStream(pCtx, *pValue.stream.is, (char *)0, pPersistedLen); break;
+					case VT_STRING: case Afy::VT_BSTR: TContextOut::TPrimitives::outStream(pCtx, *pValue.stream.is, (char *)0, pPersistedLen); break;
 					default: assert(false && "Unexisting stream format!"); break;
 				}
 				lCloned ? lStream->destroy() : (void)lStream->reset();
@@ -471,7 +474,7 @@ namespace PSSER_NAMESPACE
 
 			// Variable-length.
 			case VT_STRING: case VT_URL: TContextOut::TPrimitives::outString(pCtx, pValue.str, pValue.length); break;
-			case AfyDB::VT_BSTR: TContextOut::TPrimitives::outString(pCtx, pValue.bstr, pValue.length); break;
+			case Afy::VT_BSTR: TContextOut::TPrimitives::outString(pCtx, pValue.bstr, pValue.length); break;
 			case VT_VARREF:
 			{
 				pCtx.os() << (int)pValue.refV.refN << " ";
@@ -488,9 +491,9 @@ namespace PSSER_NAMESPACE
 			//         instead of all usages, e.g. to limit the size of these values in a dump that would
 			//         contain lots of them; for the moment it doesn't sound dramatic though, and
 			//         backward compatibility should be trivial if we decide to change this later.
-			case VT_RESERVED1: pCtx.os() << pValue.i << " "; break;
-			case AfyDB::VT_INT: pCtx.os() << pValue.i << " "; break;
-			case AfyDB::VT_UINT: pCtx.os() << pValue.ui << " "; break;
+			case VT_ENUM: pCtx.os() << pValue.enu.enumid << "#" << pValue.enu.eltid << " "; break;
+			case Afy::VT_INT: pCtx.os() << pValue.i << " "; break;
+			case Afy::VT_UINT: pCtx.os() << pValue.ui << " "; break;
 			case VT_INT64: pCtx.os() << pValue.i64 << " "; break;
 			case VT_UINT64: pCtx.os() << pValue.ui64 << " "; break;
 			#ifdef SERIALIZATION_FOR_IPC
@@ -500,7 +503,7 @@ namespace PSSER_NAMESPACE
 				case VT_FLOAT: pCtx.os() << std::fixed << std::setprecision(pCtx.mFloatPrecision) << pValue.f << " "; break;
 				case VT_DOUBLE: pCtx.os() << std::fixed << std::setprecision(pCtx.mDoublePrecision) << pValue.d << " "; break;
 			#endif
-			case AfyDB::VT_BOOL: pCtx.os() << pValue.b << " "; break;
+			case Afy::VT_BOOL: pCtx.os() << pValue.b << " "; break;
 			case VT_DATETIME: pCtx.os() << pValue.ui64 << " "; break;
 			case VT_INTERVAL: pCtx.os() << pValue.i64 << " "; break;
 			case VT_CURRENT: break;
@@ -517,10 +520,9 @@ namespace PSSER_NAMESPACE
 			case VT_URIID: TContextOut::TPrimitives::outPropertyID(pCtx, pValue.uid); break;
 
 			// Delete.
-			case AfyDB::VT_ERROR: break;
+			case Afy::VT_ERROR: break;
 
 			// TODO
-			case VT_RESERVED2:
 			case VT_EXPRTREE:
 			default:
 				assert(!pCtx.mStrict && "Not yet implemented persistence required in real life!");
@@ -656,14 +658,35 @@ namespace PSSER_NAMESPACE
 	{
 		switch (valtype)
 		{
-			// Collections (both types are stored as VT_ARRAY, hence the pValue.length-independent mechanics for reload).
-			case VT_COLLECTION: assert(false);
-			case AfyDB::VT_ARRAY:
+			case Afy::VT_STRUCT:
 			{
-				if(pValue.length == 0)
+				if (pValue.length == 0)
 					pValue.varray = NULL;
 				else if (pCtx.mSession)
-					pValue.varray = (Value *)pCtx.mSession->alloc(pValue.length * sizeof(Value));
+					pValue.varray = (Value *)pCtx.mSession->malloc(pValue.length * sizeof(Value));
+				else
+					pValue.varray = new Value[pValue.length];
+
+				size_t i, lRealLength = pValue.length;
+				for (i = 0; i < pValue.length; i++)
+				{
+					property(pCtx, const_cast<Value&>(pValue.varray[i]));
+					if (Afy::VT_ERROR == pValue.varray[i].type && lRealLength > i) // Note: Robustness for #5599 and potential similar issues (e.g. tx isolation issues).
+						lRealLength = i;
+				}
+				if (lRealLength < pValue.length)
+					pValue.length = (uint32_t)lRealLength;
+				break;
+			}
+
+			// Collections (both types are stored as VT_ARRAY, hence the pValue.length-independent mechanics for reload).
+			case VT_COLLECTION: assert(false);
+			case Afy::VT_ARRAY:
+			{
+				if (pValue.length == 0)
+					pValue.varray = NULL;
+				else if (pCtx.mSession)
+					pValue.varray = (Value *)pCtx.mSession->malloc(pValue.length * sizeof(Value));
 				else
 					pValue.varray = new Value[pValue.length];
 
@@ -671,7 +694,7 @@ namespace PSSER_NAMESPACE
 				for (i = 0; i < pValue.length; i++)
 				{
 					value(pCtx, const_cast<Value&>(pValue.varray[i]));
-					if (AfyDB::VT_ERROR == pValue.varray[i].type && lRealLength > i) // Note: Robustness for #5599 and potential similar issues (e.g. tx isolation issues).
+					if (Afy::VT_ERROR == pValue.varray[i].type && lRealLength > i) // Note: Robustness for #5599 and potential similar issues (e.g. tx isolation issues).
 						lRealLength = i;
 				}
 				if (lRealLength < pValue.length)
@@ -683,7 +706,7 @@ namespace PSSER_NAMESPACE
 				if(pValue.length > 0)
 				{
 					if (pCtx.mSession)
-						pValue.range = (Value *)pCtx.mSession->alloc(pValue.length * sizeof(Value));
+						pValue.range = (Value *)pCtx.mSession->malloc(pValue.length * sizeof(Value));
 					else
 						pValue.range = new Value[pValue.length];
 
@@ -697,9 +720,9 @@ namespace PSSER_NAMESPACE
 			}
 
 			// Variable-length.
-			case AfyDB::VT_STREAM: assert(false);
+			case Afy::VT_STREAM: assert(false);
 			case VT_STRING: TContextIn::TPrimitives::inString(pCtx, pValue, (char *)0); break;
-			case AfyDB::VT_BSTR: TContextIn::TPrimitives::inString(pCtx, pValue, (unsigned char *)0); break;
+			case Afy::VT_BSTR: TContextIn::TPrimitives::inString(pCtx, pValue, (unsigned char *)0); break;
 			case VT_URL: TContextIn::TPrimitives::inURL(pCtx, pValue, (char *)0); break;
 			case VT_VARREF:
 			{
@@ -735,14 +758,14 @@ namespace PSSER_NAMESPACE
 			case VT_EXPR: TContextIn::TPrimitives::inExpr(pCtx, pValue); break;
 
 			// Fixed-length.
-			case VT_RESERVED1: pCtx.is() >> pValue.i; break;
-			case AfyDB::VT_INT: pCtx.is() >> pValue.i; break;
-			case AfyDB::VT_UINT: pCtx.is() >> pValue.ui; break;
+			case VT_ENUM: pCtx.is() >> pValue.i; break;
+			case Afy::VT_INT: pCtx.is() >> pValue.i; break;
+			case Afy::VT_UINT: pCtx.is() >> pValue.ui; break;
 			case VT_INT64: pCtx.is() >> pValue.i64; break;
 			case VT_UINT64: pCtx.is() >> pValue.ui64; break;
 			case VT_FLOAT: pCtx.is() >> pValue.f; break;
 			case VT_DOUBLE: pCtx.is() >> pValue.d; break;
-			case AfyDB::VT_BOOL: pCtx.is() >> pValue.b; break;
+			case Afy::VT_BOOL: pCtx.is() >> pValue.b; break;
 			case VT_DATETIME: pCtx.is() >> pValue.ui64; break;
 			case VT_INTERVAL: pCtx.is() >> pValue.i64; break;
 			case VT_CURRENT: break;
@@ -758,10 +781,9 @@ namespace PSSER_NAMESPACE
 			case VT_URIID: TContextIn::TPrimitives::inPropertyID(pCtx, pValue.uid); break;
 
 			// Delete.
-			case AfyDB::VT_ERROR: break;
+			case Afy::VT_ERROR: break;
 
 			// TODO
-			case VT_RESERVED2:
 			case VT_EXPRTREE:
 			default:
 				assert(false);
@@ -775,7 +797,7 @@ namespace PSSER_NAMESPACE
 		Value lTmp;
 		TContextIn::TPrimitives::beginValue(pCtx, lTmp);
 		if (!pCtx.is().good())
-			{ pValue.setError(STORE_INVALID_PROPID); assert(false); return; }
+			{ pValue.setError(STORE_INVALID_URIID); assert(false); return; }
 		pValue.length = lTmp.length;
 		#if 0
 			std::cout << "in: " << (int)lTmp.type << std::endl;
@@ -813,14 +835,12 @@ namespace PSSER_NAMESPACE
 		{
 			Value lV;
 			property(pCtx, lV);
-			if (0 == (lPINFlags & Services::kPINFAnnotation))
-				lV.setOp(OP_ADD);
 
 			if (pOverwrite && PROP_SPEC_CREATED == lV.property && pPIN.getValue(lV.property))
 				;
 			else if (pOverwrite && PROP_SPEC_UPDATED == lV.property && pPIN.getValue(lV.property))
 				;
-			else if (AfyDB::VT_ARRAY == lV.type)
+			else if (Afy::VT_ARRAY == lV.type)
 			{
 				// Review with Mark: Should I need to do this?
 				size_t i;
@@ -838,7 +858,7 @@ namespace PSSER_NAMESPACE
 			else
 			{
 				RC lRC = pPIN.modify(&lV, 1, MODE_FORCE_EIDS, &lV.eid);
-				if (RC_INVPARAM == lRC && pPIN.isCommitted())
+				if (RC_INVPARAM == lRC && pPIN.isPersistent())
 				{
 					ElementID lEid = lV.eid;
 					lV.eid = STORE_COLLECTION_ID; // Note: Using STORE_LAST_ELEMENT currently forces a collection form, even for 1 element...
@@ -890,7 +910,7 @@ namespace PSSER_NAMESPACE
 					{ assert(0 == pValue.nav->count() && "Unhealthy collection [bug #5599]"); return 0; }
 				return pValue.nav->count();
 			}
-			case AfyDB::VT_STREAM:
+			case Afy::VT_STREAM:
 			{
 				if (!pValue.stream.is)
 					return 0;
@@ -907,8 +927,9 @@ namespace PSSER_NAMESPACE
 			return true;
 		switch (pValue.type)
 		{
-			case AfyDB::VT_ARRAY: { size_t i; for (i = 0; i < pValue.length; i++) if (contains(pValue.varray[i], pTest, pContent)) return true; } return false;
-			case AfyDB::VT_COLLECTION: if (pValue.nav) { Value const * lNext; for (lNext = pValue.nav->navigate(GO_FIRST); NULL != lNext; lNext = pValue.nav->navigate(GO_NEXT)) { if (contains(*lNext, pTest, pContent)) return true; } } return false;
+			case Afy::VT_STRUCT:
+			case Afy::VT_ARRAY: { size_t i; for (i = 0; i < pValue.length; i++) if (contains(pValue.varray[i], pTest, pContent)) return true; } return false;
+			case Afy::VT_COLLECTION: if (pValue.nav) { Value const * lNext; for (lNext = pValue.nav->navigate(GO_FIRST); NULL != lNext; lNext = pValue.nav->navigate(GO_NEXT)) { if (contains(*lNext, pTest, pContent)) return true; } } return false;
 			default: break;
 		}
 		return false;
@@ -952,24 +973,6 @@ namespace PSSER_NAMESPACE
 		}
 	}
 
-	inline uint32_t Services::getPINFlags(IPIN const & pPIN)
-	{
-		return
-			(pPIN.isReadonly() ? kPINFReadonly : 0) |
-			(pPIN.canNotify() ? kPINFNotifies : 0) |
-			(pPIN.canBeReplicated() ? 0 : kPINFCantBeReplicated) |
-			(pPIN.isHidden() ? kPINFHidden : 0) |
-			(pPIN.isDeleted() ? kPINFDeleted : 0);
-	}
-
-	inline uint32_t Services::PINFlags2Mode(uint32_t pFlags)
-	{
-		return
-			(0 != (pFlags & kPINFNotifies) ? PIN_NOTIFY : 0) |
-			(0 != (pFlags & kPINFCantBeReplicated) ? PIN_NO_REPLICATION : 0) |
-			(0 != (pFlags & kPINFHidden) ? PIN_HIDDEN : 0);
-	}
-
 	/**
 	 * CollectionIterator implementation.
 	 */
@@ -979,11 +982,11 @@ namespace PSSER_NAMESPACE
 		Value const * lV;
 		switch (mCollection.type)
 		{
-			case AfyDB::VT_ARRAY:
+			case Afy::VT_ARRAY:
 				for (mI = 0; mI < pIndex && mI < mCollection.length; mI++);
 				mCurr = (mI < mCollection.length) ? mCollection.varray[mI].eid : 0;
 				return (mI < mCollection.length) ? &mCollection.varray[mI] : NULL;
-			case AfyDB::VT_COLLECTION:
+			case Afy::VT_COLLECTION:
 				for (lV = mCollection.nav->navigate(GO_FIRST), mI = 0; mI < pIndex && lV; lV = mCollection.nav->navigate(GO_NEXT), mI++);
 				mCurr = lV ? lV->eid : 0;
 				return lV;
@@ -994,7 +997,7 @@ namespace PSSER_NAMESPACE
 		return NULL;
 	}
 
-	inline Value const * CollectionIterator::beginAtEid(AfyDB::ElementID pEid)
+	inline Value const * CollectionIterator::beginAtEid(Afy::ElementID pEid)
 	{
 		reset();
 		Value const * const lV = findValue(mCollection, pEid, &mI);
@@ -1011,12 +1014,12 @@ namespace PSSER_NAMESPACE
 		Value const * lV;
 		switch (mCollection.type)
 		{
-			case AfyDB::VT_ARRAY:
+			case Afy::VT_ARRAY:
 				mI++;
 				if (mI < mCollection.length)
 					{ mCurr = mCollection.varray[mI].eid; return &mCollection.varray[mI]; }
 				return NULL;
-			case AfyDB::VT_COLLECTION:
+			case Afy::VT_COLLECTION:
 				lV = mCollection.nav->navigate(GO_NEXT);
 				mCurr = lV ? lV->eid : 0;
 				return lV;
@@ -1032,11 +1035,11 @@ namespace PSSER_NAMESPACE
 		Value const * lV;
 		switch (mCollection.type)
 		{
-			case AfyDB::VT_ARRAY:
+			case Afy::VT_ARRAY:
 				if (mI > 0)
 					{--mI; mCurr = mCollection.varray[mI].eid; return &mCollection.varray[mI]; }
 				return NULL;
-			case AfyDB::VT_COLLECTION:
+			case Afy::VT_COLLECTION:
 				lV = mCollection.nav->navigate(GO_PREVIOUS);
 				mCurr = lV ? lV->eid : 0;
 				return lV;
@@ -1051,7 +1054,7 @@ namespace PSSER_NAMESPACE
 		mCurr = 0;
 	}
 
-	inline AfyDB::Value const * CollectionIterator::findValue(AfyDB::Value const & pCollection, AfyDB::ElementID pEid, unsigned long * pIt)
+	inline Afy::Value const * CollectionIterator::findValue(Afy::Value const & pCollection, Afy::ElementID pEid, unsigned long * pIt)
 	{
 		// Warning: Usage of this function can result in O(n.log(n)), or O(n^2) patterns
 		//          (the latter case would be expected for small collections only).
@@ -1060,7 +1063,7 @@ namespace PSSER_NAMESPACE
 		unsigned long i;
 		switch (pCollection.type)
 		{
-			case AfyDB::VT_ARRAY:
+			case Afy::VT_ARRAY:
 				if(pEid == STORE_FIRST_ELEMENT)
 					i = 0;
 				else if(pEid == STORE_LAST_ELEMENT)
@@ -1070,8 +1073,8 @@ namespace PSSER_NAMESPACE
 				if (pIt)
 					*pIt = i;
 				return (i < pCollection.length) ? &pCollection.varray[i] : NULL;
-			case AfyDB::VT_COLLECTION:
-				return pCollection.nav->navigate(AfyDB::GO_FINDBYID, pEid);
+			case Afy::VT_COLLECTION:
+				return pCollection.nav->navigate(Afy::GO_FINDBYID, pEid);
 			default: break;
 		}
 		return (pCollection.eid == pEid || STORE_FIRST_ELEMENT == pEid || STORE_LAST_ELEMENT == pEid) ? &pCollection : NULL;
@@ -1118,7 +1121,7 @@ namespace PSSER_NAMESPACE
 	}
 
 	template <class T>
-	inline void PrimitivesOutRaw::outStream(ContextOut & pCtx, AfyDB::IStream & pStream, T *, uint64_t pLenInB)
+	inline void PrimitivesOutRaw::outStream(ContextOut & pCtx, Afy::IStream & pStream, T *, uint64_t pLenInB)
 	{
 		// Note: If pLenInB is specified (i.e. != uint64_t(~0)), then we will truncate or fill to make sure
 		//       we write exactly that amount of bytes; normally pLenInB should be == lTotalReadInB, but
@@ -1196,10 +1199,10 @@ namespace PSSER_NAMESPACE
 		pCtx.os() << pCLSID << " ";
 	}
 
-	inline void PrimitivesOutRaw::outClassSpec(ContextOutRaw & pCtx, ClassSpec const & pClassSpec)
+	inline void PrimitivesOutRaw::outClassSpec(ContextOutRaw & pCtx, SourceSpec const & pClassSpec)
 	{
 		// Review: Can only persist a +/- irrelevant id at the moment...
-		pCtx.os() << pClassSpec.classID << " " << pClassSpec.nParams << " ";
+		pCtx.os() << pClassSpec.objectID << " " << pClassSpec.nParams << " ";
 		unsigned i;
 		for (i = 0; i < pClassSpec.nParams; i++)
 			Out<ContextOutRaw>::value(pCtx, pClassSpec.params[i]);
@@ -1315,10 +1318,10 @@ namespace PSSER_NAMESPACE
 	{
 		switch (pValue.type)
 		{
-			case VT_COLLECTION: return pValue.nav ? AfyDB::VT_ARRAY : AfyDB::VT_ERROR;
-			case AfyDB::VT_STREAM: return pValue.stream.is ? pValue.stream.is->dataType() : AfyDB::VT_ERROR;
-			case VT_EXPR: return pValue.expr ? VT_EXPR : AfyDB::VT_ERROR;
-			case VT_STMT: return pValue.stmt ? VT_STMT : AfyDB::VT_ERROR;
+			case VT_COLLECTION: return pValue.nav ? Afy::VT_ARRAY : Afy::VT_ERROR;
+			case Afy::VT_STREAM: return pValue.stream.is ? pValue.stream.is->dataType() : Afy::VT_ERROR;
+			case VT_EXPR: return pValue.expr ? VT_EXPR : Afy::VT_ERROR;
+			case VT_STMT: return pValue.stmt ? VT_STMT : Afy::VT_ERROR;
 			case VT_REF: return VT_REFID;
 			case VT_REFPROP: return VT_REFIDPROP;
 			case VT_REFELT: return VT_REFIDELT;
@@ -1346,7 +1349,7 @@ namespace PSSER_NAMESPACE
 
 		char * lBuf;
 		if (pCtx.mSession)
-			lBuf = (char *)pCtx.mSession->alloc(lNewLenInB + lMaxC);
+			lBuf = (char *)pCtx.mSession->malloc(lNewLenInB + lMaxC);
 		else
 			lBuf = new char [lNewLenInB + lMaxC];
 
@@ -1364,7 +1367,7 @@ namespace PSSER_NAMESPACE
 	{
 		assert(1 == sizeof(T));
 		if (pCtx.mSession)
-			pString = (T *)pCtx.mSession->alloc((1 + pLen) * sizeof(T));
+			pString = (T *)pCtx.mSession->malloc((1 + pLen) * sizeof(T));
 		else
 			pString = new T [1 + pLen];
 
@@ -1461,7 +1464,7 @@ namespace PSSER_NAMESPACE
 
 	inline void PrimitivesInRaw::inRefIDVal(ContextIn & pCtx,Value & pValue)
 	{
-		AfyDB::RefVID * lRVID = pCtx.mSession ? (RefVID *)(pCtx.mSession->alloc(sizeof(RefVID))) : new RefVID;
+		Afy::RefVID * lRVID = pCtx.mSession ? (RefVID *)(pCtx.mSession->malloc(sizeof(RefVID))) : new RefVID;
 		pValue.refId = lRVID;
 		if (pCtx.getVersion() < ContextIn::kVVTREFIDVALFix1)
 			inRef(pCtx, lRVID->id, lRVID->pid);
@@ -1470,7 +1473,7 @@ namespace PSSER_NAMESPACE
 	}
 	inline void PrimitivesInRaw::inRefIDELT(ContextIn & pCtx,Value & pValue)
 	{
-		RefVID * lRVID = pCtx.mSession ? (RefVID *)(pCtx.mSession->alloc(sizeof(RefVID))) : new RefVID;
+		RefVID * lRVID = pCtx.mSession ? (RefVID *)(pCtx.mSession->malloc(sizeof(RefVID))) : new RefVID;
 		pValue.refId = lRVID; 
 		inRef(pCtx, lRVID->id, lRVID->pid, lRVID->eid); 
 	}
@@ -1480,17 +1483,17 @@ namespace PSSER_NAMESPACE
 		pCtx.is() >> pCLSID;
 	}
 
-	inline void PrimitivesInRaw::inClassSpec(ContextInRaw & pCtx, ClassSpec & pClassSpec)
+	inline void PrimitivesInRaw::inClassSpec(ContextInRaw & pCtx, SourceSpec & pClassSpec)
 	{
 		// Review: Can only persist a +/- irrelevant id at the moment...
-		pCtx.is() >> pClassSpec.classID >> pClassSpec.nParams;
+		pCtx.is() >> pClassSpec.objectID >> pClassSpec.nParams;
 		if (pCtx.is().good())
 		{
 			if(pClassSpec.nParams > 0)
 			{
 				Value * lParams;
 				if (pCtx.mSession)
-					lParams = (Value *)pCtx.mSession->alloc(pClassSpec.nParams * sizeof(Value));
+					lParams = (Value *)pCtx.mSession->malloc(pClassSpec.nParams * sizeof(Value));
 				else
 					lParams = new Value[pClassSpec.nParams];
 
@@ -1537,13 +1540,13 @@ namespace PSSER_NAMESPACE
 
 			URIMap lPM;
 			lPM.URI = lPropertyURI;
-			lPM.uid = STORE_INVALID_PROPID;
+			lPM.uid = STORE_INVALID_URIID;
 			pCtx.session().mapURIs(1, &lPM);
-			assert(STORE_INVALID_PROPID != lPM.uid);
+			assert(STORE_INVALID_URIID != lPM.uid);
 			pPropID = lPM.uid;
 		}
 		else
-			pPropID = STORE_INVALID_PROPID;
+			pPropID = STORE_INVALID_URIID;
 	}
 
 	inline void PrimitivesInRaw::beginValue(ContextIn & pCtx, Value & pHeader)
@@ -1576,7 +1579,7 @@ namespace PSSER_NAMESPACE
 		}
 		else
 		{
-			pDst.setError(STORE_INVALID_PROPID);
+			pDst.setError(STORE_INVALID_URIID);
 			assert(false);
 		}
 	}
@@ -1586,7 +1589,8 @@ namespace PSSER_NAMESPACE
 		switch (pValue.type)
 		{
 			// Collections.
-			case AfyDB::VT_ARRAY: 
+			case Afy::VT_STRUCT:
+			case Afy::VT_ARRAY: 
 			{
 				unsigned int i;
 				for (i = 0; i < pValue.length && pValue.varray; i++)
@@ -1594,7 +1598,7 @@ namespace PSSER_NAMESPACE
 				freeArray(pValue.varray, pSession); pValue.varray = NULL; pValue.length = 0;
 				break;
 			}
-			case AfyDB::VT_COLLECTION: if (pValue.nav) pValue.nav->destroy(); pValue.nav = NULL; break;
+			case Afy::VT_COLLECTION: if (pValue.nav) pValue.nav->destroy(); pValue.nav = NULL; break;
 			case VT_RANGE:
 			if(pValue.range)
 			{
@@ -1605,23 +1609,23 @@ namespace PSSER_NAMESPACE
 			}
 
 			// Streams.
-			case AfyDB::VT_STREAM: if (pValue.stream.is) pValue.stream.is->destroy(); pValue.stream.is = NULL; break;
+			case Afy::VT_STREAM: if (pValue.stream.is) pValue.stream.is->destroy(); pValue.stream.is = NULL; break;
 
 			// Variable-length.
 			case VT_STRING: case VT_URL: if (0 != pValue.length && NULL != pValue.str) { freeArray(pValue.str, pSession); } pValue.str = NULL; pValue.length = 0; break;
-			case AfyDB::VT_BSTR: if (0 != pValue.length && NULL != pValue.bstr) { freeArray(pValue.bstr, pSession); } pValue.bstr = NULL; pValue.length = 0; break;
+			case Afy::VT_BSTR: if (0 != pValue.length && NULL != pValue.bstr) { freeArray(pValue.bstr, pSession); } pValue.bstr = NULL; pValue.length = 0; break;
 			case VT_STMT: break; // Review (XXX): What if not consumed?
 			case VT_EXPR: break; // Review (XXX): What if not consumed?
 
 			// Fixed-length.
-			case VT_RESERVED1:
-			case AfyDB::VT_INT:
-			case AfyDB::VT_UINT:
+			case VT_ENUM:
+			case Afy::VT_INT:
+			case Afy::VT_UINT:
 			case VT_INT64:
 			case VT_UINT64:
 			case VT_FLOAT:
 			case VT_DOUBLE:
-			case AfyDB::VT_BOOL:
+			case Afy::VT_BOOL:
 			case VT_DATETIME:
 			case VT_INTERVAL:
 			case VT_CURRENT:
@@ -1644,10 +1648,9 @@ namespace PSSER_NAMESPACE
 				break;
 
 			// Delete.
-			case AfyDB::VT_ERROR: break;
+			case Afy::VT_ERROR: break;
 
 			// TODO
-			case VT_RESERVED2:
 			case VT_EXPRTREE:
 			default:
 				assert(false);
@@ -1658,11 +1661,11 @@ namespace PSSER_NAMESPACE
 	inline void PrimitivesInRaw::freeValues(Value *pValue, size_t iNumValues, ISession * pSession)
 	{
 		size_t i;
-		for (i = 0 ; i < iNumValues; i++) 
+		for (i = 0; i < iNumValues; i++) 
 			PrimitivesInRaw::freeValue(pValue[i], pSession);
 	}
 
-	inline void PrimitivesInRaw::freeClassSpec(ClassSpec & pClassSpec, ISession * pSession)
+	inline void PrimitivesInRaw::freeClassSpec(SourceSpec & pClassSpec, ISession * pSession)
 	{
 		freeValues(const_cast<Value*>(pClassSpec.params), pClassSpec.nParams, pSession);
 		freeArray(pClassSpec.params, pSession);
@@ -1691,7 +1694,7 @@ namespace PSSER_NAMESPACE
 			ContextOutIPC(PSSER_OSTREAM & pOs, IPCHeapHeader const * pHeapHeader, TClientAddresses const * pClientAddresses = NULL)
 				: ContextOutRaw(pOs), mHeapHeader(pHeapHeader), mClientAddresses(pClientAddresses) {}
 			inline bool isSharedMem(URIMap const * pPM, unsigned pNum) const;
-			inline bool isSharedMem(ClassSpec const * pCS, unsigned pNum) const;
+			inline bool isSharedMem(SourceSpec const * pCS, unsigned pNum) const;
 			inline bool isSharedMem(Value const * pV, unsigned pNum) const;
 			bool isSharedMem(void const * pPtr) const { return mClientAddresses ? IPC::isSharedMem(pPtr, *mClientAddresses) : IPC::isSharedMem(pPtr, mHeapHeader); }
 			void const * S2C(void const * pServerPtr) const { return mClientAddresses ? IPC::S2C(pServerPtr, mHeapHeader, *mClientAddresses) : pServerPtr; }
@@ -1745,7 +1748,7 @@ namespace PSSER_NAMESPACE
 				return false;
 		return true;
 	}
-	inline bool ContextOutIPC::isSharedMem(ClassSpec const * pCS, unsigned pNum) const
+	inline bool ContextOutIPC::isSharedMem(SourceSpec const * pCS, unsigned pNum) const
 	{
 		if (NULL == pCS)
 			return true;
@@ -1813,7 +1816,7 @@ namespace PSSER_NAMESPACE
 		{
 			char * lURI;
 			if (pCtx.mSession)
-				lURI = (char *)pCtx.mSession->alloc(1 + lURILen);
+				lURI = (char *)pCtx.mSession->malloc(1 + lURILen);
 			else
 				lURI = new char[1 + lURILen];
 
@@ -1830,7 +1833,7 @@ namespace PSSER_NAMESPACE
 	}
 	inline void PrimitivesInIPC::freeValue(ContextInIPC & pCtx, Value & pValue, ISession * pSession)
 	{
-		if (AfyDB::VT_STREAM == pValue.type && pCtx.isSharedMem(pValue.stream.is))
+		if (Afy::VT_STREAM == pValue.type && pCtx.isSharedMem(pValue.stream.is))
 			return;
 		else if (Services::isRefPtrType(pValue) && pCtx.isSharedMem(pValue.pin))
 			return;
@@ -1844,7 +1847,7 @@ namespace PSSER_NAMESPACE
 	{
 		// Special handling for all pointer types...
 		// Review: Could refine further for collections...
-		if (AfyDB::VT_STREAM == pValue.type)
+		if (Afy::VT_STREAM == pValue.type)
 		{
 			if (pCtx.isSharedMem(pValue.stream.is))
 			{
@@ -1899,8 +1902,8 @@ namespace PSSER_NAMESPACE
 			void * lAddr;
 			pCtx.is() >> lAddr;
 			lAddr = (void *)pCtx.S2C(lAddr);
-			if (AfyDB::VT_STREAM == lTmp.type)
-				pValue.stream.is = (AfyDB::IStream *)lAddr;
+			if (Afy::VT_STREAM == lTmp.type)
+				pValue.stream.is = (Afy::IStream *)lAddr;
 			else
 				pValue.str = (char *)lAddr;
 			if (OP_EDIT == lTmp.op)
@@ -2071,13 +2074,13 @@ namespace PSSER_NAMESPACE
 			// Ignore collections for now; collections of large streams are incomplete, and not used.
 			// If we need to support them later, then chunkStream should probably be invoked at
 			// valueContent() level rather than property() level.
-			case AfyDB::VT_STREAM:
+			case Afy::VT_STREAM:
 			{
-				char * const lBuf = (char *)pSession.alloc(PINHASH_BLOCKSIZE);
+				char * const lBuf = (char *)pSession.malloc(PINHASH_BLOCKSIZE);
 				if (lBuf)
 				{
 					size_t lRead, lTotalProcessed;
-					AfyDB::IStream * lIs = pValue.stream.is;
+					Afy::IStream * lIs = pValue.stream.is;
 					bool lCloned = false;
 					if (RC_OK != lIs->reset())
 						{ lIs = lIs->clone(); lCloned = true; }
@@ -2119,7 +2122,7 @@ namespace PSSER_NAMESPACE
 				}
 				break;
 			}
-			case AfyDB::VT_STRING: case AfyDB::VT_URL: case AfyDB::VT_BSTR:
+			case Afy::VT_STRING: case Afy::VT_URL: case Afy::VT_BSTR:
 			{
 				size_t iChunk;
 				size_t const lLastAvailableChunk = (pValue.length - 1) / pHSFact.getChunkSizeInB();
@@ -2179,12 +2182,12 @@ namespace PSSER_NAMESPACE
 		{
 			switch (pValue.type)
 			{
-				case AfyDB::VT_ARRAY:
+				case Afy::VT_ARRAY:
 					ContextOutComparisons::TPrimitives::beginProperty(pCtx, pValue.property);
 					Out<ContextOutComparisons>::value(pCtx, pValue.varray[0]);
 					ContextOutComparisons::TPrimitives::endProperty(pCtx, pValue.property);
 					return;
-				case AfyDB::VT_COLLECTION:
+				case Afy::VT_COLLECTION:
 				{
 					Value const * lNext = pValue.nav->navigate(GO_FIRST);
 					if (lNext)
@@ -2232,7 +2235,7 @@ namespace PSSER_NAMESPACE
 	class ContextOutDbg : public ContextOut
 	{
 		public:
-			struct CollStackItem { long mLevel; long mPropId; CollStackItem(long pLevel, long pPropId) : mLevel(pLevel), mPropId(pPropId) {} };
+			struct CollStackItem { long mLevel; long mPropId; bool mStruct; CollStackItem(long pLevel, long pPropId, bool pStruct) : mLevel(pLevel), mPropId(pPropId), mStruct(pStruct) {} };
 			typedef std::vector<IPIN const *> TPinStack;
 			typedef std::vector<CollStackItem> TCollStack;
 			typedef void (*TCustomOutputFunc)(ContextOutDbg &, Value const &, void *);
@@ -2261,10 +2264,10 @@ namespace PSSER_NAMESPACE
 	{
 		public:
 			template <class T> inline static T mymin(T const & t1, T const & t2) { return (t1 <= t2) ? t1 : t2; } // @#!$
-			inline static void outString(ContextOutDbg & pCtx, wchar_t const * pString, uint32_t pLenInB) ;
-			inline static void outString(ContextOutDbg & pCtx, unsigned char const * pString, uint32_t pLenInB) ;
+			inline static void outString(ContextOutDbg & pCtx, wchar_t const * pString, uint32_t pLenInB);
+			inline static void outString(ContextOutDbg & pCtx, unsigned char const * pString, uint32_t pLenInB);
 			template <class T> inline static void outString(ContextOutDbg & pCtx, T const * pString, uint32_t pLenInB) { if (pString) { std::basic_string<T> lString(pString, mymin(pCtx.mShowNumChars, size_t(pLenInB / sizeof(T)))); outString(pCtx, (unsigned char *)lString.c_str(), (uint32_t)lString.length() * sizeof(T)); } else pCtx.os() << "null"; }
-			template <class T> inline static void outStream(ContextOutDbg & pCtx, AfyDB::IStream & pStream, T * pT, uint64_t pLenInB = uint64_t(~0));
+			template <class T> inline static void outStream(ContextOutDbg & pCtx, Afy::IStream & pStream, T * pT, uint64_t pLenInB = uint64_t(~0));
 			inline static void outQuery(ContextOutDbg & pCtx, Value const & pValue) { PrimitivesOutRaw::outQuery(pCtx, pValue); }
 			inline static void outExpr(ContextOutDbg & pCtx, Value const & pValue) { PrimitivesOutRaw::outExpr(pCtx, pValue); }
 			inline static void outIID(ContextOutDbg & pCtx, IdentityID const & pIID) { if (pCtx.mSession) PrimitivesOutRaw::outIID(pCtx, pIID); else { pCtx.os() << pIID << " "; } }
@@ -2318,18 +2321,18 @@ namespace PSSER_NAMESPACE
 	}
 
 	template <class T>
-	inline void PrimitivesOutDbg::outStream(ContextOutDbg & pCtx, AfyDB::IStream & pStream, T *, uint64_t)
+	inline void PrimitivesOutDbg::outStream(ContextOutDbg & pCtx, Afy::IStream & pStream, T *, uint64_t)
 	{
 		static size_t const sBufSize = 0x1000;
 
-		AfyDB::ValueType type = pStream.dataType() ;
+		Afy::ValueType type = pStream.dataType();
 		T lBuf[sBufSize];
 		size_t lMaxRemaining = pCtx.mShowNumChars;
 		size_t lRead = pStream.read(lBuf, mymin(sBufSize, lMaxRemaining));
 		while (lRead)
 		{
 			lMaxRemaining -= lRead;
-			if ( type == AfyDB::VT_BSTR )
+			if ( type == Afy::VT_BSTR )
 			{
 				// Avoid any bad ascii characters
 				char safechar = '.' ;
@@ -2397,28 +2400,28 @@ namespace PSSER_NAMESPACE
 	{
 		size_t lPropertyURISize = 0;
 		if (pCtx.mSession) pCtx.mSession->getURI(pPropID, NULL, lPropertyURISize);
-		char * lPropertyURI = NULL ;
+		char const * lPropertyURI = NULL;
 		if (0 != lPropertyURISize)
 		{
-			lPropertyURI = (char *)alloca(1 + lPropertyURISize);
-			lPropertyURI[lPropertyURISize++] = 0;
-			pCtx.session().getURI(pPropID, lPropertyURI, lPropertyURISize);
+			lPropertyURI = (char const *)alloca(1 + lPropertyURISize);
+			((char *)lPropertyURI)[lPropertyURISize++] = 0;
+			pCtx.session().getURI(pPropID, (char *)lPropertyURI, lPropertyURISize);
 		}
 		else 
 		{
 			switch(pPropID)
 			{
-			case PROP_SPEC_PINID : lPropertyURI = "PROP_SPEC_PINID" ; break ;
-			case PROP_SPEC_DOCUMENT : lPropertyURI = "PROP_SPEC_DOCUMENT" ; break ;
-			case PROP_SPEC_PARENT : lPropertyURI = "PROP_SPEC_PARENT" ; break ;
-			case PROP_SPEC_VALUE : lPropertyURI = "PROP_SPEC_VALUE" ; break ;
-			case PROP_SPEC_CREATED : lPropertyURI = "PROP_SPEC_CREATED" ; break ;
-			case PROP_SPEC_CREATEDBY : lPropertyURI = "PROP_SPEC_CREATEDBY" ; break ;
-			case PROP_SPEC_UPDATED : lPropertyURI = "PROP_SPEC_UPDATED" ; break ;
-			case PROP_SPEC_UPDATEDBY : lPropertyURI = "PROP_SPEC_UPDATEDBY" ; break ;
-			case PROP_SPEC_ACL : lPropertyURI = "PROP_SPEC_ACL" ; break ;
-			case PROP_SPEC_STAMP : lPropertyURI = "PROP_SPEC_STAMP" ; break ;
-			default: break ;
+				case PROP_SPEC_PINID: lPropertyURI = "PROP_SPEC_PINID"; break;
+				case PROP_SPEC_DOCUMENT: lPropertyURI = "PROP_SPEC_DOCUMENT"; break;
+				case PROP_SPEC_PARENT: lPropertyURI = "PROP_SPEC_PARENT"; break;
+				case PROP_SPEC_VALUE: lPropertyURI = "PROP_SPEC_VALUE"; break;
+				case PROP_SPEC_CREATED: lPropertyURI = "PROP_SPEC_CREATED"; break;
+				case PROP_SPEC_CREATEDBY: lPropertyURI = "PROP_SPEC_CREATEDBY"; break;
+				case PROP_SPEC_UPDATED: lPropertyURI = "PROP_SPEC_UPDATED"; break;
+				case PROP_SPEC_UPDATEDBY: lPropertyURI = "PROP_SPEC_UPDATEDBY"; break;
+				case PROP_SPEC_ACL: lPropertyURI = "PROP_SPEC_ACL"; break;
+				case PROP_SPEC_STAMP: lPropertyURI = "PROP_SPEC_STAMP"; break;
+				default: lPropertyURI = "PROP_SPEC_<other>"; break;
 			}
 		}
 
@@ -2433,7 +2436,7 @@ namespace PSSER_NAMESPACE
 	{
 		pCtx.mLevel++;
 		outTab(pCtx);
-		if (!pCtx.mCollStack.empty() && pCtx.mCollStack.back().mLevel == pCtx.mLevel - 1)
+		if (!pCtx.mCollStack.empty() && pCtx.mCollStack.back().mLevel == pCtx.mLevel - 1 && !pCtx.mCollStack.back().mStruct)
 			pCtx.os() << "elm: ";
 		else
 			outPropertyID(pCtx, pValue.getPropID());
@@ -2450,17 +2453,24 @@ namespace PSSER_NAMESPACE
 			*pLen = lPersistedLength;
 		pCtx.os() << std::dec << lPersistedLength << ") ";
 
-		if (AfyDB::VT_ARRAY == pValue.type || VT_COLLECTION == pValue.type)
+		if (Afy::VT_ARRAY == pValue.type || Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
 		{
+			switch (pValue.type)
+			{
+				case Afy::VT_ARRAY: pCtx.os() << " VT_ARRAY "; break;
+				case Afy::VT_COLLECTION: pCtx.os() << " VT_COLLECTION "; break;
+				case Afy::VT_STRUCT: pCtx.os() << " VT_STRUCT "; break;
+				default: pCtx.os() << " <vt_unknown> "; break;
+			}
 			pCtx.mLevel++;
-			pCtx.mCollStack.push_back(ContextOutDbg::CollStackItem(pCtx.mLevel, pValue.property));
+			pCtx.mCollStack.push_back(ContextOutDbg::CollStackItem(pCtx.mLevel, pValue.property, Afy::VT_STRUCT == pValue.type));
 			pCtx.os() << std::endl;
 		}
 	}
 
 	inline void PrimitivesOutDbg::endValue(ContextOutDbg & pCtx, Value const & pValue)
 	{
-		if (AfyDB::VT_ARRAY == pValue.type || VT_COLLECTION == pValue.type)
+		if (Afy::VT_ARRAY == pValue.type || Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
 		{
 			pCtx.mCollStack.pop_back();
 			pCtx.mLevel--;
@@ -2476,7 +2486,7 @@ namespace PSSER_NAMESPACE
 		if (pCtx.mCustomOutputFunc && !Services::isCollectionType(pValue))
 		{
 			PrimitivesOutDbg::beginValue(pCtx, pValue, NULL);
-			if (STORE_INVALID_PROPID == pValue.property && !pCtx.mCollStack.empty() && pCtx.mCollStack.back().mLevel == pCtx.mLevel - 1)
+			if (STORE_INVALID_URIID == pValue.property && !pCtx.mCollStack.empty() && pCtx.mCollStack.back().mLevel == pCtx.mLevel - 1)
 			{
 				Value lVTmp;
 				memcpy(&lVTmp, &pValue, sizeof(pValue));
@@ -2489,6 +2499,264 @@ namespace PSSER_NAMESPACE
 		}
 		else
 			outValue<ContextOutDbg>(pCtx, pValue);
+	}
+
+	/*************************************************************************
+	 * XML Output
+	 * (Used to be taken care of by XQuery; I only take care of output here;
+	 * input is implemented in a service and relies on a 3rd-party SAX parser)
+	 *************************************************************************/
+
+	class PrimitivesOutXml;
+	class ContextOutXml : public ContextOut
+	{
+// TODO: a pmap of "known" xml props (name, children etc.)
+//       -> when retrieve these guys in rendered pin, shortcut normal logic
+		public:
+			struct CollStackItem { long mLevel; long mPropId; bool mStruct; CollStackItem(long pLevel, long pPropId, bool pStruct) : mLevel(pLevel), mPropId(pPropId), mStruct(pStruct) {} };
+			typedef std::vector<IPIN const *> TPinStack;
+			typedef std::vector<CollStackItem> TCollStack;
+			enum eFlags { kFRecurseRefs = (1 << 0), kFShowPropIds = (1 << 1), kFDefault = (kFRecurseRefs | kFShowPropIds), };
+		public:
+			TPinStack mPinStack;
+			TCollStack mCollStack;
+			size_t const mShowNumChars;
+			long const mFlags;
+			long mLevel;
+			bool mNestedPin;
+		public:
+			typedef PrimitivesOutXml TPrimitives;
+			ContextOutXml(std::ostream & pOs, ISession * pSession, size_t pShowNumChars = 20, long pFlags = kFDefault) : ContextOut(pOs, pSession, false, NULL != pSession), mShowNumChars(pShowNumChars), mFlags(pFlags) { clear(); }
+			void clear() { mPinStack.clear(); mCollStack.clear(); mLevel = 0; mNestedPin = false; }
+			bool recurseRefs() const { return 0 != (mFlags & kFRecurseRefs); }
+			bool showPropIds() const { return 0 != (mFlags & kFShowPropIds); }
+	};
+
+	typedef Out<ContextOutXml> OutXml;
+
+	class PrimitivesOutXml
+	{
+		public:
+			template <class T> inline static T mymin(T const & t1, T const & t2) { return (t1 <= t2) ? t1 : t2; } // @#!$
+			inline static void outString(ContextOutXml & pCtx, wchar_t const * pString, uint32_t pLenInB);
+			inline static void outString(ContextOutXml & pCtx, unsigned char const * pString, uint32_t pLenInB);
+			template <class T> inline static void outString(ContextOutXml & pCtx, T const * pString, uint32_t pLenInB) { if (pString) { std::basic_string<T> lString(pString, mymin(pCtx.mShowNumChars, size_t(pLenInB / sizeof(T)))); outString(pCtx, (unsigned char *)lString.c_str(), (uint32_t)lString.length() * sizeof(T)); } else pCtx.os() << "null"; }
+			template <class T> inline static void outStream(ContextOutXml & pCtx, Afy::IStream & pStream, T * pT, uint64_t pLenInB = uint64_t(~0));
+			inline static void outQuery(ContextOutXml & pCtx, Value const & pValue) { PrimitivesOutRaw::outQuery(pCtx, pValue); }
+			inline static void outExpr(ContextOutXml & pCtx, Value const & pValue) { PrimitivesOutRaw::outExpr(pCtx, pValue); }
+			inline static void outIID(ContextOutXml & pCtx, IdentityID const & pIID) { if (pCtx.mSession) PrimitivesOutRaw::outIID(pCtx, pIID); else { pCtx.os() << pIID << " "; } }
+			inline static void outRef(ContextOutXml & pCtx, PID const & pPID);
+			inline static void outRef(ContextOutXml & pCtx, PID const & pPID, PropertyID const & pPropID) { if (pCtx.mSession) PrimitivesOutRaw::outRef(pCtx, pPID, pPropID); else { outRef(pCtx, pPID); pCtx.os() << pPropID << " "; } }
+			inline static void outRef(ContextOutXml & pCtx, PID const & pPID, PropertyID const & pPropID, ElementID const & pEid) { if (pCtx.mSession) PrimitivesOutRaw::outRef(pCtx, pPID, pPropID, pEid); else { outRef(pCtx, pPID, pPropID); pCtx.os() << pEid << " "; } }
+			inline static void outCLSID(ContextOutXml & pCtx, ClassID const & pCLSID) { PrimitivesOutRaw::outCLSID(pCtx, pCLSID); }
+			inline static void outPropertyID(ContextOutXml & pCtx, PropertyID const & pPropID);
+			inline static void beginValue(ContextOutXml & pCtx, Value const & pValue, uint64_t * pLen);
+			inline static void endValue(ContextOutXml & pCtx, Value const & pValue);
+			inline static void beginProperty(ContextOutXml &, PropertyID const &) {}
+			inline static void endProperty(ContextOutXml &, PropertyID const &) {}
+			inline static bool beginPIN(ContextOutXml & pCtx, IPIN const & pPIN);
+			inline static void endPIN(ContextOutXml & pCtx, IPIN const & pPIN);
+		public:
+			static ValueType normalizeVT(Value const & pValue) { return PrimitivesOutRaw::normalizeVT(pValue); }
+			static std::ostream & outTab(ContextOutXml & pCtx) { for (long i = 0; i < pCtx.mLevel; i++) pCtx.os() << "  "; return pCtx.os(); }
+	};
+
+	inline void PrimitivesOutXml::outString(ContextOutXml & pCtx, wchar_t const * pString, uint32_t pLenInB) 
+	{
+		// Convert wchar_t to char for debug output
+		char * const lBuf = (char *)alloca(pLenInB);
+		memcpy(lBuf, pString, pLenInB);
+		uint32_t const lLenInC = pLenInB / sizeof(wchar_t);
+		Services::cvtUnicode((wchar_t *)lBuf, lLenInC, sizeof(char), sizeof(wchar_t));
+		outString(pCtx, lBuf, lLenInC); 
+	}
+
+	inline void PrimitivesOutXml::outString(ContextOutXml & pCtx, unsigned char const * pString, uint32_t pLenInB)
+	{ 
+		if (pString && pLenInB) 
+		{ 
+			std::basic_string<char> lString((char *)pString, mymin(uint32_t(pCtx.mShowNumChars), pLenInB)); 
+
+			// Binary data (VT_BSTR) is being sent in here, so remove bad ascii characters.
+			// Note: this should also take care of removing CR-LF, thus preserving all data on one line.
+			char safechar = '.' ;
+			for ( size_t i = 0 ; i < lString.length() ; i++ )
+			{
+				char c = lString[i] ;
+				if (( c < ' ' ) || ( c > 126 ))
+				{
+					lString[i] = safechar ;
+				}
+			}
+
+			PrimitivesOutRaw::outString(pCtx, lString.c_str(), (uint32_t)lString.length()); 
+		}
+		else pCtx.os() << "null"; 
+	}
+
+	template <class T>
+	inline void PrimitivesOutXml::outStream(ContextOutXml & pCtx, Afy::IStream & pStream, T *, uint64_t)
+	{
+		static size_t const sBufSize = 0x1000;
+
+		Afy::ValueType type = pStream.dataType();
+		T lBuf[sBufSize];
+		size_t lMaxRemaining = pCtx.mShowNumChars;
+		size_t lRead = pStream.read(lBuf, mymin(sBufSize, lMaxRemaining));
+		while (lRead)
+		{
+			lMaxRemaining -= lRead;
+			if ( type == Afy::VT_BSTR )
+			{
+				// Avoid any bad ascii characters
+				char safechar = '.' ;
+				for ( size_t i = 0 ; i < lRead ; i++ )
+				{
+					T c = lBuf[i] ;
+					if (( c < ' ' ) || ( c > 126 ))
+					{
+						lBuf[i] = safechar ;
+					}
+				}
+			}
+
+			pCtx.os().write((char *)lBuf, lRead);
+			lRead = pStream.read(lBuf, mymin(sBufSize, lMaxRemaining));
+		}
+		pCtx.os() << " ";
+	}
+
+	inline void PrimitivesOutXml::outRef(ContextOutXml & pCtx, PID const & pPID)
+	{
+		if (pCtx.mSession && pCtx.recurseRefs())
+		{
+			IPIN * const lPIN = pCtx.session().getPIN(pPID);
+			if (lPIN)
+			{
+				ContextOutXml lCtx(pCtx);
+				lCtx.mLevel++;
+				pCtx.os() << std::endl;
+				pCtx.mNestedPin = true;
+				Out<ContextOutXml>::pin(lCtx, *lPIN);
+				lPIN->destroy();
+				return;
+			}
+		}
+		PrimitivesOutRaw::outRef(pCtx, pPID);
+	}
+
+	inline bool PrimitivesOutXml::beginPIN(ContextOutXml & pCtx, IPIN const & pPIN)
+	{
+		// TODO: lookup node/name in pin
+		
+		outTab(pCtx) << "<afy:PIN afy:PID='";
+		if (pCtx.mSession)
+			PrimitivesOutRaw::outRef(pCtx, pPIN.getPID());
+		else
+			pCtx.os() << std::hex << pPIN.getPID().pid << " " << std::dec << pPIN.getPID().ident;
+		pCtx.os() << "'";
+
+		pCtx.os() << std::endl;
+		if (pCtx.mPinStack.end() != std::find(pCtx.mPinStack.begin(), pCtx.mPinStack.end(), &pPIN))
+			{ outTab(pCtx) << " afy:cycle=true />" << std::endl; return false; }
+		ContextOutXml::TPinStack::iterator i;
+		for (i = pCtx.mPinStack.begin(); pCtx.mPinStack.end() != i; i++)
+			if ((*i)->getPID() == pPIN.getPID())
+				{ outTab(pCtx) << " afy:cycle=true />" << std::endl; return false; }
+
+		pCtx.mPinStack.push_back(&pPIN);
+		return true;
+	}
+
+	inline void PrimitivesOutXml::endPIN(ContextOutXml & pCtx, IPIN const &)
+	{
+		outTab(pCtx) << "</afy:PIN>" << std::endl;
+		pCtx.mPinStack.pop_back();
+	}
+
+	inline void PrimitivesOutXml::outPropertyID(ContextOutXml & pCtx, PropertyID const & pPropID)
+	{
+		size_t lPropertyURISize = 0;
+		if (pCtx.mSession) pCtx.mSession->getURI(pPropID, NULL, lPropertyURISize);
+		char const * lPropertyURI = NULL;
+		if (0 != lPropertyURISize)
+		{
+			lPropertyURI = (char const *)alloca(1 + lPropertyURISize);
+			((char *)lPropertyURI)[lPropertyURISize++] = 0;
+			pCtx.session().getURI(pPropID, (char *)lPropertyURI, lPropertyURISize);
+		}
+		else 
+		{
+			switch(pPropID)
+			{
+				case PROP_SPEC_PINID: lPropertyURI = "afy:pinID"; break;
+				case PROP_SPEC_DOCUMENT: lPropertyURI = "afy:document"; break;
+				case PROP_SPEC_PARENT: lPropertyURI = "afy:parent"; break;
+				case PROP_SPEC_VALUE: lPropertyURI = "afy:value"; break;
+				case PROP_SPEC_CREATED: lPropertyURI = "afy:created"; break;
+				case PROP_SPEC_CREATEDBY: lPropertyURI = "afy:createdBy"; break;
+				case PROP_SPEC_UPDATED: lPropertyURI = "afy:updated"; break;
+				case PROP_SPEC_UPDATEDBY: lPropertyURI = "afy:updatedBy"; break;
+				case PROP_SPEC_ACL: lPropertyURI = "afy:ACL"; break;
+				case PROP_SPEC_STAMP: lPropertyURI = "afy:stamp"; break;
+				case PROP_SPEC_OBJID: lPropertyURI = "afy:objectID"; break;
+				case PROP_SPEC_PREDICATE: lPropertyURI = "afy:predicate"; break;
+				case PROP_SPEC_COUNT: lPropertyURI = "afy:count"; break;
+				case PROP_SPEC_SUBCLASSES: lPropertyURI = "afy:subclasses"; break;
+				case PROP_SPEC_SUPERCLASSES: lPropertyURI = "afy:superclasses"; break;
+				case PROP_SPEC_INDEX_INFO: lPropertyURI = "afy:indexInfo"; break;
+				case PROP_SPEC_PROPERTIES: lPropertyURI = "afy:properties"; break;
+				case PROP_SPEC_ONENTER: lPropertyURI = "afy:onEnter"; break;
+				case PROP_SPEC_ONUPDATE: lPropertyURI = "afy:onUpdate"; break;
+				case PROP_SPEC_ONLEAVE: lPropertyURI = "afy:onLeave"; break;
+				default: lPropertyURI = "afy:unknown"; break;
+			}
+		}
+
+		if (lPropertyURI)
+			pCtx.os() << lPropertyURI;
+	}
+
+	inline void PrimitivesOutXml::beginValue(ContextOutXml & pCtx, Value const & pValue, uint64_t * pLen)
+	{
+		pCtx.mLevel++;
+		outTab(pCtx);
+		if (!pCtx.mCollStack.empty() && pCtx.mCollStack.back().mLevel == pCtx.mLevel - 1 && !pCtx.mCollStack.back().mStruct)
+			pCtx.os() << "<afy:element>";
+		else
+			{ pCtx.os() << "<"; outPropertyID(pCtx, pValue.getPropID()); pCtx.os() << ">"; }
+
+		uint64_t const lPersistedLength = Services::evaluateLength(pValue, pCtx.mUnicodeCharSize);
+		if (pLen)
+			*pLen = lPersistedLength;
+
+		if (Afy::VT_ARRAY == pValue.type || Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
+		{
+			pCtx.mLevel++;
+			pCtx.mCollStack.push_back(ContextOutXml::CollStackItem(pCtx.mLevel, pValue.property, Afy::VT_STRUCT == pValue.type));
+			pCtx.os() << std::endl;
+		}
+	}
+
+	inline void PrimitivesOutXml::endValue(ContextOutXml & pCtx, Value const & pValue)
+	{
+		bool const lContentWasDeeper = (!pCtx.mCollStack.empty() && pCtx.mCollStack.back().mLevel > pCtx.mLevel);
+		bool const lIsElm = (!pCtx.mCollStack.empty() && pCtx.mCollStack.back().mLevel == pCtx.mLevel - 1 && !pCtx.mCollStack.back().mStruct);
+		if (Afy::VT_ARRAY == pValue.type || Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
+		{
+			pCtx.mCollStack.pop_back();
+			pCtx.mLevel--;
+		}
+
+		if (lContentWasDeeper)
+			outTab(pCtx);
+		if (lIsElm)
+			pCtx.os() << "</afy:element>" << std::endl;
+		else
+			{ pCtx.os() << "</"; outPropertyID(pCtx, pValue.getPropID()); pCtx.os() << ">" << std::endl; }
+
+		pCtx.mNestedPin = false;
+		pCtx.mLevel--;
 	}
 #endif
 };

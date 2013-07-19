@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -55,7 +55,7 @@ void TestPinProject::doTest()
 	Value vals[5];
 
 	PropertyID srcProps[6];
-	PropertyID * destProps = (PropertyID*) mSession->alloc(sizeof(PropertyID) * 6 ) ;
+	PropertyID * destProps = (PropertyID*) mSession->malloc(sizeof(PropertyID) * 6 ) ;
 
 	// Values on original pin
 	vals[0].set(100); vals[0].property=propX;
@@ -71,7 +71,7 @@ void TestPinProject::doTest()
 
 	// Detail - its unnecessary to commit the original pin, but it won't be
 	// persisted
-	CmvautoPtr<IPIN> pOrig(mSession->createUncommittedPIN(vals,4,MODE_COPY_VALUES));
+	CmvautoPtr<IPIN> pOrig(mSession->createPIN(vals,4,MODE_COPY_VALUES));
 
 	//Case 1 - boring direct copy
 

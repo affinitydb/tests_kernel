@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -8,7 +8,6 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "teststream.h"
 #include "mvauto.h"
 using namespace std;
-using namespace AfyKernel; // Interlock
 
 #ifdef WIN32
 #include <Psapi.h>
@@ -59,8 +58,8 @@ class TestMultiStore : public ITest
 			bool mbCreateStore ;
 		} ;
 
-		AfyKernel::StoreCtx * createStoreInDir(ThreadInfo * inCtx, const char * inDir, const char * inIdentity, unsigned short inStoreID) ;
-		AfyKernel::StoreCtx * openStoreInDir(const char * inDir) ;
+		Afy::IAffinity * createStoreInDir(ThreadInfo * inCtx, const char * inDir, const char * inIdentity, unsigned short inStoreID) ;
+		Afy::IAffinity * openStoreInDir(const char * inDir) ;
 		void doStuffInStore( ISession* inS  ) ;
 		void doGuestStuffInStore( ISession* inS  ) ;
 		void simulateDumpload(ISession* session, unsigned short inStoreID) ;
@@ -242,7 +241,7 @@ void TestMultiStore::threadImpl( ThreadInfo * inInfo )
 {
 	srand(inInfo->mStoreID + mRandomSeed ) ;
 
-	AfyKernel::StoreCtx *storeCtx = NULL ;
+	Afy::IAffinity *storeCtx = NULL ;
 
 	if ( inInfo->mbCreateStore )
 	{
@@ -270,7 +269,7 @@ void TestMultiStore::threadImpl( ThreadInfo * inInfo )
 	while ( s1 == NULL ) 
 	{ 
 		//s1 = MVTApp::sDynamicLinkMvstore->startSession(storeCtx, identity, NULL /*password*/);
-		s1 = AfyDB::ISession::startSession(storeCtx, identity, NULL /*password*/);
+		s1 = storeCtx->startSession(identity, NULL /*password*/);
 		if ( s1 != NULL ) break ;
 
 		if (inInfo->mbCreateStore) 
@@ -310,7 +309,7 @@ void TestMultiStore::threadImpl( ThreadInfo * inInfo )
 	s1->terminate() ;
 
 	//MVTApp::sDynamicLinkMvstore->shutdown(storeCtx, true /* immediate */);
-	shutdownStore(storeCtx);
+	storeCtx->shutdown();
 	if ( isVerbose() )
 	{
 		if ( inInfo->mbCreateStore )
@@ -324,13 +323,13 @@ void TestMultiStore::threadImpl( ThreadInfo * inInfo )
 	}
 }
 
-AfyKernel::StoreCtx * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,const char * inDir, const char * inIdentity, unsigned short inStoreID)
+Afy::IAffinity * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,const char * inDir, const char * inIdentity, unsigned short inStoreID)
 {
 	// Note: we can't use MVTApp::startStore helper because it assumes only one store open at a time
 	MVTUtil::ensureDir( inDir ) ;
 
 	//Flush any existing store files
-	AfyKernel::StoreCtx *lStoreCtx = NULL;
+	Afy::IAffinity *lStoreCtx = NULL;
 
 	// Using different page sizes for the stores
 #ifdef TEST_VARIABLE_PAGE_SIZE
@@ -354,7 +353,7 @@ AfyKernel::StoreCtx * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,const 
 	//		mUseDumpload?&lLoadStore:NULL,lAdditionalParams))
 	if (RC_OK != createStore(lSCP,lSP,lStoreCtx,mUseDumpload?&lLoadStore:NULL))
 	{
-		string msg("Could not create AfyDB ") ;
+		string msg("Could not create Afy ") ;
 		msg += inDir ;
 		TVERIFY2(0,msg.c_str()) ;
 		return NULL ;
@@ -378,14 +377,14 @@ AfyKernel::StoreCtx * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,const 
 
 			// REVIEW: IPC
 			//MVTApp::sDynamicLinkMvstore->shutdown(lStoreCtx, true /* immediate */);
-			shutdownStore(lStoreCtx);
+			lStoreCtx->shutdown();
 			lStoreCtx = NULL ;
 
 			// Reopen to get regular session
 			//if (RC_OK != MVTApp::sDynamicLinkMvstore->openStore(lSP,lStoreCtx,lAdditionalParams))
 			if (RC_OK != openStore(lSP,lStoreCtx))
 			{
-				string msg("Could not re-open existing AfyDB ") ;
+				string msg("Could not re-open existing Afy ") ;
 				msg += inDir ;
 				TVERIFY2(0,msg.c_str()) ; // Unexpected
 				return NULL ;
@@ -396,11 +395,11 @@ AfyKernel::StoreCtx * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,const 
 	return lStoreCtx ;
 }
 
-AfyKernel::StoreCtx * TestMultiStore::openStoreInDir(const char * inDir)
+Afy::IAffinity * TestMultiStore::openStoreInDir(const char * inDir)
 {
 	// Open existing store
 
-	AfyKernel::StoreCtx *lStoreCtx = NULL;
+	Afy::IAffinity *lStoreCtx = NULL;
 	StartupParameters const lSP(0, inDir, MAXFILES, NBUFFERS, DEFAULT_ASYNC_TIMEOUT, NULL, NULL, NULL /*password*/);  
 
 	while(1)
@@ -439,6 +438,7 @@ AfyKernel::StoreCtx * TestMultiStore::openStoreInDir(const char * inDir)
 
 void TestMultiStore::simulateDumpload(ISession* session, unsigned short inStoreID)
 {
+	// Stolen from testpidocs11.cpp
 	PropertyID propIds[5];
 	MVTApp::mapURIs(session, "simulateDumpload.prop.", 5, propIds);
 	const int startPage = 10;  
@@ -460,7 +460,7 @@ void TestMultiStore::simulateDumpload(ISession* session, unsigned short inStoreI
 		MVTApp::randomString(str,5,0,false);
 		val[0].set(str.c_str());val[0].setPropID(propIds[0]);
 		val[1].set(0);val[1].setPropID(propIds[1]);
-		IPIN *pin = session->createUncommittedPIN(val,2,MODE_COPY_VALUES,&lPID);
+		IPIN *pin = session->createPIN(val,2,MODE_COPY_VALUES,&lPID);
 		TVERIFYRC(session->commitPINs(&pin,1));
 		pin->destroy();
 	}	
@@ -533,14 +533,14 @@ void TestMultiStore::doStuffInStore( ISession* inS  )
 		if ( i % 50 == 0 ) strmSize = 0x20000 ; // Mix in a few really big streams		
 
 		IStream *lStream = MVTApp::wrapClientStream(inS,new TestStringStream(strmSize,VT_BSTR));
-		vals[0].set( lStream ) ; vals[0].property= binary_id ; vals[0].meta = META_PROP_NOFTINDEX | META_PROP_SSTORAGE;
+		vals[0].set( lStream ) ; vals[0].property= binary_id ; vals[0].meta = META_PROP_SSTORAGE;
 
 		MVTRand::getString( lstr, 10, 200 ) ;
 		vals[1].set( lstr.c_str() ) ; vals[1].property= str_id; 
 		vals[2].set( i ) ; vals[2].property= int_id; 
 
 		PID newpid ;
-		TVERIFYRC(inS->createPIN(newpid,vals,1)) ;
+		TVERIFYRC(inS->createPINAndCommit(newpid,vals,1)) ;
 		TVERIFY( inS->getLocalStoreID() == inS->getStoreID( newpid ) ) ;
 
 		lAllPins[i] = newpid ;
@@ -565,7 +565,7 @@ void TestMultiStore::doStuffInStore( ISession* inS  )
 
 			vals[0].set( lStringPool[lWhichString].c_str() ) ;  
 			vals[0].property = coll_id; vals[0].op = OP_ADD ;
-			vals[0].meta = META_PROP_NOFTINDEX ; /* prevent FT index but not family index */
+			//vals[0].meta = META_PROP_NOFTINDEX ; /* prevent FT index but not family index */
 			TVERIFYRC( inS->modifyPIN( lAllPins[i],vals,1 ) );
 		}
 	}
@@ -578,8 +578,8 @@ void TestMultiStore::doStuffInStore( ISession* inS  )
 	Value stringToLookup ;
 	stringToLookup.set( lStringPool[0].c_str() ) ;
 
-	ClassSpec classInfo;
-	classInfo.classID = stringLookup;
+	SourceSpec classInfo;
+	classInfo.objectID = stringLookup;
 	classInfo.nParams = 1;
 	classInfo.params = &stringToLookup;
 
@@ -624,8 +624,8 @@ void TestMultiStore::doGuestStuffInStore( ISession* inS  )
 	Value stringToLookup ;
 	stringToLookup.set( "MatchMeString" ) ;
 
-	ClassSpec classInfo;
-	classInfo.classID = stringLookup;
+	SourceSpec classInfo;
+	classInfo.objectID = stringLookup;
 	classInfo.nParams = 1;
 	classInfo.params = &stringToLookup;
 

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -119,11 +119,11 @@ void TestDateTime::queryDTPart()
 	PropertyID lPropId;
 	{
 		URIMap lData;
-		lData.URI = "testdatetime.datetime"; lData.uid = STORE_INVALID_PROPID; mSession->mapURIs(1, &lData);
+		lData.URI = "testdatetime.datetime"; lData.uid = STORE_INVALID_URIID; mSession->mapURIs(1, &lData);
 		lPropId = lData.uid;
 		Value lV[2];PID lPID;
 		lV[0].setDateTime(lTS);lV[0].setPropID(lPropId);
-		if(RC_OK!= mSession->createPIN(lPID,lV,1)){
+		if(RC_OK!= mSession->createPINAndCommit(lPID,lV,1)){
 			mLogger.out() << "ERROR(queryDTPart) :Failed to create PIN" << std::endl;
 			lSuccess = false;
 		}
@@ -403,7 +403,7 @@ void TestDateTime::testPinTimeStamps()
 	Value vCreateProp; vCreateProp.set(1); vCreateProp.property=PROP_SPEC_CREATED; 
 
 	PID pid ;
-	TVERIFYRC(mSession->createPIN(pid,&vCreateProp,1));
+	TVERIFYRC(mSession->createPINAndCommit(pid,&vCreateProp,1));
 	CmvautoPtr<IPIN> pin(mSession->getPIN(pid));
 	const Value * v=pin->getValue(PROP_SPEC_CREATED);
 	TVERIFY(v!=NULL);

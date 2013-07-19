@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 #include "app.h"
@@ -98,7 +98,7 @@ void TestMultiColIdxonCollections::createPins()
         if ((i % 10) == 0)
             mLogger.out() << "." << std::flush;
         
-        Value * lV = (Value *)mSession->alloc(10 * sizeof(Value));
+        Value * lV = (Value *)mSession->malloc(10 * sizeof(Value));
         for (j = 0; j < 10; j++)
         {
             if (MVTRand::getBool())
@@ -106,13 +106,13 @@ void TestMultiColIdxonCollections::createPins()
             else
             {
                 std::string const lS = MVTRand::getString2(5, -1, false);
-                char * const lStr = (char *)mSession->alloc(1 + lS.length());
+                char * const lStr = (char *)mSession->malloc(1 + lS.length());
                 memcpy(lStr, lS.c_str(), lS.length());
                 lStr[lS.length()] = 0;
                 SETVALUE_C(lV[j], mProps[j % 2], lStr, OP_ADD, STORE_LAST_ELEMENT);
             }
         }
-        lPins.push_back(mSession->createUncommittedPIN(lV, 10));
+        lPins.push_back(mSession->createPIN(lV, 10));
     }
 
     mLogger.out() << std::endl << "Committing pins..." << std::endl;

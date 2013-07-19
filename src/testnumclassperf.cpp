@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -182,8 +182,8 @@ public:
 
 		if ( lClassID != STORE_INVALID_CLASSID )
 		{
-			ClassSpec classInfo;
-			classInfo.classID = lClassID;
+			SourceSpec classInfo;
+			classInfo.objectID = lClassID;
 			classInfo.nParams = 0;
 			classInfo.params = NULL;
 
@@ -207,8 +207,8 @@ public:
 		Value lNumberToLookup; lNumberToLookup.set( inNumber ); 
 		lNumberToLookup.property = mNumberProp;
 
-		ClassSpec classInfo;
-		classInfo.classID = cls;
+		SourceSpec classInfo;
+		classInfo.objectID = cls;
 		classInfo.nParams = 1;
 		classInfo.params = &lNumberToLookup;
 
@@ -290,7 +290,7 @@ public:
 
 			Value v; v.set( val ); v.property = mNumberProp;
 			PID newPid;
-			TVRC_R(mSession->createPIN(newPid,&v,1),mTest);
+			TVRC_R(mSession->createPINAndCommit(newPid,&v,1),mTest);
 		}
 		*mOut << "Add PIN time: " << endTimer() << endl;
 	}	
@@ -298,7 +298,7 @@ public:
 	void modifyPINValues()
 	{
 		// Perform updates to the PIN values (which will adjust the index)
-		*mOut << "AfyDB size before value modifications: " << getStoreFileSize() << endl;
+		*mOut << "Afy size before value modifications: " << getStoreFileSize() << endl;
 		startTimer(); 
 		int cntModifsRemaining = CNT_VALUE_MODIFICATIONS;
 
@@ -353,7 +353,7 @@ public:
 
 	void addRemovePINs()
 	{
-		*mOut << "AfyDB size before add/remove: " << getStoreFileSize() << endl;
+		*mOut << "Afy size before add/remove: " << getStoreFileSize() << endl;
 		startTimer();
 
 		int cntRemoveRemaining = CNT_PIN_REMOVE;
@@ -404,7 +404,7 @@ public:
 				mCntSpecific++;
 			Value v; v.set( val ); v.property = mNumberProp;
 			PID newPid;
-			TVRC_R(mSession->createPIN(newPid,&v,1),mTest);
+			TVRC_R(mSession->createPINAndCommit(newPid,&v,1),mTest);
 			cntAddRemaining--;
 		}
 

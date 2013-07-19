@@ -59,13 +59,13 @@ void TestMultiColumnIndex1::doTest()
 	if (mSession->getClassID(class1,clsid) != RC_OK)
 	{
 		//first time run this test...		
-		AfyDB::PropertyID props[10];
-		AfyDB::URIMap pmaps[10];
+		Afy::PropertyID props[10];
+		Afy::URIMap pmaps[10];
 		
 		for (int i = 0; i < 10; i++)
 		{
 			pmaps[i].URI = propNames[i];
-			pmaps[i].uid = STORE_INVALID_PROPID;
+			pmaps[i].uid = STORE_INVALID_URIID;
 		}
 		AfyRC::RC rc;
 		mSession->mapURIs(10, pmaps);
@@ -79,7 +79,7 @@ void TestMultiColumnIndex1::doTest()
 		{
 			Value val[2];
 			val[0].setVarRef(0,pmaps[i].uid); val[1].setParam(i);
-			IExprTree *exprt = mSession->expr(AfyDB::OP_IN,2,val);
+			IExprTree *exprt = mSession->expr(Afy::OP_IN,2,val);
 			qry->addCondition(var,exprt);
 			exprt->destroy();
 		}
@@ -97,7 +97,7 @@ void TestMultiColumnIndex1::doTest()
 			va.setPropID(pmaps[i].uid); 
 		}
 		PID pid;
-		rc = mSession->createPIN(pid,vals,3);
+		rc = mSession->createPINAndCommit(pid,vals,3);
 		TVERIFY(rc == RC_OK);
 	}
 	 

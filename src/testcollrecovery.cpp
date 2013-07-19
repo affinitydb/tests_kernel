@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -10,7 +10,7 @@ class TestCollRecovery:  public ITest
 {
 		static const int sNumProps = 10;
 		PropertyID mPropIds[sNumProps];
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 	public:
 		TEST_DECLARE(TestCollRecovery);
 		virtual char const * getName() const { return "testcollrecovery"; }
@@ -125,15 +125,13 @@ void TestCollRecovery::addCollection(ISession *pSession, PID pPID, int pNumEleme
 	{
 		Value lV;
 		SETVALUE(lV, pPropID, lStrings[0].c_str(), OP_ADD);
-		lV.setMeta(META_PROP_NOFTINDEX);
 		TVERIFYRC(lPIN->modify(&lV, 1));
 
-		Value *lVal = (Value *)pSession->alloc(sizeof(Value) * pNumElements-1);
+		Value *lVal = (Value *)pSession->malloc(sizeof(Value) * pNumElements-1);
 		int k = 0;
 		for(k = 0; k < pNumElements - 1; k++)
 		{
 			SETVALUE_C(lVal[k], pPropID, lStrings[k+1].c_str(), OP_ADD, STORE_LAST_ELEMENT); 
-			lVal[k].setMeta(META_PROP_NOFTINDEX);
 		}
 		
 		lV.set(lVal, k); lV.setPropID(pPropID); lV.op = OP_ADD; lV.eid = STORE_LAST_ELEMENT;

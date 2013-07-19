@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -80,7 +80,8 @@ void testlistwords::createWords(const char* strList)
 	Value vl ; 
 	vl.set(strList) ; 
 	vl.property = mProp[0] ;
-	mIPIN = mSession->createUncommittedPIN(&vl,1,MODE_COPY_VALUES);	
+	vl.meta = META_PROP_FTINDEX;
+	mIPIN = mSession->createPIN(&vl,1,MODE_COPY_VALUES);	
 	TVERIFYRC(mSession->commitPINs(&mIPIN,1)); 
 	mIPIN->destroy();
 }

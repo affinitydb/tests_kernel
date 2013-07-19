@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -52,11 +52,11 @@ class CWithIFM
 		}
 };
 
-template <class T> void valueSet(AfyDB::Value & pV, T v) { pV.set(v); } // generic version.
-template <> void valueSet(AfyDB::Value & pV, int64_t v) { pV.setI64(v); } // special because of the special name...
-template <> void valueSet(AfyDB::Value & pV, uint64_t v) { pV.setU64(v); } // special because of the special name... (n.b. equivalent to setDateTime)
-template <> void valueSet(AfyDB::Value & pV, float v) { pV.set(v); } // special because of the extra arguments...
-template <> void valueSet(AfyDB::Value & pV, PID const & v) { pV.set(v); } // special because by reference...
+template <class T> void valueSet(Afy::Value & pV, T v) { pV.set(v); } // generic version.
+template <> void valueSet(Afy::Value & pV, int64_t v) { pV.setI64(v); } // special because of the special name...
+template <> void valueSet(Afy::Value & pV, uint64_t v) { pV.setU64(v); } // special because of the special name... (n.b. equivalent to setDateTime)
+template <> void valueSet(Afy::Value & pV, float v) { pV.set(v); } // special because of the extra arguments...
+template <> void valueSet(Afy::Value & pV, PID const & v) { pV.set(v); } // special because by reference...
 
 // Publish this test.
 class TestIsolationSimple : public ITest
@@ -82,14 +82,14 @@ class TestIsolationSimple : public ITest
 		static char const * const sSimulatedIssues[];
 		static char const * const sPid[];
 	protected:
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 		ISession * mSession1, * mSession2;
 		PropertyID mPropIDs[215];
 		PID mPIDs[kPEnd];
 		ClassID mCLSID;
 		Tstring mLargeString;
 		int mCurrentReadOnlyType; // eReadOnlyType
-		int mCurrentTxiLevel; // AfyDB::TXI_LEVEL
+		int mCurrentTxiLevel; // Afy::TXI_LEVEL
 		int mCurrentlySimulatedIssue; // eIsolationIssues
 		int mCurrentPid; // ePid
 	public:
@@ -123,7 +123,7 @@ class TestIsolationSimple : public ITest
 		void testCreateLotsofPins();
 		void testCreateLotsofProperties();
 	protected:
-		void createPIN(ePid pPID, long pRequirements=kPRAll, bool pAttach=false);
+		void createPINAndCommit(ePid pPID, long pRequirements=kPRAll, bool pAttach=false);
 		PID getCurrentPID() { return mPIDs[mCurrentPid]; }
 		void createBlankReplicatedPID(ISession & pSession, PID & pResult);
 	protected:
@@ -132,8 +132,8 @@ class TestIsolationSimple : public ITest
 		static bool findPin_class(ISession * pS, ClassID pClsid, PID const & pPID);
 		static bool findPin_ft(ISession * pS, PID const & pPID, Tstring const & pTxt, unsigned long pMode = 0);
 		static bool findPin_result(ICursor * pCursor, PID const & pPID);
-		static Tstring readStream(AfyDB::IStream & pStream);
-		static bool compareStreamToString(AfyDB::PropertyID pPropID, AfyDB::IPIN & pPIN, Tstring const & pExpected);
+		static Tstring readStream(Afy::IStream & pStream);
+		static bool compareStreamToString(Afy::PropertyID pPropID, Afy::IPIN & pPIN, Tstring const & pExpected);
 		static void extractSomeWords(Tstring const & pFrom, int pNum, Tstring & pExtracted);
 	protected:
 		bool isCurrentCaseExcluded(char const *& pReason) const
@@ -171,12 +171,12 @@ class TestIsolationSimple : public ITest
 				//   we recreate new pins every time (in their expected state);
 				//   pPinRequirements allows to skip the expensive large properties
 				//   when they're not needed.
-				createPIN((ePid)mCurrentPid, pPinRequirements, true);
+				createPINAndCommit((ePid)mCurrentPid, pPinRequirements, true);
 
 				// Note:
 				//   See isCurrentCaseExcluded()...
 				CWithSession const lWS(mSession2);
-				TVERIFYRC(lWS->startTransaction(mCurrentReadOnlyType==kROTExplicit?TXT_READONLY:TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+				TVERIFYRC(lWS->startTransaction(mCurrentReadOnlyType==kROTExplicit?TXT_READONLY:TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 			}
 		}
 		void rccommit()
@@ -250,9 +250,9 @@ class TestIsolationSimple : public ITest
 		{
 			public:
 				typedef T vt;
-				AfyDB::ValueType const mVT;
+				Afy::ValueType const mVT;
 				T const mV;
-				ScalarTypeChange(AfyDB::ValueType pVT, T const & pV) : mVT(pVT), mV(pV) {}
+				ScalarTypeChange(Afy::ValueType pVT, T const & pV) : mVT(pVT), mV(pV) {}
 		};
 		template <class TT> void testScalarTypeChange(TT pTT, ISession * pS1, ISession * pS2)
 		{
@@ -266,11 +266,11 @@ class TestIsolationSimple : public ITest
 			{
 				CWithSession const lWS(pS1);
 				lP1 = lWS->getPIN(lPID);
-				TVERIFY(AfyDB::VT_INT == lP1->getValue(lPropID)->type);
+				TVERIFY(Afy::VT_INT == lP1->getValue(lPropID)->type);
 				TVERIFY(sValueInt == lP1->getValue(lPropID)->i);
 				Value lV;
 				valueSet(lV, pTT.mV); lV.type = pTT.mVT;/*For cases like u64 vs datetime...*/ lV.property = lPropID; lV.op = OP_SET;
-				TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+				TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 				TVERIFYRC(lP1->modify(&lV, 1));
 				TVERIFY(pTT.mVT == lP1->getValue(lPropID)->type);
 				TVERIFY(pTT.mV == *((typename TT::vt *)&lP1->getValue(lPropID)->str));
@@ -280,7 +280,7 @@ class TestIsolationSimple : public ITest
 				CWithSession const lWS(pS2);
 				CmvautoPtr<IPIN> lP2(lWS->getPIN(lPID));
 				Value const * lV = lP2->getValue(lPropID);
-				EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(AfyDB::VT_INT == lV->type));
+				EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(Afy::VT_INT == lV->type));
 				EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(sValueInt == lV->i));
 			}
 			// And back to old type...
@@ -295,9 +295,9 @@ class TestIsolationSimple : public ITest
 				TVERIFY(pTT.mV == *((typename TT::vt *)&lP1->getValue(lPropID)->str));
 				Value lV;
 				SETVALUE(lV, lPropID, sValueInt, OP_SET);
-				TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+				TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 				TVERIFYRC(lP1->modify(&lV, 1));
-				TVERIFY(AfyDB::VT_INT == lP1->getValue(lPropID)->type);
+				TVERIFY(Afy::VT_INT == lP1->getValue(lPropID)->type);
 				TVERIFY(sValueInt == lP1->getValue(lPropID)->i);
 			}
 			rccommit();
@@ -353,8 +353,8 @@ int TestIsolationSimple::execute()
 			// Pins.
 			INITLOCALPID(mPIDs[kPNormal]);
 			INITLOCALPID(mPIDs[kPReplicated]);
-			createPIN(kPNormal);
-			createPIN(kPReplicated);
+			createPINAndCommit(kPNormal);
+			createPINAndCommit(kPReplicated);
 
 			// Class.
 			mCLSID = STORE_INVALID_CLASSID;
@@ -493,7 +493,7 @@ void TestIsolationSimple::testUpdateInt()
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV;
 		SETVALUE(lV, mPropIDs[kBPInt], 1000, OP_SET);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 	}
 	rccommit();
@@ -507,7 +507,7 @@ void TestIsolationSimple::testUpdateInt()
 		CWithSession const lWS(mSession2);
 		CmvautoPtr<IPIN> lP2(lWS->getPIN(getCurrentPID()));
 		Value const * lV = lP2->getValue(mPropIDs[kBPInt]);
-		TVERIFY(AfyDB::VT_INT == lV->type);
+		TVERIFY(Afy::VT_INT == lV->type);
 		EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(sValueInt == lV->i));
 	}
 	CWithSession const lWS(mSession1);
@@ -527,7 +527,7 @@ void TestIsolationSimple::testUpdateSmallString()
 		TVERIFY(findPin_ft(lWS.p(), getCurrentPID(), sValueStr, MODE_ALL_WORDS));
 		Value lV;
 		SETVALUE(lV, mPropIDs[kBPSmallStr], lNewStr, OP_SET);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		TVERIFY(findPin_ft(lWS.p(), getCurrentPID(), lNewStr, MODE_ALL_WORDS));
 	}
@@ -536,7 +536,7 @@ void TestIsolationSimple::testUpdateSmallString()
 		CWithSession const lWS(mSession2);
 		CmvautoPtr<IPIN> lP2(lWS->getPIN(getCurrentPID()));
 		Value const * lV = lP2->getValue(mPropIDs[kBPSmallStr]);
-		TVERIFY(AfyDB::VT_STRING == lV->type);
+		TVERIFY(Afy::VT_STRING == lV->type);
 		EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(0 == strcmp(lV->str, sValueStr)));
 		EXPECTED_FAILURE_WITH_NO_ISOLATION_INDEXOP; TVERIFY(rcverify(findPin_ft(lWS.p(), getCurrentPID(), sValueStr, MODE_ALL_WORDS), true));
 		EXPECTED_FAILURE_WITH_NO_ISOLATION_INDEXOP; TVERIFY(rcverify(!findPin_ft(lWS.p(), getCurrentPID(), lNewStr, MODE_ALL_WORDS), true));
@@ -562,7 +562,7 @@ void TestIsolationSimple::testUpdateLargeString()
 		Value lV;
 		Tstring lNS(" "); lNS += lNewSegment; lNS += " ";
 		lV.setEdit(lNS.c_str(), lNS.length(), 20, 0); lV.property = mPropIDs[kBPLargeStr];
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		TVERIFY(findPin_ft(lWS.p(), getCurrentPID(), lNewSegment, MODE_ALL_WORDS)); // This fails... is it a bug? (unrelated with isolation)
 	}
@@ -590,7 +590,7 @@ void TestIsolationSimple::testUpdateSmallCollection()
 		TVERIFY(size_t(sSmallCollSize) == MVTApp::getCollectionLength(*lP1->getValue(mPropIDs[kBPSmallColl])));
 		Value lV;
 		SETVALUE_C(lV, mPropIDs[kBPSmallColl], 1000, OP_ADD, STORE_LAST_ELEMENT);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		TVERIFY(size_t(sSmallCollSize + 1) == MVTApp::getCollectionLength(*lP1->getValue(mPropIDs[kBPSmallColl])));
 	}
@@ -616,7 +616,7 @@ void TestIsolationSimple::testUpdateLargeCollection()
 		TVERIFY(size_t(sLargeCollSize) == MVTApp::getCollectionLength(*lP1->getValue(mPropIDs[kBPLargeColl]))); // See line 130...
 		Value lV;
 		SETVALUE_C(lV, mPropIDs[kBPLargeColl], 1000, OP_ADD, STORE_LAST_ELEMENT);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		TVERIFY(size_t(sLargeCollSize + 1) == MVTApp::getCollectionLength(*lP1->getValue(mPropIDs[kBPLargeColl]))); // This fails... is it a bug? (unrelated with isolation)
 	}
@@ -641,7 +641,7 @@ void TestIsolationSimple::testTransformSmallStringIntoLargeString()
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV;
 		SETVALUE(lV, mPropIDs[kBPSmallStr], mLargeString.c_str(), OP_SET);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		TVERIFY(compareStreamToString(mPropIDs[kBPSmallStr], *lP1, mLargeString));
 	}
@@ -650,7 +650,7 @@ void TestIsolationSimple::testTransformSmallStringIntoLargeString()
 		CWithSession const lWS(mSession2);
 		CmvautoPtr<IPIN> lP2(lWS->getPIN(getCurrentPID()));
 		Value const * lV = lP2->getValue(mPropIDs[kBPSmallStr]);
-		EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(AfyDB::VT_STRING == lV->type && 0 == strcmp(lV->str, sValueStr)));
+		EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(Afy::VT_STRING == lV->type && 0 == strcmp(lV->str, sValueStr)));
 	}
 	CWithSession const lWS(mSession1);
 	if (!simulatingrc())
@@ -667,10 +667,10 @@ void TestIsolationSimple::testTransformLargeStringIntoSmallString()
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV;
 		SETVALUE(lV, mPropIDs[kBPLargeStr], sValueStr, OP_SET);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		Value const * lVv = lP1->getValue(mPropIDs[kBPLargeStr]);
-		TVERIFY(AfyDB::VT_STRING == lVv->type && 0 == strcmp(lVv->str, sValueStr));
+		TVERIFY(Afy::VT_STRING == lVv->type && 0 == strcmp(lVv->str, sValueStr));
 	}
 	rccommit();
 	{
@@ -692,7 +692,7 @@ void TestIsolationSimple::testTransformSmallCollectionIntoLargeCollection()
 		CWithSession const lWS(mSession1);
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV; int i;
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		for (i = sSmallCollSize; i < sLargeCollSize; i++)
 		{
 			SETVALUE_C(lV, mPropIDs[kBPSmallColl], 1 + i, OP_ADD, STORE_LAST_ELEMENT);
@@ -720,7 +720,7 @@ void TestIsolationSimple::testTransformLargeCollectionIntoSmallCollection()
 		CWithSession const lWS(mSession1);
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV; int i;
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		for (i = sSmallCollSize; i < sLargeCollSize; i++)
 		{
 			lV.setDelete(mPropIDs[kBPLargeColl], STORE_LAST_ELEMENT);
@@ -750,10 +750,10 @@ void TestIsolationSimple::testTransformSmallCollectionIntoScalar()
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV;
 		SETVALUE(lV, mPropIDs[kBPSmallColl], sValueInt, OP_SET);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		Value const * lVv = lP1->getValue(mPropIDs[kBPSmallColl]);
-		TVERIFY(AfyDB::VT_INT == lVv->type && sValueInt == lVv->i);
+		TVERIFY(Afy::VT_INT == lVv->type && sValueInt == lVv->i);
 	}
 	rccommit();
 	{
@@ -777,10 +777,10 @@ void TestIsolationSimple::testTransformLargeCollectionIntoScalar()
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV;
 		SETVALUE(lV, mPropIDs[kBPLargeColl], sValueInt, OP_SET);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		Value const * lVv = lP1->getValue(mPropIDs[kBPLargeColl]);
-		TVERIFY(AfyDB::VT_INT == lVv->type && sValueInt == lVv->i);
+		TVERIFY(Afy::VT_INT == lVv->type && sValueInt == lVv->i);
 	}
 	rccommit();
 	{
@@ -803,7 +803,7 @@ void TestIsolationSimple::testTransformScalarIntoSmallCollection()
 		CWithSession const lWS(mSession1);
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV; int i;
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		for (i = 1; i < sSmallCollSize; i++)
 		{
 			SETVALUE_C(lV, mPropIDs[kBPInt], 1 + i, OP_ADD, STORE_LAST_ELEMENT);
@@ -816,7 +816,7 @@ void TestIsolationSimple::testTransformScalarIntoSmallCollection()
 		CWithSession const lWS(mSession2);
 		CmvautoPtr<IPIN> lP2(lWS->getPIN(getCurrentPID()));
 		Value const * lV = lP2->getValue(mPropIDs[kBPInt]);
-		EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(AfyDB::VT_INT == lV->type && sValueInt == lV->i));
+		EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(Afy::VT_INT == lV->type && sValueInt == lV->i));
 	}
 	CWithSession const lWS(mSession1);
 	if (!simulatingrc())
@@ -832,7 +832,7 @@ void TestIsolationSimple::testTransformScalarIntoLargeCollection()
 		CWithSession const lWS(mSession1);
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV; int i;
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		for (i = 1; i < sLargeCollSize; i++)
 		{
 			SETVALUE_C(lV, mPropIDs[kBPInt], 1 + i, OP_ADD, STORE_LAST_ELEMENT);
@@ -845,7 +845,7 @@ void TestIsolationSimple::testTransformScalarIntoLargeCollection()
 		CWithSession const lWS(mSession2);
 		CmvautoPtr<IPIN> lP2(lWS->getPIN(getCurrentPID()));
 		Value const * lV = lP2->getValue(mPropIDs[kBPInt]);
-		EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(AfyDB::VT_INT == lV->type && sValueInt == lV->i));
+		EXPECTED_FAILURE_WITH_NO_ISOLATION; TVERIFY(rcverify(Afy::VT_INT == lV->type && sValueInt == lV->i));
 	}
 	CWithSession const lWS(mSession1);
 	if (!simulatingrc())
@@ -873,11 +873,11 @@ void TestIsolationSimple::testCreate1Pin(bool pTxNesting, bool pCommit)
 	{
 		CWithSession const lWS(mSession1);
 		if (pTxNesting)
-			{ TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel)); }
+			{ TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel)); }
 		Value lPVs[1];
 		SETVALUE(lPVs[0], mPropIDs[kBPInt], 1, OP_SET);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
-		TVERIFYRC(lWS->createPIN(lPID, lPVs, 1));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->createPINAndCommit(lPID, lPVs, 1));
 		TVERIFY(findPin_session(lWS.p(), lPID));
 		TVERIFY(findPin_fullscan(lWS.p(), mCLSID, lPID));
 		TVERIFY(findPin_class(lWS.p(), mCLSID, lPID));
@@ -905,11 +905,11 @@ void TestIsolationSimple::testCreate1Property(bool pTxNesting, bool pCommit)
 	{
 		CWithSession const lWS(mSession1);
 		if (pTxNesting)
-			{ TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel)); }
+			{ TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel)); }
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV;
 		SETVALUE(lV, mPropIDs[kBPInsertedProp], 1, OP_SET);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		Value const * lVt = lP1->getValue(mPropIDs[kBPInsertedProp]);
 		TVERIFY(lVt && lVt->i == 1);
@@ -936,7 +936,7 @@ void TestIsolationSimple::testDelete1Pin()
 	{
 		CWithSession const lWS(mSession1);
 		lP1 = lWS->getPIN(getCurrentPID());
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->deletePIN());
 		TVERIFY(!lWS->getPIN(getCurrentPID())); // Review (maxw): not sure what's the intended behavior here...
 	}
@@ -961,7 +961,7 @@ void TestIsolationSimple::testDelete1Property()
 		lP1 = lWS->getPIN(getCurrentPID());
 		Value lV;
 		lV.setDelete(mPropIDs[kBPDeletedProp]);
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		TVERIFYRC(lP1->modify(&lV, 1));
 		Value const * lVt = lP1->getValue(mPropIDs[kBPDeletedProp]);
 		TVERIFY(!lVt);
@@ -991,13 +991,13 @@ void TestIsolationSimple::testCreateLotsofPins()
 	{
 		CWithSession const lWS(mSession1);
 		Value lPVs[2]; Tstring lStr; int j; TPINs lBucket;
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		for (j = 0; j < 1000; j++)
 		{
 			MVTApp::randomString(lStr, 200, 300);
 			SETVALUE(lPVs[0], mPropIDs[kBPInt], j, OP_SET);
 			SETVALUE(lPVs[1], mPropIDs[kBPSmallStr], lStr.c_str(), OP_SET);
-			IPIN * const lPIN = lWS->createUncommittedPIN(lPVs, 2, MODE_COPY_VALUES);
+			IPIN * const lPIN = lWS->createPIN(lPVs, 2, MODE_COPY_VALUES);
 			lBucket.push_back(lPIN);
 		}
 		TVERIFYRC(lWS->commitPINs(&lBucket[0], (unsigned)lBucket.size()));
@@ -1037,7 +1037,7 @@ void TestIsolationSimple::testCreateLotsofProperties()
 		CWithSession const lWS(mSession1);
 		Value lV; Tstring lStr; int j;
 		lP1 = lWS->getPIN(getCurrentPID());
-		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (AfyDB::TXI_LEVEL)mCurrentTxiLevel));
+		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
 		for (j = 0; j < 200; j++)
 		{
 			MVTApp::randomString(lStr, 50, 100);
@@ -1048,7 +1048,7 @@ void TestIsolationSimple::testCreateLotsofProperties()
 		for (j = 0, lOk = true; j < 200 && lOk; j++)
 		{
 			Value const * lVt = lP1->getValue(mPropIDs[kBPEnd + j]);
-			lOk = (lVt && AfyDB::VT_STRING == lVt->type && lStrings[j] == lVt->str);
+			lOk = (lVt && Afy::VT_STRING == lVt->type && lStrings[j] == lVt->str);
 		}
 		TVERIFY(lOk);
 	}
@@ -1070,7 +1070,7 @@ void TestIsolationSimple::testCreateLotsofProperties()
 }
 
 // Misc helpers...
-void TestIsolationSimple::createPIN(ePid pPID, long pRequirements, bool pAttach)
+void TestIsolationSimple::createPINAndCommit(ePid pPID, long pRequirements, bool pAttach)
 {
 	CWithIFM const lwifm(mSession1, ITF_REPLICATION, kPReplicated == pPID, pAttach);
 	CWithSession const lWS(pAttach ? mSession1 : NULL);
@@ -1092,7 +1092,7 @@ void TestIsolationSimple::createPIN(ePid pPID, long pRequirements, bool pAttach)
 				INITLOCALPID(mPIDs[kPNormal]);
 			}
 
-			TVERIFYRC(mSession1->createPIN(mPIDs[kPNormal], lPVs, 6));
+			TVERIFYRC(mSession1->createPINAndCommit(mPIDs[kPNormal], lPVs, 6));
 			lP = mSession1->getPIN(mPIDs[kPNormal]);
 			break;
 		}
@@ -1158,7 +1158,7 @@ void TestIsolationSimple::createBlankReplicatedPID(ISession & pSession, PID & pR
 	CWithIFM const lwifm(&pSession, ITF_REPLICATION);
 	INITLOCALPID(pResult);
 	LOCALPID(pResult) = (uint64_t(lStoreid1) << STOREID_SHIFT) + lStartIndex;
-	IPIN * const lP = pSession.createUncommittedPIN(NULL, 0, PIN_REPLICATED, &pResult);
+	IPIN * const lP = pSession.createPIN(NULL, 0, PIN_REPLICATED, &pResult);
 	TVERIFYRC(pSession.commitPINs(&lP, 1));
 	lP->destroy();
 }
@@ -1173,7 +1173,7 @@ bool TestIsolationSimple::findPin_fullscan(ISession * pS, ClassID pClsid, PID co
 	if (RC_OK != pS->getClassInfo(pClsid, lCls))
 		return false;
 	Value const * const lClsV = lCls->getValue(PROP_SPEC_PREDICATE);
-	if (!lClsV || lClsV->type != AfyDB::VT_STMT)
+	if (!lClsV || lClsV->type != Afy::VT_STMT)
 		return false;
 	CmvautoPtr<IStmt> lQ(lClsV->stmt->clone());
 	ICursor* lC = NULL;
@@ -1190,7 +1190,7 @@ bool TestIsolationSimple::findPin_class(ISession * pS, ClassID pClsid, PID const
 	//   the expected result when run the second time on an existing store.
 
 	CmvautoPtr<IStmt> lQ(pS->createStmt());
-	ClassSpec cs; cs.classID = pClsid; cs.nParams = 0; cs.params = NULL;
+	SourceSpec cs; cs.objectID = pClsid; cs.nParams = 0; cs.params = NULL;
 	lQ->addVariable(&cs, 1);
 	ICursor* lC = NULL;
 	lQ->execute(&lC);
@@ -1217,7 +1217,7 @@ bool TestIsolationSimple::findPin_result(ICursor * pCursor, PID const & pPID)
 	}
 	return lFound;
 }
-Tstring TestIsolationSimple::readStream(AfyDB::IStream & pStream)
+Tstring TestIsolationSimple::readStream(Afy::IStream & pStream)
 {
 	std::stringstream lResult;
 	char lBuf[0x1000];
@@ -1227,10 +1227,10 @@ Tstring TestIsolationSimple::readStream(AfyDB::IStream & pStream)
 	lResult << std::ends;
 	return lResult.str().c_str();
 }
-bool TestIsolationSimple::compareStreamToString(AfyDB::PropertyID pPropID, AfyDB::IPIN & pPIN, Tstring const & pExpected)
+bool TestIsolationSimple::compareStreamToString(Afy::PropertyID pPropID, Afy::IPIN & pPIN, Tstring const & pExpected)
 {
 	Value const * lV = pPIN.getValue(pPropID);
-	if (AfyDB::VT_STREAM != lV->type)
+	if (Afy::VT_STREAM != lV->type)
 		return false;
 	return (readStream(*lV->stream.is) == pExpected);
 }

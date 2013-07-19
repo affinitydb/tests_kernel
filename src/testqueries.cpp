@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -76,7 +76,6 @@ int TestQueries::execute()
 		ISession * const session = MVTApp::startSession();
 		MVTRand::getString(mRandStr,10,10,false,false);
 		
-		//session->setURIBase("vmware.com/");
 		//MVTApp::mapURIs(session,"TestQueries.prop",30,pm);
 		
 		memset(pm,0,sizeof(pm));				
@@ -108,7 +107,7 @@ int TestQueries::execute()
 		pm[25].URI="testQueries.VT_COLLECTION"; // VT_COLLECTION
 		
 		for(size_t i = 0; i < (sizeof(pm)/sizeof(pm[0])); i++) {
-			pm[i].uid = STORE_INVALID_PROPID; 
+			pm[i].uid = STORE_INVALID_URIID; 
 			if(RC_OK!=session->mapURIs(1, &pm[i])) 
 				assert(false);			
 		}
@@ -263,11 +262,11 @@ void TestQueries::testQuery(ISession *session)
 	
 	pvs[0].set("Post1");pvs[0].setPropID(propMap[0].uid);
 	pvs[1].set("abc1");pvs[1].setPropID(propMap[1].uid);
-	session->createPIN(pidVal1,pvs,2);	
+	session->createPINAndCommit(pidVal1,pvs,2);	
 
 	pvs[0].set("Post2");pvs[0].setPropID(propMap[0].uid);
 	pvs[1].set("abc2");pvs[1].setPropID(propMap[1].uid);
-	session->createPIN(pidVal2,pvs,2);
+	session->createPINAndCommit(pidVal2,pvs,2);
 	
 	val[0].set(pidVal1);
 	val[1].set(pidVal2);
@@ -283,7 +282,7 @@ void TestQueries::testQuery(ISession *session)
 		pvs[1].set(val,2);pvs[1].setPropID(propMap[1].uid);
 	#endif
 
-	session->createPIN(pidVal,pvs,2);
+	session->createPINAndCommit(pidVal,pvs,2);
 
 #if 0		// obsolete
 	IStmt *qry = session->createStmt();	
@@ -324,14 +323,14 @@ void TestQueries::testFTIndexWithNativeQuery(ISession *session)
 	PID pidVal1;
 	pvs1[0].set("Post1");pvs1[0].setPropID(pm[0].uid);
 	pvs1[1].set("abc1");pvs1[1].setPropID(pm[1].uid);
-	session->createPIN(pidVal1,pvs1,2);
+	session->createPINAndCommit(pidVal1,pvs1,2);
 	oval[0].set(pidVal1);
 
 	Value pvs2[2];
 	PID pidVal2;
 	pvs2[0].set("Post2");pvs2[0].setPropID(pm[0].uid);
 	pvs2[1].set("abc2");pvs2[1].setPropID(pm[1].uid);
-	session->createPIN(pidVal2,pvs2,2);
+	session->createPINAndCommit(pidVal2,pvs2,2);
 
 	oval[1].set(pidVal2);
 
@@ -339,14 +338,14 @@ void TestQueries::testFTIndexWithNativeQuery(ISession *session)
 	PID pidVal3;
 	pvs3[0].set("Post3");pvs3[0].setPropID(pm[0].uid);
 	pvs3[1].set("abc3");pvs3[1].setPropID(pm[1].uid);
-	session->createPIN(pidVal3,pvs3,2);
+	session->createPINAndCommit(pidVal3,pvs3,2);
 	oval[2].set(pidVal3);
 
 	Value pvs4[2];
 	PID pidVal4;
 	pvs4[0].set("Post4");pvs4[0].setPropID(pm[0].uid);
 	pvs4[1].set("abc4");pvs4[1].setPropID(pm[1].uid);
-	session->createPIN(pidVal4,pvs4,2);
+	session->createPINAndCommit(pidVal4,pvs4,2);
 	oval[3].set(pidVal4);
 
 	///pin which refrences the above pins
@@ -355,20 +354,20 @@ void TestQueries::testFTIndexWithNativeQuery(ISession *session)
 	PID pidVal;
 	pvs[0].set("Post");pvs[0].setPropID(pm[0].uid);
 	pvs[1].set(oval,4);pvs[1].setPropID(pm[1].uid);
-	session->createPIN(pidVal,pvs,2);
+	session->createPINAndCommit(pidVal,pvs,2);
 
 	PID tmppidVal;
 	pvs[0].set("Post7");pvs[0].setPropID(pm[0].uid);
 	pvs[1].set("new property");pvs[1].setPropID(pm[2].uid);
-	session->createPIN(tmppidVal,pvs,2);
+	session->createPINAndCommit(tmppidVal,pvs,2);
 
 	pvs[0].set("ABCD");pvs[0].setPropID(pm[0].uid);
 	pvs[1].set("new property1");pvs[1].setPropID(pm[2].uid);
-	session->createPIN(tmppidVal,pvs,2);
+	session->createPINAndCommit(tmppidVal,pvs,2);
 
 	pvs[0].set("Post9");pvs[0].setPropID(pm[0].uid);
 	pvs[1].set("new ");pvs[1].setPropID(pm[1].uid);
-	session->createPIN(tmppidVal,pvs,2);
+	session->createPINAndCommit(tmppidVal,pvs,2);
 
 	IStmt *qry = session->createStmt();
 
@@ -1275,9 +1274,9 @@ void TestQueries::runStringOperators(ISession *session)
 	logResult("OP_CONCAT with VT_STRING (1)",RC_OTHER);
 	executeSimpleQuery(session,OP_CONCAT,VT_STRING,1,"OP_CONCAT__VT_STRING1",1);
 
-	// don't support OP_CONCAT on more than 2 values
-	//logResult("OP_CONCAT with VT_STRING (2)",RC_OTHER);
-	//executeSimpleQuery(session,OP_CONCAT,VT_STRING,1,"OP_CONCAT__VT_STRING2",2);
+	// support OP_CONCAT on more than 2 values
+	logResult("OP_CONCAT with VT_STRING (2)",RC_OTHER);
+	executeSimpleQuery(session,OP_CONCAT,VT_STRING,1,"OP_CONCAT__VT_STRING2",2);
 
 	// OP_CONCAT with VT_URL
 	logResult("OP_CONCAT with VT_URL (0)",RC_OTHER);
@@ -2125,7 +2124,7 @@ IExprTree * TestQueries::createCompExpr(ISession *session,unsigned var,int Op, i
 			val[0].setVarRef(0,*pids);
 			val[1].set(b);
 			break;
-		case VT_RESERVED1:
+		case VT_ENUM:
 		case VT_URIID:
 		case VT_IDENTITY:
 		default:
@@ -2281,7 +2280,7 @@ IExprTree * TestQueries::createLogicalExpr(ISession *session,unsigned var,int Op
 IExprTree * TestQueries::createConvExpr(ISession *session,unsigned var,int Op, int type)
 {
 	IExprTree *expr1;
-	PropertyID pids[1]={STORE_INVALID_PROPID};
+	PropertyID pids[1]={STORE_INVALID_URIID};
 	Value val[2],val1[2];
 	const char *str = NULL; //,*url;
 	int i = 0;
@@ -2608,7 +2607,7 @@ IExprTree * TestQueries::createMinMaxExpr(ISession *session,unsigned var,int Op,
 					val[102].setDateTime(dt);
 					expr1 =  session->expr(ExprOp(Op),103,val);
 					break;		
-				case VT_RESERVED1:		
+				case VT_ENUM:		
 				default:
 					logResult("Datatype not supported",RC_OTHER);
 			}
@@ -2738,7 +2737,7 @@ IExprTree * TestQueries::createMinMaxExpr(ISession *session,unsigned var,int Op,
 					val[102].setDateTime(dt);
 					expr1 =  session->expr(ExprOp(Op),103,val);
 					break;		
-				case VT_RESERVED1:		
+				case VT_ENUM:		
 				default:
 					logResult("Datatype not supported",RC_OTHER);
 			}
@@ -3800,8 +3799,8 @@ void TestQueries::executeSimpleQuery(ISession *session,int Op,int type,int nExpR
 		lCLS += lCLSName;
 		logResult(lCLS,RC_OTHER);		
 		IStmt * lQ = session->createStmt();
-		ClassSpec lCS;
-		lCS.classID = lCLSID;
+		SourceSpec lCS;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 0;
 		lCS.params = NULL;
 		lQ->addVariable(&lCS, 1);
@@ -3857,8 +3856,8 @@ void TestQueries::executeComplexQuery(ISession *session,int Op,int Op1,int type1
 		logResult(lCLS,RC_OTHER);
 		
 		IStmt * lQ = session->createStmt();
-		ClassSpec lCS;
-		lCS.classID = lCLSID;
+		SourceSpec lCS;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 0;
 		lCS.params = NULL;
 		lQ->addVariable(&lCS, 1);
@@ -3915,7 +3914,7 @@ void TestQueries::populateStore(ISession *session)
 		ui64 = 12753803254343750LL;
 		pvs[19].setDateTime(ui64); SETVATTR(pvs[19], pm[19].uid, OP_SET);
 		//pvs[20].setInterval(pm[20].uid,ui64);
-		RC rc = session->createPIN(pid,pvs,20);
+		RC rc = session->createPINAndCommit(pid,pvs,20);
 		PinID[0] = session->getPIN(pid);
 
 		SETVALUE(pvs[0], pm[0].uid, "Nepal", OP_SET);
@@ -3929,7 +3928,7 @@ void TestQueries::populateStore(ISession *session)
 		SETVALUE(pvs[8], pm[9].uid, true, OP_SET);
 		SETVALUE(pvs[9], pm[10].uid, 5.5, OP_SET);
 		SETVALUE(pvs[10], pm[14].uid, "http://www.nepalfc.com", OP_SET);
-		rc = session->createPIN(pid,pvs,11);
+		rc = session->createPINAndCommit(pid,pvs,11);
 		PinID[1] = session->getPIN(pid);
 
 		const static unsigned char bstr[] = {97,98,99,65,66,67};
@@ -3956,7 +3955,7 @@ void TestQueries::populateStore(ISession *session)
 		for (int i = 1; i <= 500; i++)
 			SETVALUE_C(pvs[21+i], pm[25].uid, i, OP_ADD, STORE_LAST_ELEMENT);
 		
-		rc = session->createPIN(pid,pvs,522);
+		rc = session->createPINAndCommit(pid,pvs,522);
 		PinID[2] = session->getPIN(pid);
 	}else{
 		IExprTree *lET1 = session->expr(OP_EQ,2,pvs);

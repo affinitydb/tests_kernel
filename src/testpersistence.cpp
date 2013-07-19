@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -148,8 +148,8 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	
 	RC rc = session->mapURIs(28,pm);
 
-	session->createPIN(pid1000,NULL,0);
-	session->createPIN(pid1001,NULL,0);
+	session->createPINAndCommit(pid1000,NULL,0);
+	session->createPINAndCommit(pid1001,NULL,0);
 	propOnRef=pm[13].uid;
 	propOnRef1=pm[12].uid;
 
@@ -159,7 +159,7 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	val[1].set("collection prop0");val[1].setPropID(propOnRef1);val[1].op = OP_ADD;val[1].eid = STORE_LAST_ELEMENT;
 	val[2].set("collection prop1");val[2].setPropID(propOnRef1);val[2].op = OP_ADD;val[2].eid = STORE_LAST_ELEMENT;
 	val[3].set("collection prop2");val[3].setPropID(propOnRef1);val[3].op = OP_ADD;val[3].eid = STORE_LAST_ELEMENT;
-	rc = session->createPIN(rpid,val,4);
+	rc = session->createPINAndCommit(rpid,val,4);
 	IPIN *rpin = session->getPIN(rpid);
 	
 	//pin for persistence test
@@ -172,6 +172,7 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	val[3].set(ubuf,(unsigned long)strlen(buf));val[3].setPropID(pm[3].uid);
 	val[4].setURL("http://www.starwars.com");val[4].setPropID(pm[4].uid);
 	val[5].setURL("http://www.lucasfilms.com");val[5].setPropID(pm[5].uid);
+	val[3].meta = META_PROP_FTINDEX; 
 	val[6].set(unsigned(123612));val[6].setPropID(pm[6].uid);
 	int64_t i64 = 123456789;
 	val[7].setI64(i64);val[7].setPropID(pm[7].uid);
@@ -253,7 +254,7 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	id = session->storeIdentity("Princess Leah",NULL,0);
 	val[26].setIdentity(id);val[26].setPropID(pm[26].uid);
 
-	rc = session->createPIN(pid[0],val,27);
+	rc = session->createPINAndCommit(pid[0],val,27);
 	delete[] cval;
 	compexpr->destroy();
 	query->destroy();
@@ -464,7 +465,7 @@ void TestPersistence::serial(ISession *session,PID *pid)
 
 	unsigned int const sMode = session->getInterfaceMode();
 	session->setInterfaceMode(sMode | ITF_REPLICATION);
-	IPIN *newp = session->createUncommittedPIN();
+	IPIN *newp = session->createPIN();
 	in.open("serial.log");
 	MvStoreSerialization::ContextInRaw lSerCtxin(in, *session);
 	MvStoreSerialization::InRaw::pin(lSerCtxin, *newp);

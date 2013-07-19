@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -245,7 +245,7 @@ void TestOrderBy::doTest()
 		TExprTreePtr lE = EXPRTREEGEN(mSession)(OP_MUL, 2, val, 0);
 
 		CmvautoPtr<IStmt> lQ(getClassQuery(lCLSID,mSession));
-		OrderSeg ord = {lE,STORE_INVALID_PROPID,0,0,0};
+		OrderSeg ord = {lE,STORE_INVALID_URIID,0,0,0};
 		TVERIFYRC(lQ->setOrder(&ord,1));
 		lE->destroy() ;
 
@@ -334,8 +334,8 @@ void TestOrderBy::testPinIDOrdering(ISession* session)
 IStmt * TestOrderBy::getClassQuery(ClassID incls, ISession* session)
 {
 	IStmt * lQ = session->createStmt();
-	ClassSpec lCS;
-	lCS.classID = incls;
+	SourceSpec lCS;
+	lCS.objectID = incls;
 	lCS.nParams = 0;
 	lCS.params = NULL;
 	unsigned char const var1 = lQ->addVariable(&lCS, 1);
@@ -653,7 +653,7 @@ void TestOrderBy::populateStore(ISession *session){
 
 		if ( MVTRand::getRange(0,10) > 0 )
 		{
-			SETVALUE(val[pos], mPropids[propFTStr], "archer", OP_SET); pos++;
+			SETVALUE(val[pos], mPropids[propFTStr], "archer", OP_SET); val[pos].meta = META_PROP_FTINDEX; pos++;
 		}
 		else
 		{
@@ -668,7 +668,7 @@ void TestOrderBy::populateStore(ISession *session){
 		MVTRand::getString(str2, 2, 0, false); // short little strings so ordering is really obvious
 		str2[0] = MVTRand::getBool() ? 'a' : 'A' ; // Emphasis apparent string sorting problem
 
-		SETVALUE(val[pos], mPropids[propStrNoCase], str2.c_str(), OP_SET); val[11].setMeta(META_PROP_NOFTINDEX) ; pos++;
+		SETVALUE(val[pos], mPropids[propStrNoCase], str2.c_str(), OP_SET); pos++;
 
 		// 10% of the pins are missing this property
 		if ( MVTRand::getRange(0,9) > 0 )
@@ -751,7 +751,7 @@ void TestOrderBy::testOrderByIndex( ISession * inSession, int inCntPins )
 		v.property = dateProp ;
 
 		PID pid ;
-		TVERIFYRC(inSession->createPIN( pid, &v, 1 ));
+		TVERIFYRC(inSession->createPINAndCommit( pid, &v, 1 ));
 	}
 	//
 	// Create query to use index
@@ -765,8 +765,8 @@ void TestOrderBy::testOrderByIndex( ISession * inSession, int inCntPins )
 	Value classParam ;
 	classParam.setRange(allDateRange);	
 	
-	ClassSpec cs ;
-	cs.classID = dateClass ;
+	SourceSpec cs ;
+	cs.objectID = dateClass ;
 	cs.nParams = 1 ;
 	cs.params = &classParam ;
 	allPins->addVariable( &cs, 1 ) ;

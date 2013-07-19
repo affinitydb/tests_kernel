@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -32,7 +32,7 @@ struct IdentityInfo
 class TestIdentity : public ITest
 {
 	public:
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 		TEST_DECLARE(TestIdentity);
 		virtual char const * getName() const { return "testidentity"; }
 		virtual char const * getHelp() const { return ""; }
@@ -167,7 +167,7 @@ void TestIdentity::testPinCreation( IdentityInfo & info, bool inExpectPinCreatio
 		// You can create a PIN, which belongs to the owner
 		// not the current identity
 		PID newPIN ;
-		TVERIFYRC( lSession->createPIN( newPIN, NULL, 0, 0 )) ;
+		TVERIFYRC( lSession->createPINAndCommit( newPIN, NULL, 0, 0 )) ;
 		TVERIFY( newPIN.ident == STORE_OWNER ) ;
 
 		// But you can't look it up (because of normal ACL)
@@ -175,7 +175,7 @@ void TestIdentity::testPinCreation( IdentityInfo & info, bool inExpectPinCreatio
 		TVERIFY( pin == NULL ) ;
 
 		// This way works also 
-		IPIN * newPin = lSession->createUncommittedPIN() ;
+		IPIN * newPin = lSession->createPIN() ;
 		TVERIFYRC( lSession->commitPINs( &newPin, 1, 0 ) );
 		newPin->destroy() ;
 	}
@@ -183,9 +183,9 @@ void TestIdentity::testPinCreation( IdentityInfo & info, bool inExpectPinCreatio
 	{
 		// Pin Creation blocked
 		PID newPIN ;
-		TVERIFY( RC_NOACCESS == lSession->createPIN( newPIN, NULL, 0, 0 ) ) ;
+		TVERIFY( RC_NOACCESS == lSession->createPINAndCommit( newPIN, NULL, 0, 0 ) ) ;
 		
-		IPIN * newPin = lSession->createUncommittedPIN() ;
+		IPIN * newPin = lSession->createPIN() ;
 		TVERIFY( RC_NOACCESS == lSession->commitPINs( &newPin, 1, 0 ) );
 		newPin->destroy() ;
 	}

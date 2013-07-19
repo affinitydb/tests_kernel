@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -33,7 +33,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 // One interesting question here is when to use PID references instead of keys.  Relational databases 
 // don't directly support references from one row to another, whereas the MV store supports PIN references.
 // On the other hand relational databases have explicit support for unique, primary keys in a table,
-// data integrity etc, whereas the AfyDB does not.  This test demonstrates both key and reference approach
+// data integrity etc, whereas the Afy does not.  This test demonstrates both key and reference approach
 // based on the following #ifdef
 #define USE_PIN_REF 1
 
@@ -112,8 +112,8 @@ public:
 
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
 
-		ClassSpec spec ;
-		spec.classID = mClass ;
+		SourceSpec spec ;
+		spec.objectID = mClass ;
 		spec.nParams = 0 ; 
 		spec.params = NULL ;			
 		unsigned char lVar = lQ->addVariable( &spec,1 ) ;
@@ -139,8 +139,8 @@ public:
 		TV_R( mClass != STORE_INVALID_CLASSID, mTest ) ; // call CreateClass first
 
 		IStmt * lQ = mSession->createStmt(sop) ;
-		ClassSpec spec ;
-		spec.classID = mClass ;
+		SourceSpec spec ;
+		spec.objectID = mClass ;
 		spec.nParams = 0 ; // Class with no variables
 		spec.params = NULL ;			
 		lQ->addVariable( &spec,1 ) ;
@@ -150,8 +150,8 @@ public:
 	IPIN * LookupByKey(const Value & inKeyValue) const 
 	{
 		CmvautoPtr<IStmt> lQ( mSession->createStmt() ) ;
-		ClassSpec spec ;
-		spec.classID = mIndexFamily ;
+		SourceSpec spec ;
+		spec.objectID = mIndexFamily ;
 		spec.nParams = 1 ; 
 		spec.params = &inKeyValue ;
 		lQ->addVariable( &spec,1 ) ;
@@ -246,7 +246,7 @@ public:
 		vals[2].set( inLastName ) ; vals[2].property = mLastName_id ;
 		vals[3].set( inAge ) ; vals[3].property = mAge_id ;
 
-		TVRC_R(mSession->createPIN( pid, vals, 4),mTest) ;
+		TVRC_R(mSession->createPINAndCommit( pid, vals, 4),mTest) ;
 
 		mNextKey++ ;
 	}
@@ -308,7 +308,7 @@ public:
 		vals[1].set( inTitle ) ; vals[1].property = mTitle_id ;
 		vals[2].set( inAuthor ) ; vals[2].property = mAuthor_id ;
 
-		TVRC_R(mSession->createPIN( pid, vals, 3),mTest) ;
+		TVRC_R(mSession->createPINAndCommit( pid, vals, 3),mTest) ;
 	}
 
 #ifdef BIG_DATA
@@ -453,7 +453,7 @@ public:
 		vals[2].setDateTime( borrowDate ) ; vals[2].property = mBorrowDate_id ;
 		vals[3].setDateTime( dueDate ) ; vals[3].property = mDueDate_id ;
 
-		TVRC_R(mSession->createPIN( pid, vals, 4),mTest) ;
+		TVRC_R(mSession->createPINAndCommit( pid, vals, 4),mTest) ;
 	}
 
 	int mCntLoans ;
@@ -474,7 +474,7 @@ class TestRDBMS : public ITest
 		TEST_DECLARE(TestRDBMS);
 		virtual char const * getName() const { return "testrdbms"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "Test AfyDB As Relational Database"; }
+		virtual char const * getDescription() const { return "Test Afy As Relational Database"; }
 		
 		virtual int execute();
 		virtual void destroy() { delete this; }

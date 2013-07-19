@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -148,9 +148,9 @@ void TestJoinExcept::runJoinQuery(ClassID pLeftCLSID, ClassID pRightCLSID, QUERY
 	assert(pJoinOp != QRY_SEMIJOIN && pJoinOp != QRY_JOIN);	
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());			
-		ClassSpec lCS[2]; 
-		lCS[0].classID = pLeftCLSID; lCS[0].nParams = 0; lCS[0].params = NULL;
-		lCS[1].classID = pRightCLSID; lCS[1].nParams = 0; lCS[1].params = NULL;
+		SourceSpec lCS[2]; 
+		lCS[0].objectID = pLeftCLSID; lCS[0].nParams = 0; lCS[0].params = NULL;
+		lCS[1].objectID = pRightCLSID; lCS[1].nParams = 0; lCS[1].params = NULL;
 		unsigned char lLeftVar = lQ->addVariable(&lCS[0], 1);		
 		unsigned char lRightVar = lQ->addVariable(&lCS[1], 1);
 		if (pJoinOp<QRY_UNION) lQ->setOp(lLeftVar, lRightVar, QRY_INTERSECT); else lQ->setOp(lLeftVar, lRightVar, pJoinOp);
@@ -159,7 +159,7 @@ void TestJoinExcept::runJoinQuery(ClassID pLeftCLSID, ClassID pRightCLSID, QUERY
 		if(!isVerbose())
 			TVERIFYRC(lQ->count(lCount));
 		else
-			TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
+			TVERIFYRC(lQ->count(lCount, 0, 0, ~0));
 		TIMESTAMP lEnd; getTimestamp(lEnd);
 		//mLogger.out() << "runJoinQuery: Count = " << lCount << std::endl;		
 		
@@ -207,7 +207,7 @@ void TestJoinExcept::runJoinQuery(PID pPID, PropertyID pPropID, ClassID pRightCL
 	//mLogger.out() << ">>> " << std::endl;
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());			
-		ClassSpec lCS; lCS.classID = pRightCLSID; lCS.nParams = 0; lCS.params = NULL;
+		SourceSpec lCS; lCS.objectID = pRightCLSID; lCS.nParams = 0; lCS.params = NULL;
 		unsigned char lLeftVar = lQ->addVariable(pPID, pPropID);		
 		unsigned char lRightVar = lQ->addVariable(&lCS, 1);
 		if (pJoinOp<QRY_UNION) lQ->setOp(lLeftVar, lRightVar, QRY_INTERSECT); else lQ->setOp(lLeftVar, lRightVar, pJoinOp);
@@ -216,7 +216,7 @@ void TestJoinExcept::runJoinQuery(PID pPID, PropertyID pPropID, ClassID pRightCL
 		if(!isVerbose())
 			TVERIFYRC(lQ->count(lCount));
 		else
-			TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
+			TVERIFYRC(lQ->count(lCount, 0, 0, ~0));
 		TIMESTAMP lEnd; getTimestamp(lEnd);
 		//mLogger.out() << "runJoinQuery2: Count = " << lCount << std::endl;		
 		if(lCount != pExpectedCount)

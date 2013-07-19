@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -113,12 +113,12 @@ public:
 		}
 		mCurrentPropIndex = 0;
 		mPID.pid = STORE_INVALID_PID; mPID.ident = STORE_OWNER;
-		if(pCreatePIN) mPID = createPIN();		
+		if(pCreatePIN) mPID = createPINAndCommit();		
 		mSearchProps = NULL;
 		mNumSearchProps = 0;
 	}	
 
-	PID createPIN()
+	PID createPINAndCommit()
 	{
 		PID lPID = {STORE_INVALID_PID, STORE_OWNER};
 		CREATEPIN(mSession, lPID, NULL, 0);
@@ -136,9 +136,9 @@ public:
 		mNumSearchProps = pNumProps;
 	}
 
-	PropertyID addTextProperty(PID pPID, const char * pValue, bool pRemoveStopWords = true, PropertyID pPropID = STORE_INVALID_PROPID )
+	PropertyID addTextProperty(PID pPID, const char * pValue, bool pRemoveStopWords = true, PropertyID pPropID = STORE_INVALID_URIID )
 	{
-		TV_R(pPropID != STORE_INVALID_PROPID || mCurrentPropIndex != mNumProps, mTest);
+		TV_R(pPropID != STORE_INVALID_URIID || mCurrentPropIndex != mNumProps, mTest);
 		if(pPID.pid == 0 || pPID.pid == STORE_INVALID_PID)
 			pPID = mPID;
 
@@ -146,13 +146,13 @@ public:
 			return addStreamTextProperty(pPID, pValue, pRemoveStopWords, pPropID);
 
 		PropertyID lPropID;
-		if(pPropID == STORE_INVALID_PROPID) lPropID = mPropIDs[mCurrentPropIndex++];
+		if(pPropID == STORE_INVALID_URIID) lPropID = mPropIDs[mCurrentPropIndex++];
 		else lPropID = pPropID;
 
 		Value lV ; 
 		SETVALUE(lV, lPropID, pValue, OP_SET);
-
-		if (pRemoveStopWords) lV.meta = META_PROP_STOPWORDS ;	
+		lV.meta = META_PROP_FTINDEX;
+		//if (pRemoveStopWords) lV.meta = META_PROP_STOPWORDS ;	
 		
 		IPIN *lPIN = mSession->getPIN(pPID);;
 		TVRC_R(lPIN->modify(&lV, 1), mTest);
@@ -242,7 +242,7 @@ public:
 	~MultiFTSearchContext() { if(mPropIDs) delete[] mPropIDs; if(mSearchProps) delete[] mSearchProps;}	
 protected:
 
-	PropertyID addStreamTextProperty(PID pPID, const char * pValue, bool pRemoveStopWords = true, PropertyID pPropID = STORE_INVALID_PROPID)
+	PropertyID addStreamTextProperty(PID pPID, const char * pValue, bool pRemoveStopWords = true, PropertyID pPropID = STORE_INVALID_URIID)
 	{
 		TestStream * lStream = new TestStream((int)(40000)*sizeof(char), NULL, VT_STRING ) ;
 		
@@ -251,16 +251,16 @@ protected:
 		memcpy(lStream->getBuffer(), forceContent.c_str(), forceContent.size()*sizeof(char));
 		
 		PropertyID lPropID;
-		if(pPropID == STORE_INVALID_PROPID) lPropID = mPropIDs[mCurrentPropIndex++];
+		if(pPropID == STORE_INVALID_URIID) lPropID = mPropIDs[mCurrentPropIndex++];
 		else lPropID = pPropID;
 		Value lV ; 
 		lV.set(MVTApp::wrapClientStream(mSession, lStream)) ; 
 		lV.property = lPropID ;
-
+		lV.meta = META_PROP_FTINDEX;
 		if (pRemoveStopWords)
 		{
 			// Means that any common english words will be excluded from the index
-			lV.meta = META_PROP_STOPWORDS ;	
+//			lV.meta = META_PROP_STOPWORDS ;	
 		}
 		IPIN *lPIN = mSession->getPIN(pPID);;
 		TVRC_R(lPIN->modify(&lV, 1), mTest);
@@ -287,7 +287,6 @@ class TestMultiFT : public ITest
 		virtual char const * getName() const { return "testmultift"; }
 		virtual char const * getHelp() const { return ""; }
 		virtual char const * getDescription() const { return "Tests ANDing of multiple FT conditions in query"; }
-		virtual bool includeInSmokeTest(char const *& pReason) const { return false; }
 
 		virtual int execute();
 		virtual void destroy() { delete this; }
@@ -345,8 +344,8 @@ void TestMultiFT::testSimpleSearch()
 	TSearchInfo lInfo;
 	unsigned int lFlags[2] = {0, 0};
 
-	PID lPID1 = lCtx.createPIN();	
-	PID lPID2 = lCtx.createPIN();	
+	PID lPID1 = lCtx.createPINAndCommit();	
+	PID lPID2 = lCtx.createPINAndCommit();	
 	
 	PropertyID lProp1 = lCtx.addTextProperty(lPID1, "EMC began in 1979.\n  The founders were Richard (Dick) Egan and Roger Marino, the E and M in the company's name.", bFilterStopWords);
 	PropertyID lProp2 = lCtx.addTextProperty(lPID1, "EMC did not adopt the EMC notation to refer to Einstein's famous equation, E=mc2", bFilterStopWords);
@@ -399,8 +398,8 @@ void TestMultiFT::testSimpleSearch2()
 	TSearchInfo lInfo;
 	unsigned int lFlags[2] = {0, 0};
 
-	PID lPID1 = lCtx.createPIN();	
-	PID lPID2 = lCtx.createPIN();	
+	PID lPID1 = lCtx.createPINAndCommit();	
+	PID lPID2 = lCtx.createPINAndCommit();	
 	
 	PropertyID lProp1 = lCtx.addTextProperty(lPID1, "EMC began in 1979.\n  The founders were Richard (Dick) Egan and Roger Marino, the E and M in the company's name.", bFilterStopWords);
 	PropertyID lProp2 = lCtx.addTextProperty(lPID1, "EMC did not adopt the EMC2 notation to refer to Einstein's famous equation, E=mc2", bFilterStopWords);
@@ -454,7 +453,7 @@ void TestMultiFT::testSimpleSearch3()
 	unsigned int lFlags[2] = {0, 0};
 
 	int lNumType1PINs = 1, lNumType2PINs = 0;
-	PID lPID1 = lCtx.createPIN();
+	PID lPID1 = lCtx.createPINAndCommit();
 	
 	PropertyID lProp1 = lCtx.addTextProperty(lPID1, "EMC began in 1979.\n  The founders were Richard (Dick) Egan and Roger Marino, the E and M in the company's name.", bFilterStopWords);
 	PropertyID lProp2 = lCtx.addTextProperty(lPID1, "EMC did not adopt the EMC2 notation to refer to Einstein's famous equation, E=mc2", bFilterStopWords);
@@ -463,7 +462,7 @@ void TestMultiFT::testSimpleSearch3()
 	int i = 0;
 	for(i = 1; i < sNumPINs; i++)
 	{
-		PID lPID = lCtx.createPIN();
+		PID lPID = lCtx.createPINAndCommit();
 		if(MVTRand::getRange(10, 100) > 50)
 		{
 			lNumType1PINs++;
@@ -546,7 +545,7 @@ void TestMultiFT::testUTF8()
 		
 	mLogger.out() << "Running series of simple UTF8 tests..." << endl;
 
-	PID lPID1 = lCtx.createPIN();
+	PID lPID1 = lCtx.createPINAndCommit();
 	PropertyID lPropID1 = lCtx.addTextProperty(lPID1, lFile.buf, bFilterStopWords);
 	PropertyID lPropID2 = lCtx.addTextProperty(lPID1, lFile.buf, bFilterStopWords);
 	
@@ -648,8 +647,8 @@ void TestMultiFT::testStopWords()
 	MultiFTSearchContext ctxtWithStop( this, mSession, 3 ) ;
 	unsigned int lFlags[2] = {MODE_ALL_WORDS, MODE_ALL_WORDS};
 		
-	PropertyID lProps[3] = {STORE_INVALID_PROPID, STORE_INVALID_PROPID, STORE_INVALID_PROPID};
-	PropertyID lProps1[3] = {STORE_INVALID_PROPID, STORE_INVALID_PROPID, STORE_INVALID_PROPID};
+	PropertyID lProps[3] = {STORE_INVALID_URIID, STORE_INVALID_URIID, STORE_INVALID_URIID};
+	PropertyID lProps1[3] = {STORE_INVALID_URIID, STORE_INVALID_URIID, STORE_INVALID_URIID};
 	//lCtx.setPropsForSearch(lProps, 2);
 
 	// Based on ftproceng, these are full of stop words
@@ -662,12 +661,12 @@ void TestMultiFT::testStopWords()
 	size_t pos = 0 ;
 	while ( strlen( testStrs[pos] ) > 0 )
 	{
-		PID lPID1 = ctxtFilterStop.createPIN();
+		PID lPID1 = ctxtFilterStop.createPINAndCommit();
 		lProps[0] = ctxtFilterStop.addTextProperty( lPID1, testStrs[pos], true /* META_PROP_STOPWORDS */, lProps[0]) ;
 		lProps[1] = ctxtFilterStop.addTextProperty( lPID1, testStrs[pos], false, lProps[1]) ;
 		lProps[2] = ctxtFilterStop.addTextProperty( lPID1, testStrs[pos], true/* META_PROP_STOPWORDS */, lProps[2]) ;
 		
-		PID lPID2 = ctxtWithStop.createPIN();
+		PID lPID2 = ctxtWithStop.createPINAndCommit();
 		lProps1[0] = ctxtWithStop.addTextProperty( lPID2, testStrs[pos], false, lProps1[0]) ;
 		lProps1[1] = ctxtWithStop.addTextProperty( lPID2, testStrs[pos], true/* META_PROP_STOPWORDS */, lProps1[1]) ;
 		lProps1[2] = ctxtWithStop.addTextProperty( lPID2, testStrs[pos], false, lProps1[2]) ;

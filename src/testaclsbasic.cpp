@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -19,7 +19,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 class TestAclsBasic : public ITest
 {
 	public:
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 		TEST_DECLARE(TestAclsBasic);
 		virtual char const * getName() const { return "testaclsbasic"; }
 		virtual char const * getHelp() const { return ""; }
@@ -44,7 +44,7 @@ class TestAclsBasic : public ITest
 			unsigned long inExpectedCnt
 		) ;
 
-		void AddACL( ISession * const inSession, const PID & inPID, IdentityID inID, uint8_t inFlags /* ACL_READ, ACL_WRITE */ ) ;
+		void AddACL( ISession * const inSession, const PID & inPID, IdentityID inID, uint8_t inFlags /* META_PROP_READ, META_PROP_WRITE */ ) ;
 	protected:
 		void doTest();
 		void testPINCreatePermissions(const char * inIdentity, bool bExpectedPermission) ;
@@ -133,16 +133,16 @@ void TestAclsBasic::doTest()
 	val.set( 100 ) ; 
 	val.property = propids[0] ;
 
-	TVERIFYRC( lSession->createPIN( pidRoot, &val, 1 ) );
+	TVERIFYRC( lSession->createPINAndCommit( pidRoot, &val, 1 ) );
 
 	// Set up the expected ACL values
-	AddACL( lSession, pidRoot, lReader.id, ACL_READ ) ;
-	AddACL( lSession, pidRoot, lWriter.id, ACL_WRITE ) ;
-	AddACL( lSession, pidRoot, lRW.id, ACL_WRITE | ACL_READ ) ;
+	AddACL( lSession, pidRoot, lReader.id, META_PROP_READ ) ;
+	AddACL( lSession, pidRoot, lWriter.id, META_PROP_WRITE ) ;
+	AddACL( lSession, pidRoot, lRW.id, META_PROP_WRITE | META_PROP_READ ) ;
 
 	// Access split to two separate values
-	AddACL( lSession, pidRoot, lRW2.id, ACL_WRITE ) ;
-	AddACL( lSession, pidRoot, lRW2.id, ACL_READ ) ;
+	AddACL( lSession, pidRoot, lRW2.id, META_PROP_WRITE ) ;
+	AddACL( lSession, pidRoot, lRW2.id, META_PROP_READ ) ;
 
 	// Presumably redundant, as having no ACL means no access,
 	// but this verifies that a empty access property is accepted
@@ -156,7 +156,7 @@ void TestAclsBasic::doTest()
 	vals[0].property = propids[0] ;
 	vals[1].set(pidRoot) ; 
 	vals[1].property = PROP_SPEC_DOCUMENT ;
-	TVERIFYRC( lSession->createPIN( pidChild, vals, 2 ) );
+	TVERIFYRC( lSession->createPINAndCommit( pidChild, vals, 2 ) );
 
 
 	// "Nested" document Pin
@@ -164,7 +164,7 @@ void TestAclsBasic::doTest()
 	vals[0].property = propids[0] ;
 	vals[1].set(pidChild) ; 
 	vals[1].property = PROP_SPEC_DOCUMENT ;
-	TVERIFYRC( lSession->createPIN( pidGrandChild, vals, 2 ) );
+	TVERIFYRC( lSession->createPINAndCommit( pidGrandChild, vals, 2 ) );
 
 			
 	lSession->terminate();
@@ -173,17 +173,17 @@ void TestAclsBasic::doTest()
 	// Verify expected access to the different identities
 	//
 
-	testAccess(	pidRoot, propids[0], lReader.str, ACL_READ, 100 ) ;
-	testAccess(	pidRoot, propids[0], lWriter.str, ACL_WRITE, 100 ) ;
-	testAccess(	pidRoot, propids[0], lRW.str, ACL_WRITE|ACL_READ, 100 ) ;
-	testAccess(	pidRoot, propids[0], lRW2.str, ACL_WRITE|ACL_READ, 100 ) ;
+	testAccess(	pidRoot, propids[0], lReader.str, META_PROP_READ, 100 ) ;
+	testAccess(	pidRoot, propids[0], lWriter.str, META_PROP_WRITE, 100 ) ;
+	testAccess(	pidRoot, propids[0], lRW.str, META_PROP_WRITE|META_PROP_READ, 100 ) ;
+	testAccess(	pidRoot, propids[0], lRW2.str, META_PROP_WRITE|META_PROP_READ, 100 ) ;
 	testAccess(	pidRoot, propids[0], lNoAccess.str, 0, 100 ) ;
 	testAccess(	pidRoot, propids[0], lNoACL.str, 0, 100 ) ;
 
-	testAccess(	pidChild, propids[0], lReader.str, ACL_READ, 800 ) ;
-	testAccess(	pidChild, propids[0], lWriter.str, ACL_WRITE, 800 ) ;
-	testAccess(	pidChild, propids[0], lRW.str, ACL_WRITE|ACL_READ, 800 ) ;
-	testAccess(	pidChild, propids[0], lRW2.str, ACL_WRITE|ACL_READ, 800 ) ;
+	testAccess(	pidChild, propids[0], lReader.str, META_PROP_READ, 800 ) ;
+	testAccess(	pidChild, propids[0], lWriter.str, META_PROP_WRITE, 800 ) ;
+	testAccess(	pidChild, propids[0], lRW.str, META_PROP_WRITE|META_PROP_READ, 800 ) ;
+	testAccess(	pidChild, propids[0], lRW2.str, META_PROP_WRITE|META_PROP_READ, 800 ) ;
 	testAccess(	pidChild, propids[0], lNoAccess.str, 0, 800 ) ;
 	testAccess(	pidChild, propids[0], lNoACL.str, 0, 800 ) ;
 
@@ -212,7 +212,7 @@ void TestAclsBasic::AddACL
 	ISession * const inSession, 
 	const PID & inPID, 
 	IdentityID inID, 
-	uint8_t inFlags /* ACL_READ, ACL_WRITE */  
+	uint8_t inFlags /* META_PROP_READ, META_PROP_WRITE */  
 )
 {
 	// Give inID access to pin inPID
@@ -266,7 +266,7 @@ void TestAclsBasic::testAccess
 
 	// Read Scenarios
 
-	if ( inAccess & ACL_READ )
+	if ( inAccess & META_PROP_READ )
 	{
 		// Read the whole PIN and the particular property
 		IPIN* pin1 = lSession->getPIN( inPID ) ;
@@ -288,13 +288,13 @@ void TestAclsBasic::testAccess
 
 	// Write Scenarios
 
-	if ( inAccess & ACL_WRITE )
+	if ( inAccess & META_PROP_WRITE )
 	{
 		// Write via session
 		TVERIFYRC( lSession->modifyPIN( inPID, &valUpdate, 1 ) );
 
 		// Write from the PIN (only available if also read access)
-		if ( inAccess & ACL_READ )
+		if ( inAccess & META_PROP_READ )
 		{
 			IPIN* pin = lSession->getPIN( inPID ) ;
 
@@ -319,7 +319,7 @@ void TestAclsBasic::testAccess
 		// Expect write failure
 		TVERIFY( RC_OK != lSession->modifyPIN( inPID, &valUpdate, 1 ) );
 
-		if ( inAccess & ACL_READ )
+		if ( inAccess & META_PROP_READ )
 		{
 			// Write through PIN should also fail
 			IPIN* pin = lSession->getPIN( inPID ) ;
@@ -392,7 +392,7 @@ void TestAclsBasic::testPINCreatePermissions( const char * inIdentity, bool bExp
 	Value readMeIfYouDare ;
 	readMeIfYouDare.set(666) ; readMeIfYouDare.property = MVTApp::getProp( lSession, "TestAclsBasic.testPINCreatePermissions" ) ;
 
-	RC rc = lSession->createPIN( newpin, &readMeIfYouDare, 1 ) ;
+	RC rc = lSession->createPINAndCommit( newpin, &readMeIfYouDare, 1 ) ;
 
 	if ( bExpectedPermission )
 	{

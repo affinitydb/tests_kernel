@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -79,7 +79,7 @@ void testclassfilter::createPins(int numPins)
 	{	
 		tValue[0].set(1);
 		tValue[0].property=mProp[0];
-		mIPIN = mSession->createUncommittedPIN(tValue,1,MODE_COPY_VALUES);
+		mIPIN = mSession->createPIN(tValue,1,MODE_COPY_VALUES);
 		TVERIFYRC(mSession->commitPINs(&mIPIN,1)); 
 		mIPIN->destroy();
 	}
@@ -94,14 +94,14 @@ void testclassfilter::createPins(int numPins)
 			else
 				tValue[1].set(99);
 			tValue[1].property=mProp[2];
-			mIPIN = mSession->createUncommittedPIN(tValue,2,MODE_COPY_VALUES);
+			mIPIN = mSession->createPIN(tValue,2,MODE_COPY_VALUES);
 
 		}
 		else
 		{
 			tValue[0].set(1);
 			tValue[0].property=mProp[1];
-			mIPIN = mSession->createUncommittedPIN(tValue,1,MODE_COPY_VALUES);
+			mIPIN = mSession->createPIN(tValue,1,MODE_COPY_VALUES);
 		}
 		TVERIFYRC(mSession->commitPINs(&mIPIN,1)); 
 		mIPIN->destroy();
@@ -110,10 +110,10 @@ void testclassfilter::createPins(int numPins)
 
 void testclassfilter::verifyJoinQuery(bool lhs)
 {
-	ClassSpec lCS1;
-	lCS1.classID = mClass[0];	lCS1.nParams = 0;
-	ClassSpec lCS2;
-	lCS2.classID = mClass[1];	lCS2.nParams = 0;
+	SourceSpec lCS1;
+	lCS1.objectID = mClass[0];	lCS1.nParams = 0;
+	SourceSpec lCS2;
+	lCS2.objectID = mClass[1];	lCS2.nParams = 0;
 	uint64_t lCount;
 	static const uint64_t opEqCount = (MAXNUMPINS/2) + (NUMQUERYPIN/2);
 	static const uint64_t opExCount = (MAXNUMPINS/2) + (NUMQUERYPIN);

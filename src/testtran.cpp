@@ -1,13 +1,12 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
 #include "app.h"
 #include "mvauto.h"
 using namespace std;
-using namespace AfyKernel;
 
 // Note: for coverage of collections with transactions check out testtrancoll.cpp
 
@@ -159,7 +158,7 @@ private:
 // Publish this test.
 class TestTransactions : public ITest
 {
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 	public:
 		TEST_DECLARE(TestTransactions);
 		virtual char const * getName() const { return "testtran"; }
@@ -249,7 +248,7 @@ void TestTransactions::simpleTran(ISession *session)
 	// Create initial PIN
 	SETVALUE(pvs[0], propID[0], "Tran1 prop", OP_SET);
 	pvs[1].setURL("http://www.cricinfo.com"); SETVATTR(pvs[1], propID[1], OP_SET);
-	TVERIFYRC( session->createPIN(pid,pvs,2) );
+	TVERIFYRC( session->createPINAndCommit(pid,pvs,2) );
 
 	CmvautoPtr<IPIN> pin( session->getPIN(pid) );
 	if (isVerbose()) MVTApp::output(*pin.Get(), mLogger.out(), session);
@@ -325,21 +324,21 @@ void TestTransactions::simpleTran(ISession *session)
 
 #if 0 // REVIEW - why was this commented out?
 	//case 7: add a couple of props and commit or rollback
-	TVERIFYRC(session->startTransaction());
-		    pvs[0].set("Test prop 1");pvs[0].setPropID(propID[3]);
-		    pvs[1].set("Test prop 2");pvs[1].setPropID(propID[4]);
-		    TVERIFYRC(pin->modify(pvs,2));
-	TVERIFY2(session->rollback(),"****Case 7(rollback) ");
+    TVERIFYRC(session->startTransaction());
+		pvs[0].set("Test prop 1");pvs[0].setPropID(propID[3]);
+		pvs[1].set("Test prop 2");pvs[1].setPropID(propID[4]);
+		TVERIFYRC(pin->modify(pvs,2));
+    TVERIFY2(session->rollback(),"****Case 7(rollback) ");
 
-	MVTApp::output(*pin.Get(), mLogger.out(), session);
+    MVTApp::output(*pin.Get(), mLogger.out(), session);
 #endif
 
 	//case 8: Roll back of value added through ISession::modifyPIN
 	PID pid2 ;
 	pvs[0].set("Modify PIN check");pvs[0].setPropID(propID[3]);
-	TVERIFYRC(session->createPIN(pid2,pvs,1));
+	TVERIFYRC(session->createPINAndCommit(pid2,pvs,1));
 
-	// Verify that it shows up in query
+    // Verify that it shows up in query
 	TVERIFY2( 1 == findPIN("Modify PIN check",propID[3],session), "findPIN string query problem" );
 
 	pvs[0].set("Modification string");pvs[0].setPropID(propID[4]);
@@ -352,9 +351,9 @@ void TestTransactions::simpleTran(ISession *session)
 	// First property set should still be around for Query
 	TVERIFY( 1 == findPIN("Modify PIN check",propID[3],session) );
 
-	// Verify other property available in direct
-	CmvautoPtr<IPIN> pid2Lookup( session->getPIN( pid2 ) );
-	TVERIFY( 0 == strcmp( "Modify PIN check", pid2Lookup->getValue(propID[3])->str )  ) ;
+    // Verify other property available in direct
+    CmvautoPtr<IPIN> pid2Lookup( session->getPIN( pid2 ) );
+    TVERIFY( 0 == strcmp( "Modify PIN check", pid2Lookup->getValue(propID[3])->str )  ) ;
 	if (isVerbose()) MVTApp::output(*pid2Lookup.Get(), mLogger.out(), session);
 }
 
@@ -376,7 +375,7 @@ void TestTransactions::pinTransactions(ISession *session)
 	//case 1: delete a PIN (without purge and rollback).
 	pvs[0].set("This pin is getting slaughtered");pvs[0].setPropID(lPropIDs[0]);
 	pvs[1].set("This PIN wont be purged");pvs[1].setPropID(lPropIDs[1]);
-	TVERIFYRC(session->createPIN(pid,pvs,2));
+	TVERIFYRC(session->createPINAndCommit(pid,pvs,2));
 
 	TVERIFYRC(session->startTransaction());
 		TVERIFYRC(session->deletePINs(&pid,1));
@@ -401,7 +400,7 @@ void TestTransactions::pinTransactions(ISession *session)
 
 	pvs[0].set("Purge Me please");pvs[0].setPropID(lPropIDs[2]);
 	pvs[1].set("Under the effect of a transaction");pvs[1].setPropID(lPropIDs[3]);
-	TVERIFYRC( session->createPIN(pid2,pvs,2) );
+	TVERIFYRC( session->createPINAndCommit(pid2,pvs,2) );
 
 	TVERIFYRC(session->startTransaction());
 		TVERIFYRC(session->deletePINs(&pid2,1,MODE_PURGE));
@@ -418,7 +417,7 @@ void TestTransactions::pinTransactions(ISession *session)
 	pid.pid = STORE_INVALID_PID ;
 	TVERIFYRC(session->startTransaction());
 		pvs[0].set("One property PIN");pvs[0].setPropID(lPropIDs[2]);
-		rc = session->createPIN(pid,pvs,1);
+		rc = session->createPINAndCommit(pid,pvs,1);
 	TVERIFYRC(session->rollback());
 	TVERIFY(session->getPIN(pid)==NULL) ;	
 	cntAfter = findPIN("One property PIN",lPropIDs[2],session);
@@ -430,7 +429,7 @@ void TestTransactions::pinTransactions(ISession *session)
 	TVERIFYRC(session->startTransaction());
 		pvs[0].set("Prop1");pvs[0].setPropID(lPropIDs[2]);
 		pvs[1].set(46);pvs[1].setPropID(lPropIDs[3]);
-		TVERIFYRC(session->createPIN(pid,pvs,2));
+		TVERIFYRC(session->createPINAndCommit(pid,pvs,2));
 	TVERIFYRC(session->rollback());
 	TVERIFY(session->getPIN(pid)==NULL) ;	
 	cntAfter = findPIN("Prop1",lPropIDs[2],session);
@@ -691,7 +690,7 @@ int TestTransactions::findPIN(const string& str, unsigned int propid,ISession *s
 	uint64_t count2 ;
 	TVERIFYRC(query->count( count2 ) );
 
-	// Long way to get the number of matches
+    // Long way to get the number of matches
 
 	ICursor *result = NULL;
 	TVERIFYRC(query->execute(&result));
@@ -728,11 +727,11 @@ void TestTransactions::populateStore(ISession *session,URIMap *pm,int npm, PID *
 
 	MVTApp::mapURIs(session,"TestTransactions.prop",npm,pm);
 
-	session->createPIN(pid[0],NULL,0);
-	session->createPIN(pid[1],NULL,0);
-	session->createPIN(pid[2],NULL,0);
-	session->createPIN(pid[3],NULL,0);
-	session->createPIN(pid[4],NULL,0);
+	session->createPINAndCommit(pid[0],NULL,0);
+	session->createPINAndCommit(pid[1],NULL,0);
+	session->createPINAndCommit(pid[2],NULL,0);
+	session->createPINAndCommit(pid[3],NULL,0);
+	session->createPINAndCommit(pid[4],NULL,0);
 }
 
 void TestTransactions::SetInitial( ISession* session, URIMap *pm, PID & outpid, const char* prop0, const char* prop1, const char* prop2 )
@@ -743,7 +742,7 @@ void TestTransactions::SetInitial( ISession* session, URIMap *pm, PID & outpid, 
 	SETVALUE(pvs[1], pm[Prop1].uid, prop1, OP_SET);
 	SETVALUE(pvs[2], pm[Prop2].uid, prop2, OP_SET);
 
-	session->createPIN(outpid,pvs,3);
+	session->createPINAndCommit(outpid,pvs,3);
 }
 
 void TestTransactions::VerifyExpected( ISession* session, URIMap *pm, const PID & pid, const char* prop0, const char* prop1, const char* prop2 )
@@ -762,7 +761,7 @@ void TestTransactions::multisessionTrans(ISession * session)
 	RC rc ;
 
 	PID pid ;
-	TVERIFYRC(session->createPIN(pid,NULL,0));
+	TVERIFYRC(session->createPINAndCommit(pid,NULL,0));
 
 	PropertyID propids[5] ; 
 	MVTApp::mapURIs(session,"TestTransactions.multisessionTrans",sizeof(propids)/sizeof(propids[0]),propids);
@@ -858,7 +857,8 @@ void TestTransactions::multisessionTrans(ISession * session)
 	// but deletion attempt will fail
 	val.setDelete(propids[1]) ;
 	rc = tester.S2()->mPins[0]->modify(&val,1,0) ;
-	TVERIFY(RC_OK != rc) ;
+	//	TVERIFY(RC_OK != rc) ; not anymore - if property doesn't exist, modify() just does nothing
+
 
 #if SINGLE_THREAD_DEADLOCK 
 	// Case 7: Deleting the same property within a transaction
@@ -925,7 +925,7 @@ void TestTransactions::multisessionTrans(ISession * session)
 	// S2 should fail cleanly because pin is gone
 	val.setDelete(propids[3]) ;
 	rc = tester.S2()->mPins[0]->modify(&val,1,0) ;
-	TVERIFY(RC_OK != rc) ;
+	//TVERIFY(RC_OK != rc) ;	not anymore - the pin is not gone, it's the property, and modify() now doesn't fail if it doesn't exist
 
 	TVERIFYRC(tester.S2()->mSession->commit()) ;
 
@@ -980,8 +980,8 @@ void TestTransactions::multisessionDeadlock(ISession * session)
 	PropertyID strProp =propids[0] ;
 
 	PID pids[2] ;
-	TVERIFYRC(session->createPIN(pids[0],NULL,0));
-	TVERIFYRC(session->createPIN(pids[1],NULL,0));
+	TVERIFYRC(session->createPINAndCommit(pids[0],NULL,0));
+	TVERIFYRC(session->createPINAndCommit(pids[1],NULL,0));
 
 	PID pidX = pids[0] ; // For test readability
 	PID pidY = pids[1] ;
@@ -1048,7 +1048,7 @@ void TestTransactions::multisessionDeadlock(ISession * session)
 // 
 struct DeadlockThreadInfo
 {
-	DeadlockThreadInfo( ITest * inCtxt, volatile long * inSyncPoint , AfyKernel::StoreCtx *pStoreCtx, int idx)
+	DeadlockThreadInfo( ITest * inCtxt, volatile long * inSyncPoint , Afy::IAffinity *pStoreCtx, int idx)
 	{
 		ctxt = inCtxt ;
 		syncPoint = inSyncPoint ;
@@ -1063,7 +1063,7 @@ struct DeadlockThreadInfo
 	PID pids[2] ;    // Two pids that will get the threads into deadlock trouble
 	ITest * ctxt ;  // TestTransactions object
 	volatile long * syncPoint ;
-	AfyKernel::StoreCtx *mStoreCtx;
+	Afy::IAffinity *mStoreCtx;
 	int index ;  // Gives a readable name to the thread
 	bool bLoser; // Whether this thread failed
 	PID unrelatedPID; // An unrelated PIN that doesn't contribute to deadlock
@@ -1082,7 +1082,7 @@ static THREAD_SIGNATURE threadTestDeadlock(void * pDeadlockThreadInfo)
 	// Also create a dummy pin as part of this transaction
 	// to see whether deadlock will roll back entire transaction
 	// 
-	TVRC_R(session->createPIN( pTI->unrelatedPID,NULL,0), pTI->ctxt);
+	TVRC_R(session->createPINAndCommit( pTI->unrelatedPID,NULL,0), pTI->ctxt);
 
 
 	TVRC_R(session->modifyPIN( pTI->pids[0], &pTI->valpin0, 1 ), pTI->ctxt) ;
@@ -1143,8 +1143,8 @@ void TestTransactions::multithreadDeadlock(ISession * session)
 	PropertyID strProp =propids[0] ;
 
 	PID pids[2] ;
-	TVERIFYRC(session->createPIN(pids[0],NULL,0));
-	TVERIFYRC(session->createPIN(pids[1],NULL,0));
+	TVERIFYRC(session->createPINAndCommit(pids[0],NULL,0));
+	TVERIFYRC(session->createPINAndCommit(pids[1],NULL,0));
 	PID pidX = pids[0] ; // For test readability
 	PID pidY = pids[1] ;
 
@@ -1233,7 +1233,7 @@ the chance of such parallel updates is relatively small.
 struct UpdateThreadInfo
 {
 	// Data sent to each thread
-	UpdateThreadInfo( ITest * inCtxt, PID inPid, PropertyID inProp, AfyKernel::StoreCtx *pStoreCtx)
+	UpdateThreadInfo( ITest * inCtxt, PID inPid, PropertyID inProp, Afy::IAffinity *pStoreCtx)
 	{
 		mTest = inCtxt ;
 		mStoreCtx = pStoreCtx;
@@ -1244,7 +1244,7 @@ struct UpdateThreadInfo
 	PID mPid ;
 	PropertyID mProperty ;
 	ITest * mTest ;  
-	AfyKernel::StoreCtx *mStoreCtx;
+	Afy::IAffinity *mStoreCtx;
 } ;
 
 
@@ -1392,11 +1392,12 @@ void TestTransactions::safePinUpdates(ISession * session)
 	MVTApp::mapURIs(session,"TestTransactions.safepinupdates",1,&strProp);
 
 	char initialString[2] ; initialString[0]=START_CHAR ; initialString[1]=0 ;
-	Value initial ;
-	initial.set( initialString ) ; initial.property = strProp ;
+	Value initial[2] ;
+	initial[0].set(0u); initial[0].property=PROP_SPEC_STAMP;
+	initial[1].set( initialString ) ; initial[1].property = strProp ;
 
 	PID pid ;
-	TVERIFYRC(session->createPIN(pid,&initial,1));
+	TVERIFYRC(session->createPINAndCommit(pid,initial,2));
 	
 	UpdateThreadInfo info(this,pid,strProp,mStoreCtx) ;
 	

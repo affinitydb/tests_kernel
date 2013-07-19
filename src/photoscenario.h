@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -123,7 +123,7 @@ class PhotoScenario : public ITest, public IStoreNotification
 		*/
 
 		ISession * mSession;
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 		size_t mPinCount ; // Default number of pins added to the store
 		size_t mTagCount; // Default number of tags in the app
 		size_t mFolderCount; // Default number of folders
@@ -208,7 +208,7 @@ class PhotoScenario : public ITest, public IStoreNotification
 	
 };
 
-class PhotoScenarioStream : public AfyDB::IStream
+class PhotoScenarioStream : public Afy::IStream
 {
 	protected:
 		size_t const mLength;

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -24,7 +24,7 @@ public:
 TEST_IMPLEMENT(TestSingleCharFT, TestLogger::kDStdOut);
 
 int TestSingleCharFT::execute()
-{
+	{
 	char URIName[32]="test.singleFT.";
 	Value tValue[3];
 	uint64_t lCount = 0;
@@ -38,17 +38,20 @@ int TestSingleCharFT::execute()
 	
 	tValue[0].set("wild a meadow");		//first pin
 	tValue[0].property=mProp[0];
-	mIPIN = mSession->createUncommittedPIN(tValue,1,MODE_COPY_VALUES);	
+	tValue[0].meta = META_PROP_FTINDEX;
+	mIPIN = mSession->createPIN(tValue,1,MODE_COPY_VALUES);	
 	mSession->commitPINs(&mIPIN,1); 
         
 	tValue[1].set("wild meadow");		//second pin
 	tValue[1].property=mProp[0];
-	mIPIN = mSession->createUncommittedPIN(&tValue[1],1,MODE_COPY_VALUES);	
+	tValue[1].meta = META_PROP_FTINDEX;
+	mIPIN = mSession->createPIN(&tValue[1],1,MODE_COPY_VALUES);	
 	mSession->commitPINs(&mIPIN,1); 
 
 	tValue[2].set("wild meadow angel");		//third pin
 	tValue[2].property=mProp[0];
-	mIPIN = mSession->createUncommittedPIN(&tValue[2],1,MODE_COPY_VALUES);	
+	tValue[2].meta = META_PROP_FTINDEX;
+	mIPIN = mSession->createPIN(&tValue[2],1,MODE_COPY_VALUES);	
 	mSession->commitPINs(&mIPIN,1); 
 	mIPIN->destroy();
 

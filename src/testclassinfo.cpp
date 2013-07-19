@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -142,7 +142,7 @@ void TestClassInfo::testSimpleClass()
 		unsigned char lVar = lQ->addVariable();
 		TVERIFYRC(lQ->setPropCondition(lVar, &lPropIDs[0], 1));
 		lClassString = lQ->toString();
-		TVERIFYRC(defineClass(mSession,lB, lQ, &lCLSID, true));
+		TVERIFYRC(defineClass(mSession,lB, lQ, &lCLSID));
 	}
 
 	// Get Class info and Query
@@ -150,16 +150,11 @@ void TestClassInfo::testSimpleClass()
 	if (cpin!=NULL) {
 		lClassInfoString = cpin->getValue(PROP_SPEC_PREDICATE)->stmt->toString();
 		TVERIFY(strcmp(lClassString.c_str(), lClassInfoString.c_str()) == 0);
-		if(!MVTApp::isRunningSmokeTest())
-		{
-			uint64_t lCount = 0; TVERIFYRC(cpin->getValue(PROP_SPEC_PREDICATE)->stmt->count(lCount));
-			TVERIFY(lCount == 32000);
-			const Value *cv = cpin->getValue(PROP_SPEC_NINSTANCES);
-			TVERIFY(cv->ui64 == 32000);
-			std::cout << "Actual count: " << lCount <<" and PROP_SPEC_NINSTANCES returns: " << cv->ui64 << std::endl;
-		}
-		const Value *cv = cpin->getValue(PROP_SPEC_CLASS_INFO);
-		TVERIFY(cv!=NULL && (cv->type==VT_UINT||cv->type==VT_INT) && (cv->ui&CLASS_SDELETE) != 0);
+		uint64_t lCount = 0; TVERIFYRC(cpin->getValue(PROP_SPEC_PREDICATE)->stmt->count(lCount));
+		TVERIFY(lCount == 32000);
+		const Value *cv = cpin->getValue(PROP_SPEC_COUNT);
+		TVERIFY(cv->ui64 == 32000);
+		std::cout << "Actual count: " << lCount <<" and PROP_SPEC_NINSTANCES returns: " << cv->ui64 << std::endl;
 		cpin->destroy();
 	}
 }
@@ -174,14 +169,14 @@ void TestClassInfo::createPINs(PropertyID *pPropIDs, const int pNumPINs)
 		PID lPID;
 		Value lV[15];
 		SETVALUE(lV[0], pPropIDs[0], (lRand + i), OP_SET);
-		SETVALUE(lV[1], pPropIDs[1], "prop1", OP_SET); lV[1].meta = META_PROP_NOFTINDEX;
+		SETVALUE(lV[1], pPropIDs[1], "prop1", OP_SET);
 		
 		int lRandVal = MVTRand::getRange(10, 100);
 		SETVALUE_C(lV[2], pPropIDs[2], lRandVal, OP_ADD, STORE_LAST_ELEMENT);
 		SETVALUE_C(lV[3], pPropIDs[2], (lRandVal+lRand), OP_ADD, STORE_LAST_ELEMENT);
 		
 		Tstring lStr; MVTRand::getString(lStr, 5, 10, false, false);
-		SETVALUE(lV[4], pPropIDs[3], lStr.c_str(), OP_SET); lV[4].meta = META_PROP_NOFTINDEX;
+		SETVALUE(lV[4], pPropIDs[3], lStr.c_str(), OP_SET);
 		
 		CREATEPIN(mSession, lPID, lV, 5);		
 	}

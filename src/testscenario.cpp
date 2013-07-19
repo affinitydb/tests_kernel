@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -212,7 +212,7 @@ class TestScenarioBase : public ITest
 {		
 	public:
 		virtual void destroy() { delete this; }
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 	protected:
 		typedef std::vector<PITScenario *> TScenarii;
 		void cleanup(TScenarii & pScenarii);
@@ -379,7 +379,7 @@ class PITScenario
 	protected:
 		TestLogger & mLogger; // Log output.
 		long const mThreadAbstrID; // The "thread" id abstraction that identifies this scenario.
-		AfyKernel::StoreCtx *mStoreCtx; // The store ctx.
+		Afy::IAffinity *mStoreCtx; // The store ctx.
 		ISession * mSession; // The session through which this scenario is run.
 		TOperations mOperations; // The operations to run in this scenario.
 		TPIDs mPIDs; // The PINs resulting from those operations.
@@ -394,7 +394,7 @@ class PITScenario
 		long getThreadAbstrID() const { return mThreadAbstrID; }
 		void addOperation(PITOperation * pOp) { assert(!mThread); mOperations.push_back(pOp); }
 		size_t getNumOperations() { return mOperations.size(); }
-		void setStoreCtx(AfyKernel::StoreCtx *pStoreCtx){ mStoreCtx = pStoreCtx; }
+		void setStoreCtx(Afy::IAffinity *pStoreCtx){ mStoreCtx = pStoreCtx; }
 	public:
 		void run();
 		bool test();
@@ -558,7 +558,7 @@ char const * const PITOperation::sTypeName[kTTotal] =
 	"beginTransaction",
 	"commit",
 	"rollback",
-	"createPIN",
+	"createPINAndCommit",
 	"deletePIN",
 	"addProperty",
 	"deleteProperty",
@@ -836,7 +836,7 @@ void PITOperation::test(PITScenario & pContext, PITTestContext & pTestContext)
 					if (!lPIN.Get())
 						pContext.setFailed("test error", this);
 					else if (verboseTestPass())
-						pContext.outputMessage("test succeeded: createPIN", this, 15);
+						pContext.outputMessage("test succeeded: createPINAndCommit", this, 15);
 				}
 				break;
 			}

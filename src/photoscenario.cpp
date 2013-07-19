@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -37,7 +37,7 @@ int	PhotoScenario::execute()
 
 		// Generate Meta - Folders		
 		generateFolderPathPool( mFolderCount ) ;
-		
+
 		createPhotoClasses() ;
 
 		// Actual derived tests will implement these
@@ -171,7 +171,7 @@ PID PhotoScenario::addPhotoPin
 		inStrmsize = MVTRand::getRange(1,10000) ;
 
 	IStream *lStream = MVTApp::wrapClientStream(mSession,new TestStringStream(inStrmsize,VT_BSTR));
-	vals[2].set( lStream ) ; vals[2].property=binary_id ; vals[2].meta = META_PROP_NOFTINDEX | META_PROP_SSTORAGE;
+	vals[2].set( lStream ) ; vals[2].property=binary_id ; vals[2].meta = META_PROP_SSTORAGE;
 
 	if ( inDate == 0 )
 		inDate = MVTRand::getDateTime(mSession) ;
@@ -182,7 +182,7 @@ PID PhotoScenario::addPhotoPin
 	vals[6].set("image/jpeg") ; vals[6].property=mime_id ; 
 
 	PID newpin ;
-	TVERIFYRC( mSession->createPIN( newpin, vals, 7 ) );
+	TVERIFYRC( mSession->createPINAndCommit( newpin, vals, 7 ) );
 
 	if (bCreateMixed && MVTRand::getBool() )
 	{
@@ -788,8 +788,8 @@ void PhotoScenario::createPhotoClasses()
 		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyImageClusterID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -812,8 +812,8 @@ void PhotoScenario::createPhotoClasses()
 		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilytaggedImagesID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -836,8 +836,8 @@ void PhotoScenario::createPhotoClasses()
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned char lVar;
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			lVar = lQ->addVariable(lRange,1);		
@@ -877,8 +877,8 @@ void PhotoScenario::createPhotoClasses()
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned char lVar;
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			lVar = lQ->addVariable(lRange,1);		
@@ -902,8 +902,8 @@ void PhotoScenario::createPhotoClasses()
 		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilytaggedImagesEWID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSSubImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSSubImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -927,8 +927,8 @@ void PhotoScenario::createPhotoClasses()
 		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSSubImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSSubImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -952,8 +952,8 @@ void PhotoScenario::createPhotoClasses()
 		if(RC_OK!=mSession->getClassID(className.c_str(),lWasteFamilyID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSWasteImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSWasteImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -976,8 +976,8 @@ void PhotoScenario::createPhotoClasses()
 		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyImageClusterEWCRID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSSubImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSSubImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -1001,8 +1001,8 @@ void PhotoScenario::createPhotoClasses()
 		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyImageClusterWCRID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSWasteImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSWasteImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -1026,8 +1026,8 @@ void PhotoScenario::createPhotoClasses()
 		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyFileImageID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSImportedFileID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSImportedFileID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -1093,8 +1093,8 @@ void PhotoScenario::createPhotoClasses()
 		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyAllImportedFilesID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSImportedFileID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSImportedFileID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -1144,8 +1144,8 @@ IStmt * PhotoScenario::createClassQueryS
 	TVERIFY( cls != STORE_INVALID_CLASSID ) ;
 	IStmt * q = inSession->createStmt(sop) ;
 
-	ClassSpec classInfo;
-	classInfo.classID = cls;
+	SourceSpec classInfo;
+	classInfo.objectID = cls;
 	classInfo.nParams = inCntVars;
 	classInfo.params = inVars;
 
@@ -1240,7 +1240,7 @@ bool PhotoScenario::createAppPINs()
 	for(i = 0, k = 1, y = 0; i < (int)mPinCount; i++, k++)
 	{		
 		int strLen = 0;		
-		Value *lPVs = (Value *)mSession->alloc(24*sizeof(Value));		
+		Value *lPVs = (Value *)mSession->malloc(24*sizeof(Value));		
 		if(k==1) 
 		{
 			mLogger.out() << "Creating cloud of " << sClusterSize << " PINs ...";
@@ -1251,20 +1251,20 @@ bool PhotoScenario::createAppPINs()
 		if(i%100 == 0) mLogger.out() << ".";
 
 		strLen = (int)strlen(pFolderName) + 1;
-		char *tmpFolderPath = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *tmpFolderPath = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(tmpFolderPath,pFolderName);
 		SETVALUE(lPVs[0],fs_path_id,tmpFolderPath,OP_SET); // fs_path 
 
 		const char * lTmpMimeStr = "image/jpeg";
 		strLen = (int)strlen(lTmpMimeStr) + 1;
-		char *lMimeStr = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *lMimeStr = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(lMimeStr,lTmpMimeStr);
-		SETVALUE(lPVs[1],mime_id,lMimeStr,OP_SET);lPVs[1].setMeta(META_PROP_NOFTINDEX); // mime
+		SETVALUE(lPVs[1],mime_id,lMimeStr,OP_SET); // mime
 
 		Tstring lTmpFileName;MVTRand::getString(lTmpFileName,15,50,false,false);
 		lTmpFileName += ".JPG" ;
 		strLen = (int)lTmpFileName.length() + 1;
-		char *lFileName = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *lFileName = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(lFileName,lTmpFileName.c_str());
 		SETVALUE(lPVs[2],name_id,lFileName,OP_SET); // name
 
@@ -1276,14 +1276,14 @@ bool PhotoScenario::createAppPINs()
 
 		int lSize = (int) ((float)40000 * rand()/RAND_MAX);
 		IStream *lStream1 = MVTApp::wrapClientStream(mSession, new PhotoScenarioStream(lSize > 0? lSize:800));
-		lPVs[5].set(lStream1);lPVs[5].setPropID(binary_id);lPVs[5].setMeta(META_PROP_NOFTINDEX |META_PROP_SSTORAGE); //binary
+		lPVs[5].set(lStream1);lPVs[5].setPropID(binary_id);lPVs[5].setMeta(META_PROP_SSTORAGE); //binary
 
 		lDT = MVTRand::getDateTime(mSession,false); 
 		lPVs[6].setDateTime(lDT) ;lPVs[6].setPropID(date_id); //date
 
 		const char * lTmpModelStr = "Nikon";
 		strLen = (int)strlen(lTmpModelStr) + 1;
-		char *lModelStr = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *lModelStr = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(lModelStr,lTmpModelStr);
 		SETVALUE(lPVs[7],exif_model_id,lModelStr,OP_SET); //exif_model
 
@@ -1304,19 +1304,19 @@ bool PhotoScenario::createAppPINs()
 
 		lSize = (int) ((float)1000 * rand()/RAND_MAX); // preview
 		IStream *lStream2 = MVTApp::wrapClientStream(mSession, new PhotoScenarioStream(lSize > 0? lSize:400));
-		lPVs[15].set(lStream2);lPVs[15].setPropID(preview_id);lPVs[15].setMeta(META_PROP_NOFTINDEX|META_PROP_SSTORAGE);
+		lPVs[15].set(lStream2);lPVs[15].setPropID(preview_id);lPVs[15].setMeta(META_PROP_SSTORAGE);
 
 		const char * lTmpMakeStr = "Junk";
 		strLen = (int)strlen(lTmpMakeStr) + 1;
-		char *lMakeStr = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *lMakeStr = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(lMakeStr,lTmpMakeStr);		
 		SETVALUE(lPVs[16],exif_make_id,lMakeStr,OP_SET); // exif_make
 
 		const char * lTmpNodeStr = "007-pinode.mvstore.org";
 		strLen = (int)strlen(lTmpNodeStr) + 1;
-		char *lNodeStr = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *lNodeStr = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(lNodeStr,lTmpNodeStr);		
-		SETVALUE(lPVs[17],refreshNodeID_id,lNodeStr,OP_SET);lPVs[17].setMeta(META_PROP_NOFTINDEX); // refresh-node-id
+		SETVALUE(lPVs[17],refreshNodeID_id,lNodeStr,OP_SET); // refresh-node-id
 
 		SETVALUE(lPVs[18],exif_width_id,MVTRand::getRange(860,1024),OP_SET); // exif_width
 
@@ -1324,30 +1324,30 @@ bool PhotoScenario::createAppPINs()
 
 		Tstring lTmpPathIndexStr; MVTRand::getString(lTmpPathIndexStr,15,200,false,false); // fs_path_index
 		strLen = (int)lTmpPathIndexStr.length() + 1;
-		char *lTmpPathIndex = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *lTmpPathIndex = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(lTmpPathIndex,lTmpPathIndexStr.c_str());
 		SETVALUE(lPVs[20],fs_path_index_id,lTmpPathIndex,OP_SET);
 
 		const char * lTmpSourceNodeStr = "008-pinode.mvstore.org";
 		strLen = (int)strlen(lTmpSourceNodeStr) + 1;
-		char *lSourceNodeStr = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *lSourceNodeStr = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(lSourceNodeStr,lTmpSourceNodeStr);		
-		SETVALUE(lPVs[21],sourcenode_id,lSourceNodeStr,OP_SET);lPVs[21].setMeta(META_PROP_NOFTINDEX); // sourcenode 
+		SETVALUE(lPVs[21],sourcenode_id,lSourceNodeStr,OP_SET); // sourcenode 
 
 		SETVALUE(lPVs[22],PROP_SPEC_CREATED,1,OP_SET); // PROP_SPEC_CREATED
 
 		SETVALUE(lPVs[23],cache_id,0,OP_SET); // cache
 
-		lPIN = mSession->createUncommittedPIN(lPVs,24);
+		lPIN = mSession->createPIN(lPVs,24);
 		
 		// Add Tags to the Image PIN
 		{			
 			int j = 0;
-			Value *lTagVal = (Value *)mSession->alloc(lNumTags*sizeof(Value));
+			Value *lTagVal = (Value *)mSession->malloc(lNumTags*sizeof(Value));
 			char *lTag = NULL;
 			for(j = 0; j < lNumTags; j++)
 			{
-				lTag = (char *)mSession->alloc((mTagPool[j].length() + 1)*sizeof(char));
+				lTag = (char *)mSession->malloc((mTagPool[j].length() + 1)*sizeof(char));
 				strcpy(lTag, mTagPool[j].c_str());
 				SETVALUE_C(lTagVal[j],tag_id,lTag,OP_ADD,STORE_COLLECTION_ID);
 			}
@@ -1365,8 +1365,8 @@ bool PhotoScenario::createAppPINs()
 			// Add ACLs if notification is disabled. Notification adds ACLs otherwise
 			if(mCreateACLs)
 			{
-				Value *lACLVal = (Value *)mSession->alloc(1*sizeof(Value));
-				RefVID *lRef = (RefVID *)mSession->alloc(1*sizeof(RefVID));
+				Value *lACLVal = (Value *)mSession->malloc(1*sizeof(Value));
+				RefVID *lRef = (RefVID *)mSession->malloc(1*sizeof(RefVID));
 				for(j = 0; j < lNumTags; j++)
 				{
 					RefVID l = {mTagPINs[0], PROP_SPEC_ACL, STORE_COLLECTION_ID, STORE_CURRENT_VERSION};
@@ -1396,7 +1396,7 @@ bool PhotoScenario::createAppPINs()
 				IPIN *lPIN = mSession->getPIN(lFolderPID);
 
 				/* Adding the Image PINs as posts to the Folder PIN */
-				Value *lPVs = (Value *)mSession->alloc((mNumPINsPerFolder+1)*sizeof(Value));
+				Value *lPVs = (Value *)mSession->malloc((mNumPINsPerFolder+1)*sizeof(Value));
 				for(lIndex = 0; lIndex < (k==sClusterSize?sClusterSize:k); lIndex++) 
 				{					
 					PID lPID = lClusterPINs[lIndex]->getPID();
@@ -1440,7 +1440,7 @@ PID PhotoScenario::createFeedPIN(const char *pFolderName)
 	SETVALUE(lPVs[5],feedflattensubfolder_id,0,OP_SET); // feedflattensubfolder
 	SETVALUE(lPVs[6],autogen_id,1,OP_SET); // autogen
 	
-	if(RC_OK !=  mSession->createPIN(lFeedPID,lPVs,7))
+	if(RC_OK !=  mSession->createPINAndCommit(lFeedPID,lPVs,7))
 	{
 		mLogger.out() << "ERROR (createFeedPIN): Failed to create feed PIN of foldername = " << pFolderName << std::endl;		
 	}
@@ -1452,26 +1452,26 @@ PID PhotoScenario::createFolderPIN(PID pPID, const char *pFolderName)
 	int strLen = 0;
 	PID lFolderPID; INITLOCALPID(lFolderPID);
 
-	Value *lPVs = (Value *)mSession->alloc(10*sizeof(Value));
+	Value *lPVs = (Value *)mSession->malloc(10*sizeof(Value));
 
 	strLen = (int)strlen(pFolderName) + 1;
-	char *lFolderName = (char *)mSession->alloc(strLen*sizeof(char));
+	char *lFolderName = (char *)mSession->malloc(strLen*sizeof(char));
 	strcpy(lFolderName, pFolderName);
 	SETVALUE(lPVs[0],name_id,lFolderName,OP_SET); //name
 
-	char *lShortName = (char *)mSession->alloc(strLen*sizeof(char));
+	char *lShortName = (char *)mSession->malloc(strLen*sizeof(char));
 	strcpy(lShortName, pFolderName);
 	SETVALUE(lPVs[1],shortname_id,lShortName,OP_SET); //shortname
 
 	const char *lTmpContent = "\0";
-	char * lContent = (char *)mSession->alloc((strlen(lTmpContent) + 1)*sizeof(char));
+	char * lContent = (char *)mSession->malloc((strlen(lTmpContent) + 1)*sizeof(char));
 	strcpy(lContent, lTmpContent);
 	SETVALUE(lPVs[2],content_id,lContent,OP_SET); // content
 
 	SETVALUE(lPVs[3],autogenerated_id,1,OP_SET); // autogenerated
 	SETVALUE(lPVs[4],photo_count_id,0,OP_SET); //photo_count
 
-	char *lFSName = (char *)mSession->alloc(strLen*sizeof(char));
+	char *lFSName = (char *)mSession->malloc(strLen*sizeof(char));
 	strcpy(lFSName, pFolderName);
 	SETVALUE(lPVs[5],fs_folder_id,lFSName,OP_SET); //fs_folder
 
@@ -1480,7 +1480,7 @@ PID PhotoScenario::createFolderPIN(PID pPID, const char *pFolderName)
 	SETVALUE(lPVs[8],album_count_id,0,OP_SET); //album_count
 	SETVALUE(lPVs[9],feedtype_id,1,OP_SET); // feedtype
 
-	IPIN *lPIN = mSession->createUncommittedPIN(lPVs,10);
+	IPIN *lPIN = mSession->createPIN(lPVs,10);
 
 	if(RC_OK !=  mSession->commitPINs(&lPIN,1))
 	{
@@ -1505,20 +1505,20 @@ PID PhotoScenario::createTagPIN(const char *pTagName)
 
 	if(mCreateTagPINs)
 	{	
-		Value *lPVs = (Value *)mSession->alloc(4*sizeof(Value));						
+		Value *lPVs = (Value *)mSession->malloc(4*sizeof(Value));						
 		
 		int strLen = (int)lTagStr.length()+1;
-		char *tmpName = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *tmpName = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(tmpName,lTagStr.c_str());
 
-		char *tmpShortName = (char*)mSession->alloc(sizeof(char)*(strLen));
+		char *tmpShortName = (char*)mSession->malloc(sizeof(char)*(strLen));
 		strcpy(tmpShortName,lTagStr.c_str());
 
 		SETVALUE(lPVs[0],tagword_id,tmpName,OP_SET);
 		SETVALUE(lPVs[1],shortname_id,tmpShortName,OP_SET);
 		SETVALUE(lPVs[2],tagcount_id,0,OP_SET);
 		SETVALUE(lPVs[3],PROP_SPEC_UPDATED,1,OP_SET);
-		if(RC_OK !=  mSession->createPIN(lTagPID,lPVs,4))
+		if(RC_OK !=  mSession->createPINAndCommit(lTagPID,lPVs,4))
 			assert(false);
 		else
 			mTagPINs.push_back(lTagPID);

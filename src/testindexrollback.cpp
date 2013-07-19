@@ -72,7 +72,7 @@ void TestIndexRollback::doTest()
 		va[0].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[0].property = ids[0];
 		va[1].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[1].property = ids[1];
 		va[2].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[2].property = ids[2];
-		pins[i] = mSession->createUncommittedPIN(va,3,MODE_COPY_VALUES); // Note (maxw): If MODE_COPY_VALUES is not specified, mvstore assumes that va is allocated via ISession::alloc.
+		pins[i] = mSession->createPIN(va,3,MODE_COPY_VALUES); // Note (maxw): If MODE_COPY_VALUES is not specified, mvstore assumes that va is allocated via ISession::alloc.
 	}
 	IPIN *cpins[650];
 	for (int i = 0; i < 60000/6+1; i++)
@@ -91,8 +91,8 @@ void TestIndexRollback::doTest()
 	}
 	
 	query = mSession->createStmt();
-	ClassSpec spec;
-	spec.classID = clsid; spec.nParams = 0; spec.params = NULL;
+	SourceSpec spec;
+	spec.objectID = clsid; spec.nParams = 0; spec.params = NULL;
 
 	Tstring st;
 	std::cout<<"\n starting classification" << endl;
@@ -100,16 +100,17 @@ void TestIndexRollback::doTest()
 	{
 		query = mSession->createStmt("select where $0 in :0",&ids[i],1);
 		Value va[2];
-		va[0].set(query); va[0].property = PROP_SPEC_PREDICATE;
+		va[0].set(query); va[0].property = PROP_SPEC_PREDICATE; va[0].meta = META_PROP_INDEXED;
 		MVTRand::getString(st,10,0,true);
-		va[1].set(st.c_str()); va[1].property = PROP_SPEC_URI;
+		URIMap pmap={st.c_str(),STORE_INVALID_URIID}; mSession->mapURIs(1,&pmap);
+		va[1].setURIID(pmap.uid); va[1].property = PROP_SPEC_OBJID;
 		PID pid;
-		mSession->createPIN(pid,va,2);
+		mSession->createPINAndCommit(pid,va,2);
 		std::cout << char('$'+i) << flush;
 	}
 	std::cout << "\n starting deletion" << endl;
 	query = mSession->createStmt(STMT_DELETE);
-	spec.classID = clsid; spec.nParams = 0; spec.params = NULL;
+	spec.objectID = clsid; spec.nParams = 0; spec.params = NULL;
 	query->addVariable(&spec,1);
 	query->execute(NULL,NULL,0,~0U,0,MODE_PURGE);
 	query->destroy();

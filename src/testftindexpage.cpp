@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -47,7 +47,7 @@ int	TestFTIndexPage::execute()
 		// query for control pin, if exists do not populate store.
 		// Note: fullscan...
 		URIMap lData;
-		lData.URI = "TestFTIndexPage.prop"; lData.uid = STORE_INVALID_PROPID;
+		lData.URI = "TestFTIndexPage.prop"; lData.uid = STORE_INVALID_URIID;
 		session->mapURIs(1, &lData);
 		propid[0] = lData.uid;	
 		
@@ -96,7 +96,8 @@ void TestFTIndexPage::populateStore(ISession *session)
 	PID	pid;
 	//create a control pin to allow this test run multiple times w.o failure.
 	pvs[0].set("testftindexpagepin");pvs[0].setPropID(propid[0]);
-	TVERIFYRC(session->createPIN(pid,pvs,1));
+	pvs[0].meta = META_PROP_FTINDEX;
+	TVERIFYRC(session->createPINAndCommit(pid,pvs,1));
 
 	URIMap pm[1];
 	/*
@@ -113,7 +114,7 @@ void TestFTIndexPage::populateStore(ISession *session)
 		if (0 == i % 100)
 			mLogger.out() << ".";
 
-		IPIN *pin = session->createUncommittedPIN();
+		IPIN *pin = session->createPIN();
 		titleStr = "" ;
 		char buff[7];
 		titleStr +=	"goldflake kings";
@@ -122,6 +123,7 @@ void TestFTIndexPage::populateStore(ISession *session)
 
 		//create the pins here.
 		pvs[0].set(titleStr.c_str());pvs[0].setPropID(pm[0].uid);
+		pvs[0].meta = META_PROP_FTINDEX;
 		pin->modify(pvs,1);
 		session->commitPINs(&pin,1);
 		pin->destroy();

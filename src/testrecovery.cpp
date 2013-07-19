@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -402,7 +402,7 @@ void TestRecoveryBase::addBasicContent()
 
 	Value v ; v.set( "dummy property" ) ; v.property = id ;
 	PID pid ;
-	TVERIFYRC(mSession->createPIN(pid,&v,1,0));	
+	TVERIFYRC(mSession->createPINAndCommit(pid,&v,1,0));	
 
 #if 1
 	// Forcing a class into the store will prevent recovery 
@@ -440,7 +440,7 @@ class TestRecoveryBasic : public TestRecoveryBase
 			{
 				Value v ; v.set( 100 ) ; v.property = id ;
 				PID pid ;
-				TVERIFYRC(mSession->createPIN(pid,&v,1,0));
+				TVERIFYRC(mSession->createPINAndCommit(pid,&v,1,0));
 			}
 		}
 };
@@ -543,7 +543,7 @@ class TestRecoveryTransaction : public TestRecoveryBase
 
 			mSession->startTransaction() ;
 			v.set( "should be there" ) ; v.property = idA ;
-			TVERIFYRC(mSession->createPIN(pid,&v,1,0));
+			TVERIFYRC(mSession->createPINAndCommit(pid,&v,1,0));
 
 			// Also add this pin as part of the "PinsWithPropC" index
 			v.set(99) ; v.property=idC ;
@@ -553,7 +553,7 @@ class TestRecoveryTransaction : public TestRecoveryBase
 
 			mSession->startTransaction() ;
 			v.set( "should not be there" ) ; v.property = idA ;
-			TVERIFYRC(mSession->createPIN(pid,&v,1,0));
+			TVERIFYRC(mSession->createPINAndCommit(pid,&v,1,0));
 			mSession->rollback() ;
 
 			if ( !inReference )
@@ -572,7 +572,7 @@ class TestRecoveryTransaction : public TestRecoveryBase
 					IStream *stream = MVTApp::wrapClientStream(mSession,new TestStringStream(16000,VT_STRING));
 					vals[1].set( stream ) ; vals[1].property = idB ;
 				
-					TVERIFYRC(mSession->createPIN(pid,vals,2,0));
+					TVERIFYRC(mSession->createPINAndCommit(pid,vals,2,0));
 
 					for ( int k = 0 ; k < 100 ; k++ )
 					{
@@ -591,8 +591,8 @@ class TestRecoveryTransaction : public TestRecoveryBase
 			TVERIFYRC(mSession->getClassID("PinsWithPropC",cid));
 			TVERIFY( cid != STORE_INVALID_CLASSID) ;
 
-			ClassSpec spec ;
-			spec.classID = cid ;
+			SourceSpec spec ;
+			spec.objectID = cid ;
 			spec.nParams = 0 ;
 			spec.params = NULL ;
 

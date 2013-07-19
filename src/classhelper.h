@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -21,7 +21,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "mvstoreapi.h"
 #include "serialization.h"
 
-using namespace AfyDB ;
+using namespace Afy ;
 using namespace std ; 
 
 #define MAX_PINS_FOR_CLASS_TEST 200000
@@ -60,8 +60,8 @@ public:
 		IStmt * const lQ = inSession->createStmt(sop);
 		if (!lQ)
 			return NULL;
-		AfyDB::ClassSpec lCS;
-		lCS.classID = inClassID;
+		Afy::SourceSpec lCS;
+		lCS.objectID = inClassID;
 		lCS.nParams = inCntParams;
 		lCS.params = inParams;
 		unsigned char variable0=lQ->addVariable(&lCS, 1);
@@ -222,7 +222,7 @@ public:
 			// Use listValues to enumerate each unique value in the index and
 			// test each individually.
 			CmvautoPtr<IndexNav> lValEnum ; 
-			RC rc=inSession->listValues(inClassID,STORE_INVALID_PROPID, lValEnum.Get());
+			RC rc=inSession->listValues(inClassID,STORE_INVALID_URIID, lValEnum.Get());
 			if ( rc!= RC_OK ) 
 			{ 
 				outResultInfo << "Problem with listValues" << std::endl;
@@ -303,7 +303,7 @@ public:
 		vals.clear();
 
 		CmvautoPtr<IndexNav> lValEnum ; 
-		RC rc=inSession->listValues(inClass,STORE_INVALID_PROPID, lValEnum.Get());
+		RC rc=inSession->listValues(inClass,STORE_INVALID_URIID, lValEnum.Get());
 		if ( rc!= RC_OK ) return false;
 		
 		for(;;)
@@ -332,7 +332,7 @@ public:
 		stringstream osConclude ; // so errors appear at the end
 
 		CmvautoPtr<IndexNav> lValEnum ; 
-		RC rc=inSession->listValues(inClass,STORE_INVALID_PROPID, lValEnum.Get());
+		RC rc=inSession->listValues(inClass,STORE_INVALID_URIID, lValEnum.Get());
 		if ( rc!= RC_OK ) 
 		{ 
 			outResultInfo << "listValues value traversal failed" << endl ; return false; 
@@ -354,8 +354,8 @@ public:
 
 			// Run family query based on this value
 			CmvautoPtr<IStmt> q( inSession->createStmt() );
-			ClassSpec r; 
-			r.classID=inClass ;
+			SourceSpec r; 
+			r.objectID=inClass ;
 			r.nParams=1 ;
 
 			// OP_IN must have a VT_RANGE, so pass same value as start/end
@@ -428,13 +428,13 @@ public:
 		// Discover information about an family index
 
 		CmvautoPtr<IndexNav> lValEnum ; 
-		RC rc=inSession->listValues(inClass,STORE_INVALID_PROPID, lValEnum.Get());
+		RC rc=inSession->listValues(inClass,STORE_INVALID_URIID, lValEnum.Get());
 		if ( rc!= RC_OK ) 
 		{ 
 			return false; 
 		}
 		
-		outType=VT_ANY; outIndexedProp=STORE_INVALID_PROPID;
+		outType=VT_ANY; outIndexedProp=STORE_INVALID_URIID;
 		outKeyCnt=0; outPinRefCnt=0;
 		outisRange=isRangeQuery(inSession,inClass);
 
@@ -455,8 +455,8 @@ public:
 		{
 			// Run family query based on this value
 			CmvautoPtr<IStmt> q( inSession->createStmt() );
-			ClassSpec r; 
-			r.classID=inClass ;
+			SourceSpec r; 
+			r.objectID=inClass ;
 			r.nParams=0 ;
 			r.params=NULL;
 

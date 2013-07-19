@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -154,7 +154,7 @@ bool TestDNFQuery::testQuery(ClassID pClassID, int pExpCount)
 	if(STORE_INVALID_CLASSID != pClassID)
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
-		ClassSpec lCS; lCS.classID = pClassID; lCS.nParams = 0; lCS.params = NULL;
+		SourceSpec lCS; lCS.objectID = pClassID; lCS.nParams = 0; lCS.params = NULL;
 		lQ->addVariable(&lCS, 1);
 		uint64_t lCount = 0;
 		TVERIFYRC(lQ->count(lCount));

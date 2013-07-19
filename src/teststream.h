@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -151,7 +151,7 @@ protected:
 };
 
 
-class MyStream : public AfyDB::IStream
+class MyStream : public Afy::IStream
 {
 	// Similar to TestStringStream (it used to be cut and paste in several tests)
 	// This stream contains a predictable content and can test Values to see if they were generated
@@ -249,7 +249,7 @@ class MyStream : public AfyDB::IStream
 };
 
 class CFileStream :
-	public AfyDB::IStream
+	public Afy::IStream
 {
 public:
 	CFileStream(const std::string &pFilePath,bool pIsBinary = false)

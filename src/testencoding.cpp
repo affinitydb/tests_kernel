@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -15,7 +15,7 @@ class TestEncoding : public ITest
 		TEST_DECLARE(TestEncoding);
 		virtual char const * getName() const { return "testencoding"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "testing of encoding capabilities of the AfyDB"; }
+		virtual char const * getDescription() const { return "testing of encoding capabilities of the Afy"; }
 		//Enabled the test for smoketest as it passes - Rohan (2/8/2006)
 		//virtual bool includeInSmokeTest(char const *& pReason) const { pReason = "till it passes..."; return false; }
 		
@@ -67,7 +67,8 @@ void TestEncoding::populatestore(ISession *session)
 		if (!ustr.find("--",0)==0)
 		{
 			val[0].set(ustr.c_str());val[0].setPropID(pm[0].uid);
-			TVERIFYRC(session->createPIN(pid,val,1));
+			val[0].meta = META_PROP_FTINDEX;
+			TVERIFYRC(session->createPINAndCommit(pid,val,1));
 			pin = session->getPIN(pid);
 			assert(0 == strcmp(pin->getValue(pm[0].uid)->str,ustr.c_str()));
 			pin->destroy();

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -15,7 +15,7 @@ class TestProps;
 
 struct ThreadInfoProps
 {	
-	AfyKernel::StoreCtx *mStoreCtx;
+	Afy::IAffinity *mStoreCtx;
 	unsigned int mSeed;
 	TestProps * pTest;
 	MVTestsPortability::Mutex *lock;
@@ -32,7 +32,7 @@ static const int sNumPropInd = sNumProps-1; //max index within array, counting f
 // Publish this test.
 class TestProps : public ITest
 {
-		AfyKernel::StoreCtx *mStoreCtx;		
+		Afy::IAffinity *mStoreCtx;		
 	public:
 		TEST_DECLARE(TestProps);
 		virtual char const * getName() const { return "testprops"; }
@@ -47,8 +47,8 @@ class TestProps : public ITest
 		virtual void destroy() { delete this; }
                 
         RC addPINTag(IPIN *ppin);
-		void genValue(const IPIN * const *PINs,int nPINs,Value& val, PropertyID pid=STORE_INVALID_PROPID, bool fCElt=false, ISession *pSession = NULL);
-		virtual bool  mapURIs(AfyKernel::StoreCtx *);
+		void genValue(const IPIN * const *PINs,int nPINs,Value& val, PropertyID pid=STORE_INVALID_URIID, bool fCElt=false, ISession *pSession = NULL);
+		virtual bool  mapURIs(Afy::IAffinity *);
 		virtual bool  removePins(); 
 	public:
 		PropertyID mPropIDs[sNumProps];      //properties array, index starts with 0; 
@@ -94,7 +94,7 @@ RC TestProps::addPINTag(IPIN *ppin)
  * Be noted, that the last property is reserved for tagging each pin, in order to delete them all  at 
  * the end of the test...  
  */
-bool TestProps::mapURIs(AfyKernel::StoreCtx * pctx)
+bool TestProps::mapURIs(Afy::IAffinity * pctx)
 {
 	ISession *ses = MVTApp::startSession(pctx);
     
@@ -170,7 +170,7 @@ int TestProps::execute()
 
 void TestProps::genValue(const IPIN * const *PINs,int nPINs,Value& val, PropertyID pid, bool fCElt, ISession *pSession)
 {
-	if (pid==STORE_INVALID_PROPID) pid = mPropIDs[rand()%sNumPropInd]; unsigned char *ubuf; char *str;
+	if (pid==STORE_INVALID_URIID) pid = mPropIDs[rand()%sNumPropInd]; unsigned char *ubuf; char *str;
 	val.type = (ValueType)(rand()%(VT_ARRAY+1)); val.eid=STORE_COLLECTION_ID;
 	if (fCElt && val.type==VT_ARRAY) val.type=VT_STRING;
 	char buf[200]; unsigned len = rand()%(sizeof(buf)-1),i; Value *vals;
@@ -186,15 +186,15 @@ void TestProps::genValue(const IPIN * const *PINs,int nPINs,Value& val, Property
 	default:
 	case VT_STRING:
 		for (i=0; i<len; i++) buf[i] = (char)(rand()%(0x7f-' ')+' ');
-		buf[len]=0; str = (char*)pSession->alloc(sizeof(char)*(len+1)); strcpy(str, buf);
+		buf[len]=0; str = (char*)pSession->malloc(sizeof(char)*(len+1)); strcpy(str, buf);
 		val.set(str); break;
 	case VT_BSTR:
 		for (i=0; i<len; i++) buf[i] = (char)rand();
-		ubuf = (unsigned char*)pSession->alloc(len); memcpy(ubuf,buf,len);
+		ubuf = (unsigned char*)pSession->malloc(len); memcpy(ubuf,buf,len);
 		val.set(ubuf,len); break;
 	case VT_URL:
 		for (i=0; i<len; i++) buf[i] = (char)(rand()%(0x7f-' ')+' ');
-		buf[len]=0; str = (char*)pSession->alloc(sizeof(char)*(len+1)); strcpy(str, buf); 
+		buf[len]=0; str = (char*)pSession->malloc(sizeof(char)*(len+1)); strcpy(str, buf); 
 		val.setURL(str); break;
 	case VT_INT: val.set((int)rand()); break;
 	case VT_UINT: val.set((unsigned)rand()); break;
@@ -206,7 +206,7 @@ void TestProps::genValue(const IPIN * const *PINs,int nPINs,Value& val, Property
 	case VT_DATETIME: val.setDateTime((uint64_t)rand()); break;
 	case VT_INTERVAL: val.setInterval((int64_t)rand()); break;
 	case VT_ARRAY:
-		len=rand()%30+2; vals=(Value*)pSession->alloc(len*sizeof(Value));
+		len=rand()%30+2; vals=(Value*)pSession->malloc(len*sizeof(Value));
 		for (i=0; i<len; i++) {genValue(PINs,nPINs,val,pid,true,pSession); vals[i]=val;}
 		val.set(vals,len);
 		break;
@@ -269,7 +269,7 @@ static THREAD_SIGNATURE threadProc(void * pInfo)
 	srand(seed);
 
 	// Each thread words on its own set of PINs
-	IPIN *PINs[1024]; int nPINs = 0; Value *values = (Value*)ses->alloc(20*sizeof(Value)); PID pid; const Value *val;
+	IPIN *PINs[1024]; int nPINs = 0; Value *values = (Value*)ses->malloc(20*sizeof(Value)); PID pid; const Value *val;
 
 	lInfo->lock->lock();
 	while (!lInfo->fStarted) lInfo->start->wait(*lInfo->lock,0);
@@ -285,12 +285,12 @@ static THREAD_SIGNATURE threadProc(void * pInfo)
 		case POP_CREATE:
 			idx=MVTRand::getRange(1,19);
 			for (j=0; j<idx; j++) {
-				lInfo->pTest->genValue(PINs,nPINs,values[j],STORE_INVALID_PROPID,false,ses);
+				lInfo->pTest->genValue(PINs,nPINs,values[j],STORE_INVALID_URIID,false,ses);
 
 				//Attempt to force collection case
 				values[j].op = OP_ADD; values[j].eid=STORE_FIRST_ELEMENT; // In case same property was picked more than once
 			}
-			if (RC_OK == ses->createPIN(pid, values,idx) && (pin = ses->getPIN(pid))!=NULL){ 
+			if (RC_OK == ses->createPINAndCommit(pid, values,idx) && (pin = ses->getPIN(pid))!=NULL){ 
 			        /*
 			         * I'm planning to add 'TAG' string value to each CREATED PIN
 			         * Later, I will find all those PINS in order to delete them... 
@@ -307,7 +307,7 @@ static THREAD_SIGNATURE threadProc(void * pInfo)
 		case POP_ADDPROP:
 			if ( (int)pin->getNumberOfProperties() < sNumPropInd )
 			{
-				lInfo->pTest->genValue(PINs,nPINs,values[0],STORE_INVALID_PROPID,false,ses); values[0].setOp(OP_ADD);
+				lInfo->pTest->genValue(PINs,nPINs,values[0],STORE_INVALID_URIID,false,ses); values[0].setOp(OP_ADD);
 				while (pin->getValue(values[0].property)!=NULL) values[0].property = lInfo->pTest->mPropIDs[rand()%sNumPropInd]; 
 				TVRC_R(pin->modify(&values[0],1),lInfo->pTest); freeValue(ses,values[0]);
 			}

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -21,7 +21,7 @@ class TestSessionLogin : public ITest
 		std::vector<bool> mMayInsert;
 		URIMap lPM[4];		
 		std::vector<PID> mPID;
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 
 		TEST_DECLARE(TestSessionLogin);
 		virtual char const * getName() const { return "testsessionlogin"; }
@@ -292,7 +292,7 @@ void TestSessionLogin::createIdentities(int sNumIdentities,long volatile &lStop)
 				SETVALUE(lVal[1], lPM[1].uid, (unsigned int)lIID, OP_SET);
 				SETVALUE(lVal[2], lPM[2].uid, lCert.c_str(), OP_SET);
 				SETVALUE(lVal[3], lPM[3].uid, lMayInsert, OP_SET);
-				lSession->createPIN(lPID,lVal,4);
+				lSession->createPINAndCommit(lPID,lVal,4);
 				mPID.push_back(lPID);
 			}
 			mPwd.push_back(lPwd);
@@ -309,16 +309,18 @@ void TestSessionLogin::createIdentities(int sNumIdentities,long volatile &lStop)
 	pmap[0].URI="testsessionlogin.VT_STRING";
 	lSession->mapURIs(1,pmap);		
 	SETVALUE(pvs[0], pmap[0].uid, "login test", OP_SET);
-	RC rc = lSession->createPIN(pid,pvs,1);
+	pvs[0].meta = META_PROP_FTINDEX;
+	RC rc = lSession->createPINAndCommit(pid,pvs,1);
 	
 	SETVALUE(pvs[0], pmap[0].uid, "session login test2", OP_SET);
+	pvs[0].meta = META_PROP_FTINDEX;
 	pvs[1].setIdentity(mIdentities[(int)(sNumIdentities/2)]);
 	SETVATTR_C(pvs[1], PROP_SPEC_ACL, OP_ADD, STORE_LAST_ELEMENT);
-	pvs[1].meta = ACL_READ | ACL_WRITE;
+	pvs[1].meta = META_PROP_READ | META_PROP_WRITE;
 	pvs[2].setIdentity(mIdentities[0]);
 	SETVATTR_C(pvs[2], PROP_SPEC_ACL, OP_ADD, STORE_LAST_ELEMENT);
-	pvs[2].meta = ACL_READ | ACL_WRITE;
-	rc = lSession->createPIN(pid,pvs,3);
+	pvs[2].meta = META_PROP_READ | META_PROP_WRITE;
+	rc = lSession->createPINAndCommit(pid,pvs,3);
 
 	lSession->terminate();
 }
@@ -365,7 +367,8 @@ bool TestSessionLogin::insertPIN(ISession *pSession, bool pMayInsert)
 	char *lStr = strcat(lBuf," Created PIN");
 	PropertyID prop=MVTApp::getProp(pSession,"TestSessionLogininsertPIN");
 	lVal[0].set(lStr);lVal[0].setPropID(prop);
-	if(RC_OK!=pSession->createPIN(lPID,lVal,1)){
+	lVal[0].meta = META_PROP_FTINDEX;
+	if(RC_OK!=pSession->createPINAndCommit(lPID,lVal,1)){
 		if(pMayInsert) lSuccess = false;
 	}else{
 		if(!pMayInsert) lSuccess = false;

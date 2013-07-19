@@ -126,6 +126,14 @@ FILE(GLOB TESTS_SRCS_H   "*.h")
 FILE(GLOB TESTS_SRCS  "*.cpp")
 FILE(GLOB TESTS_SRCS_C  "*.c")
 
+# Use the stuff below to produce a 'onetest' makefile (in this example, using testservices1.cpp):
+IF(0)
+	FILE(GLOB _TESTS_UNWANTED "test*.cpp")
+	FILE(GLOB _TESTS_WANTED "tests.cpp" "testservices1.cpp")
+	LIST(REMOVE_ITEM TESTS_SRCS ${_TESTS_UNWANTED})
+	LIST(APPEND TESTS_SRCS ${_TESTS_WANTED})
+ENDIF(0)
+
 #Important for Windows: configures how the source code should be seen 
 #within the source tree: 
 # commented out -> headers and source file in different dirs. 

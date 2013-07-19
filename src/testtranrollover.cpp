@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -61,7 +61,7 @@ void TestSpillover::tranSpillover(ISession *session)
 		SETVALUE(pvs[1], lPropIDs[1], str.c_str(), OP_SET);
 		SETVALUE(pvs[2], lPropIDs[2], str.c_str(), OP_SET);
 		SETVALUE(pvs[3], lPropIDs[3], str.c_str(), OP_SET);
-		TVERIFYRC(session->createPIN(pid,pvs,4));
+		TVERIFYRC(session->createPINAndCommit(pid,pvs,4));
 	}
 	mLogger.out() << std::endl;
 	//loop to spill over across log files.
@@ -76,7 +76,7 @@ void TestSpillover::tranSpillover(ISession *session)
 			pvs[1].set(1,str.c_str());
 			pvs[2].set(3,str.c_str());
 			pvs[3].set(4,str.c_str());
-			session->createPIN(pid,pvs,4);
+			session->createPINAndCommit(pid,pvs,4);
 		}
 		mLogger.out() << std::endl;
 	session->rollback();
@@ -94,7 +94,7 @@ void TestSpillover::tranSpillover(ISession *session)
 			SETVALUE(pvs[1], lPropIDs[1], str.c_str(), OP_SET);
 			SETVALUE(pvs[2], lPropIDs[2], str.c_str(), OP_SET);
 			SETVALUE(pvs[3], lPropIDs[3], str.c_str(), OP_SET);
-			session->createPIN(pid,pvs,4);
+			session->createPINAndCommit(pid,pvs,4);
 		}
 		mLogger.out() << std::endl;
 	session->rollback();
@@ -126,7 +126,7 @@ void TestSpillover::tranBIGPins(ISession *session)
 		rc = session->mapURIs(1,&pm[i]);
 	}
 	/*pvs[0].set(1,"jai jai shiv shankar");
-	rc = session->createPIN(pid,pvs,1);*/
+	rc = session->createPINAndCommit(pid,pvs,1);*/
 	//if the above is present then no issues with recovery.
 	for (int j=0;j<200;j++) {
 		p=buf+strlen(buf);
@@ -135,7 +135,7 @@ void TestSpillover::tranBIGPins(ISession *session)
 		pvs[j].set(buf); pvs[j].setPropID(pm[j].uid);
 	}
 	session->startTransaction();
-	rc = session->createPIN(pid,pvs,1);
+	rc = session->createPINAndCommit(pid,pvs,1);
 	rc = session->rollback();
 	countPINS(session);
 }
@@ -154,7 +154,7 @@ void TestSpillover::countPINS(ISession *session)
 	IExprTree *expr = session->expr(OP_EQ,2,args);
 	query->addCondition(lVar,expr);
 	ICursor *result = NULL;
-	TVERIFYRC(query->execute(&result));
+       TVERIFYRC(query->execute(&result));
 	for (IPIN *pin; (pin=result->next())!=NULL; ){
 		count++;
 		pin->destroy();

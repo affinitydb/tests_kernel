@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -39,7 +39,7 @@ int TestConvertValue::execute()
 
 void TestConvertValue::doTest()
 {
-	AfyDB::Value v1, v2;
+	Afy::Value v1, v2;
 
 	v1.set(1); v2.set(VT_ERROR);
 	TVERIFYRC(mSession->convertValue(v1,v2,VT_DOUBLE));

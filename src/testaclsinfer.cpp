@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -76,7 +76,7 @@ void TestACLsInfer::testJoinACLs(ISession *pSession)
 	CmvautoPtr<IStmt> lQ(pSession->createStmt());
 	Value lParam[3];
 	lParam[0].setError(mPropIDs[2]); lParam[1].setError(mPropIDs[2]); lParam[2].setRange(lParam);
-	ClassSpec lCS[2] = {{mCLSID, 0, NULL}, {mCLSID2, 1, &lParam[2]}};
+	SourceSpec lCS[2] = {{mCLSID, 0, NULL}, {mCLSID2, 1, &lParam[2]}};
 	unsigned char lVar1 = lQ->addVariable(&lCS[0], 1);
 	unsigned char lVar2 = lQ->addVariable(&lCS[1], 1);
 	IExprTree *lET;
@@ -110,7 +110,7 @@ void TestACLsInfer::testACLs(ISession *pSession)
 {
 	TVERIFY(pSession != NULL);
 	CmvautoPtr<IStmt> lQ(pSession->createStmt());
-	ClassSpec lCS; lCS.classID = mCLSID; lCS.nParams = 0; lCS.params = NULL;
+	SourceSpec lCS; lCS.objectID = mCLSID; lCS.nParams = 0; lCS.params = NULL;
 	lQ->addVariable(&lCS, 1);
 	uint64_t lCount = 0;
 	TVERIFYRC(lQ->count(lCount));
@@ -178,14 +178,14 @@ void TestACLsInfer::createPINs()
 			IdentityID lIID = getIdentityID(i);
 			lV[0].setIdentity(lIID);
 			SETVATTR_C(lV[0], PROP_SPEC_ACL, OP_ADD, STORE_LAST_ELEMENT);
-			lV[0].meta = ACL_READ;
-			if(MVTRand::getBool()) lV[0].meta = lV[0].meta | ACL_WRITE;
+			lV[0].meta = META_PROP_READ;
+			if(MVTRand::getBool()) lV[0].meta = lV[0].meta | META_PROP_WRITE;
 			TVERIFYRC(lPIN->modify(lV, 1));
 		}
 		if(lPIN) { if(isVerbose()) MVTApp::output(*lPIN, mLogger.out(), mSession); lPIN->destroy();}
 	}
 	mLogger.out() << "\tCreating " << sNumPINs << " PINs ...";
-	RefVID *lRef = (RefVID *)mSession->alloc(1*sizeof(RefVID));
+	RefVID *lRef = (RefVID *)mSession->malloc(1*sizeof(RefVID));
 	int i = 0;
 	for(i = 0; i < sNumPINs; i++)
 	{

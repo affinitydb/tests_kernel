@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -44,7 +44,7 @@ int	TestToString::execute()
 			Value lPVs[lMaxNumProps];
 			for(i = 0; i < lNumPINs; i++)
 			{
-				IPIN * const lPIN = lSession->createUncommittedPIN();
+				IPIN * const lPIN = lSession->createPIN();
 				const int lNumProps = (int)(lMaxNumProps * rand()/RAND_MAX); 
 				int j = 0;
 				for(j = 0; j < lNumProps; j++){

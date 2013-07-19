@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -95,10 +95,10 @@ public:
 		if (bRemoveStopWords)
 		{
 			// Means that any common english words will be excluded from the index
-			vl.meta = META_PROP_STOPWORDS ;
+			// vl.meta = META_PROP_STOPWORDS ; // it's done always now
 		}
 		PID newPin ;
-		TVRC_R(mSession->createPIN( newPin, &vl, 1 ),mTest) ;
+		TVRC_R(mSession->createPINAndCommit( newPin, &vl, 1 ),mTest) ;
 		return newPin ;
 	}
 
@@ -265,10 +265,10 @@ protected:
 		if (bRemoveStopWords)
 		{
 			// Means that any common english words will be excluded from the index
-			vl.meta = META_PROP_STOPWORDS ;
+			// vl.meta = META_PROP_STOPWORDS ; // it's done always now
 		}
 		PID newPin ;
-		TVRC_R(mSession->createPIN( newPin, &vl, 1 ),mTest) ;
+		TVRC_R(mSession->createPINAndCommit( newPin, &vl, 1 ),mTest) ;
 		ts->destroy() ;
 		return newPin ;
 	}
@@ -915,21 +915,21 @@ PID TestFTBasic::create2PropPin( const char * inProp1, const char * inProp2, boo
 		vls[cnt].property = mProp1 ;
 
 		// Means that any common english words will be excluded from the index
-		if ( bStripStopWords)
-			vls[cnt].meta = META_PROP_STOPWORDS ;	// TODO: can also cover when not specified
+//		if ( bStripStopWords)
+//			vls[cnt].meta = META_PROP_STOPWORDS ;	// TODO: can also cover when not specified
 		cnt++ ;
 	}
 	if ( inProp2 ) 
 	{ 
 		vls[cnt].set( inProp2 ) ; 
 		vls[cnt].property = mProp2 ;
-		if ( bStripStopWords)
-			vls[cnt].meta = META_PROP_STOPWORDS ;
+//		if ( bStripStopWords)
+//			vls[cnt].meta = META_PROP_STOPWORDS ;
 		cnt++ ;
 	}
 
 	PID newPin ;
-	mSession->createPIN( newPin, vls, cnt ) ;
+	mSession->createPINAndCommit( newPin, vls, cnt ) ;
 	return newPin ;
 }
 

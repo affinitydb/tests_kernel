@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -77,7 +77,7 @@ void TestBaseURI::doTest()
 	ICursor *rslt;
 	TVERIFYRC( qF1->execute(&rslt));
 			    
-	cout << rslt->next()->getValue(PROP_SPEC_CLASSID)->uid << endl;
+	cout << rslt->next()->getValue(PROP_SPEC_OBJID)->uid << endl;
 
 	 //The next query is based on the created class family. 
      //The name 'Plato' is provided as a parameter. 
@@ -121,35 +121,34 @@ void TestBaseURI::InitProperties()
 
 	URIMap prMap[8]; PID pid;
 
-	mSession->setURIBase("mvsdk://www.mvware.com/mvstore?kernel_sdk#");
 
 	//The first property is mapped before the setURIBase(...) has been called...
 	prMap[0].URI 	  = "name"; 
-	prMap[0].uid      = STORE_INVALID_PROPID;
+	prMap[0].uid      = STORE_INVALID_URIID;
  
 	//The rest of the properties are mapped after the setURIBase(...) has been called... 
 	prMap[1].URI 	  = "philosopher"; 
-	prMap[1].uid      = STORE_INVALID_PROPID;
+	prMap[1].uid      = STORE_INVALID_URIID;
 
 	prMap[2].URI 	  = "date_of_birth"; 
-	prMap[2].uid      = STORE_INVALID_PROPID;
+	prMap[2].uid      = STORE_INVALID_URIID;
 
 	prMap[3].URI 	  = "date_of_death"; 
-	prMap[3].uid      = STORE_INVALID_PROPID;
+	prMap[3].uid      = STORE_INVALID_URIID;
 
 	prMap[4].URI 	  = "occupation"; 
-	prMap[4].uid      = STORE_INVALID_PROPID;
+	prMap[4].uid      = STORE_INVALID_URIID;
 
 	prMap[5].URI 	  = "refs_collection"; 
-	prMap[5].uid      = STORE_INVALID_PROPID;
+	prMap[5].uid      = STORE_INVALID_URIID;
 
 	prMap[6].URI 	  = "set_A_PIN"; 
-	prMap[6].uid      = STORE_INVALID_PROPID;
+	prMap[6].uid      = STORE_INVALID_URIID;
 
 	prMap[7].URI 	  = "set_B_PIN"; 
-	prMap[7].uid      = STORE_INVALID_PROPID;
+	prMap[7].uid      = STORE_INVALID_URIID;
 
-	TVERIFYRC ( mSession->mapURIs(sizeof(prMap)/sizeof(URIMap), &prMap[1]) ); 
+	TVERIFYRC ( mSession->mapURIs(sizeof(prMap)/sizeof(URIMap), &prMap[1], "mvsdk://www.mvware.com/mvstore?kernel_sdk#")); 
 
 	name            = prMap[0].uid;
 	philosopher     = prMap[1].uid;
@@ -175,7 +174,7 @@ void TestBaseURI::InitProperties()
 	lV[3].set("a person given to philosophizing"); 
 	lV[3].setPropID(philosopher); lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid, &lV[0], 4)); 
+	TVERIFYRC( mSession->createPINAndCommit(pid, &lV[0], 4)); 
 
 	//Attention! We can use the same Value variable(s) again for creating another PIN ...
 	PID pid1;
@@ -184,7 +183,7 @@ void TestBaseURI::InitProperties()
 	lV[2].set(399);    lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);    lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
 
 	collection_of_referencedPIDs[0] = pid1;  //pid is remembered for 'search over collection' scenario... 
 
@@ -193,7 +192,7 @@ void TestBaseURI::InitProperties()
 	lV[2].set(348);     lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);     lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
 	
 	collection_of_referencedPIDs[1] = pid1;   //pid is remembered for 'search over collection' scenario... 
 
@@ -202,7 +201,7 @@ void TestBaseURI::InitProperties()
 	lV[2].set(392);         lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);         lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
 	
 	collection_of_referencedPIDs[2] = pid1;   //pid is remembered for 'search over collection' scenario... 
 
@@ -211,42 +210,42 @@ void TestBaseURI::InitProperties()
 	lV[2].set(1536);                 lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);                  lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
 
 	lV[0].set("Thomas MORE"); 		lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1478);          		lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1535);          		lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);           		lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
 
 	lV[0].set("Nicolaus COPERNICUS"); lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1473);                  lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1543);                  lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);                   lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
 
 	lV[0].set("Jean-Paul Sartre"); 	lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1905);               	lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1980);               	lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);                	lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
 
 	lV[0].set("Alan Turing"); 		lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1912);    	  		lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1954);          		lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);           		lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
 
 	lV[0].set("Sir Karl Popper"); 	lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1902);              	lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1993);              	lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);               	lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPIN(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
 }
 
 

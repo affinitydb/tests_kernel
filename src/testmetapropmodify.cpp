@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -36,13 +36,12 @@ int testmetapropmodify::execute()
 
 	lV[0].set(strRand.c_str());		//Creating pin with strRand
 	lV[0].property=mProp[0];
-	mIPIN = mSession->createUncommittedPIN(lV,1);	
+	mIPIN = mSession->createPIN(lV,1);	
 	mSession->commitPINs(&mIPIN,1); 
 	PID lpid=mIPIN->getPID();
  
 	lV[0].set("modified");  //Modifying pin to replace strRand
 	lV[0].property=mProp[0];
-	lV[0].meta = META_PROP_NOFTINDEX ;
 	TVERIFYRC(mSession->modifyPIN(lpid,lV,1)); 
 
 	IStmt *query = mSession->createStmt();

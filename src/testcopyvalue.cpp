@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -19,7 +19,7 @@ class TestCopyValue : public ITest
 		virtual void destroy() { delete this; }
 	protected:
 		void doTest() ;
-		void compareStrVals( const AfyDB::Value & val, const AfyDB::Value & expected );
+		void compareStrVals( const Afy::Value & val, const Afy::Value & expected );
 	private:	
 		ISession * mSession ;
 };
@@ -37,7 +37,7 @@ int TestCopyValue::execute()
 	return RC_OK ;
 }
 
-void TestCopyValue::compareStrVals( const AfyDB::Value & val, const AfyDB::Value & expected )
+void TestCopyValue::compareStrVals( const Afy::Value & val, const Afy::Value & expected )
 {
 	// Confirm they are different values but with same string content
 	TVERIFY(val.type==VT_STRING);
@@ -47,17 +47,17 @@ void TestCopyValue::compareStrVals( const AfyDB::Value & val, const AfyDB::Value
 
 void TestCopyValue::doTest()
 {
-	AfyDB::PropertyID id = MVTUtil::getProp(mSession,"TestCopyValue"); 
+	Afy::PropertyID id = MVTUtil::getProp(mSession,"TestCopyValue"); 
 
 	//
 	// Scenario 1
 	// 
 
-	AfyDB::Value regularMemory;
+	Afy::Value regularMemory;
 	regularMemory.set("Orange"); 
 	regularMemory.property=id;
 
-	AfyDB::Value copy1;
+	Afy::Value copy1;
 	TVERIFYRC(mSession->copyValue(regularMemory,copy1));
 	compareStrVals(copy1,regularMemory);
 	mSession->freeValue(copy1);
@@ -65,13 +65,13 @@ void TestCopyValue::doTest()
 	//
 	// Same thing with session memory
 	//
-	char * orange = (char *) mSession->alloc(strlen("Orange")+1);
+	char * orange = (char *) mSession->malloc(strlen("Orange")+1);
 	strcpy(orange,"Orange");
-	AfyDB::Value sessionVal;
+	Afy::Value sessionVal;
 	sessionVal.set(orange); 
 	sessionVal.property=id;
 
-	AfyDB::Value copy2;
+	Afy::Value copy2;
 	TVERIFYRC(mSession->copyValue(sessionVal,copy2));
 	compareStrVals(copy2,sessionVal);
 	mSession->freeValue(copy2);
@@ -80,13 +80,13 @@ void TestCopyValue::doTest()
 	//
 	// session memory for string and value
 	//
-	char * orange2 = (char *) mSession->alloc(strlen("Orange")+1);
+	char * orange2 = (char *) mSession->malloc(strlen("Orange")+1);
 	strcpy(orange2,"Orange");
-	AfyDB::Value * sessionVal2 = (AfyDB::Value *)mSession->alloc(sizeof(Value));
+	Afy::Value * sessionVal2 = (Afy::Value *)mSession->malloc(sizeof(Value));
 	sessionVal2->set(orange); 
 	sessionVal2->property=id;
 
-	AfyDB::Value copy3;
+	Afy::Value copy3;
 	TVERIFYRC(mSession->copyValue(*sessionVal2,copy3));
 	compareStrVals(copy3,*sessionVal2);
 	mSession->freeValue(copy3);

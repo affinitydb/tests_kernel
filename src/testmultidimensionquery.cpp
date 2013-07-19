@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 #include "app.h"
@@ -48,8 +48,8 @@ class TestMultiDimensionQuery : public ITest
         struct DescrCondition
         {
             size_t mPropIndex; // The index of the property involved in this condition (in mProps).
-            AfyDB::ExprOp mCondType; // The operator that compares the property to the indexed parameter.
-            DescrCondition(size_t pPropIndex, AfyDB::ExprOp pCondType) : mPropIndex(pPropIndex), mCondType(pCondType) {}
+            Afy::ExprOp mCondType; // The operator that compares the property to the indexed parameter.
+            DescrCondition(size_t pPropIndex, Afy::ExprOp pCondType) : mPropIndex(pPropIndex), mCondType(pCondType) {}
         };
         typedef std::vector<DescrCondition> DescrIndex; // Multi-column indexes are defined by multiple conditions.
         typedef std::vector<ClassID> ClassIDs;
@@ -131,8 +131,8 @@ class TestMultiDimensionQuery : public ITest
             unsigned char lVars[255];
             for (i = 0; i < pF.mDescr.size(); i++)
             {       
-                ClassSpec lCS;
-                lCS.classID = pF.mSingles[i];
+                SourceSpec lCS;
+                lCS.objectID = pF.mSingles[i];
                 lCS.params = &pValues[i];
                 lCS.nParams = 1;
                 lVars[i] = lStmt->addVariable(&lCS, 1);
@@ -158,8 +158,8 @@ class TestMultiDimensionQuery : public ITest
             // Evaluate pF.mMulti with pValues (assumed to match the count of conditions in pF).
             TPIDs lResult;
             CmvautoPtr<IStmt> lStmt(mSession->createStmt());
-            ClassSpec lCS;
-            lCS.classID = pF.mMulti;
+            SourceSpec lCS;
+            lCS.objectID = pF.mMulti;
             lCS.params = pValues;
             lCS.nParams = pF.mDescr.size();
             lStmt->addVariable(&lCS, 1);
@@ -313,7 +313,7 @@ void TestMultiDimensionQuery::createPins()
 
         // create pin with random number of properties, with random value 
         nProps = MVTRand::getRange(2, num_mapVT);
-        Value * values = (Value *)mSession->alloc(nProps * sizeof(Value));
+        Value * values = (Value *)mSession->malloc(nProps * sizeof(Value));
         for (j = 0; j < nProps; j++)
         {
             ValueType type = mapVT[j];
@@ -327,7 +327,7 @@ void TestMultiDimensionQuery::createPins()
                     break;
                 case VT_STRING:
                     lS = MVTRand::getString2(5, -1, false);
-                    lStr = (char *)mSession->alloc(1 + lS.length());
+                    lStr = (char *)mSession->malloc(1 + lS.length());
                     memcpy(lStr, lS.c_str(), lS.length());
                     lStr[lS.length()] = 0;
                     SETVALUE(values[j], mProps[j], lStr, OP_SET);
@@ -340,7 +340,7 @@ void TestMultiDimensionQuery::createPins()
                     break;
             }
         }
-        IPIN * pin = mSession->createUncommittedPIN(values, nProps);
+        IPIN * pin = mSession->createPIN(values, nProps);
         if(pin != NULL)
             lPins.push_back(pin);
     }

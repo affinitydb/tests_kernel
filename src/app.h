@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -15,7 +15,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "../../kernel/include/startup.h"
 
 #include "MVTArgs.h"
-
+#include "mvauto.h"
 #ifndef _MAX_PATH
 #define _MAX_PATH 1024
 #endif
@@ -85,7 +85,7 @@ class MVTApp
 			Tstring					mSuiteName ; // A name for the suite, e.g. "Smoke"
 
 			Tstring					mDir;		// Directory for the store file
-			Tstring					mLogDir;	// Option different directory for AfyDB.log files
+			Tstring					mLogDir;	// Option different directory for Afy.log files
 			Tstring					mIdentity;	// Name of owner (IPC requires each store has diff id)
 			Tstring					mPwd;		// Optional password
 			Tstring					mIdentPwd;  // Password for mvstore owner
@@ -113,14 +113,13 @@ class MVTApp
 			bool					mbSeedSet;	// Seed value is set in command line
 			Tstring					mIOInit;    // Configuration of i/o drivers
 			Tstring					mClient;	// client host
-			IStoreIO*             mIO;		// IO Profiler or other IO plugin
 			int						argc ;			// Test specific arguments (only makes sense for Suites running a single test)
 			char **					argv ;	
 
 			long volatile			mStarted;		// ref count for openstore calls
 			long volatile			mTestIndex;		// executing test index
 			MVTestsPortability::Mutex	*mLock;			// Protect state during concurrent store open/closing
-			AfyKernel::StoreCtx *mStoreCtx;		// Store context when the store is open
+			Afy::IAffinity			*mStoreCtx;		// Store context when the store is open
 			THREADID				mThreadID;		// framework thread running this suite
 
 			TTestList				mTests;			// Tests to run in this suite
@@ -183,7 +182,7 @@ class MVTApp
 	    
 		static long sCommandCrashWithinMsAfterStartup;
 		static long sCommandCrashWithinMsBeforeStartup;
-		static AfyKernel::StoreCtx * sReplicaStoreCtx;
+		static Afy::IAffinity * sReplicaStoreCtx;
 		//static mvcore::DynamicLinkMvstore * sDynamicLinkMvstore;
 		//static mvcore::DynamicLinkMvstore * smartPtr;
 		static MVTestsPortability::Tls sThread2Session;
@@ -195,9 +194,9 @@ class MVTApp
 		static bool bRandomTests;
 		static void printStoreCreationParam();
 		static StoreCreationParameters mSCP;
-		static AfyKernel::StoreCtx *mStoreCtx;
+		static Afy::IAffinity *mStoreCtx;
 		static bool startStore(
-			IStoreNet * pNetCallback = NULL, 
+			IService * pNetCallback = NULL, 
 			IStoreNotification * pNotifier = NULL, 
 			const char *pDirectory = NULL, 
 			const char *pIdentity = NULL, 
@@ -210,15 +209,15 @@ class MVTApp
 		static void dummyStartStore(unsigned int mode=0);
 		static void stopStore();
 
-		static RC createStoreWithDumpSession(ISession *& outSession, IStoreNet * pNetCallback = NULL, IStoreNotification * pNotifier = NULL);
+		static RC createStoreWithDumpSession(ISession *& outSession, IService * pNetCallback = NULL, IStoreNotification * pNotifier = NULL);
 
 		static bool isRunningSmokeTest() { return Suite().mbSmoke; }
 		static int getNBuffers() { return Suite().mNBuffer; }
 		enum eStartSessionFlags { kSSFTrackCurrentSession = (1 << 0), kSSFNoReplication = (1 << 1), };
-		static ISession * startSession(AfyKernel::StoreCtx * = 0, char const * = 0, char const * = 0, long pFlags = kSSFTrackCurrentSession);
+		static ISession * startSession(Afy::IAffinity * = 0, char const * = 0, char const * = 0, long pFlags = kSSFTrackCurrentSession);
 		static ISession * getSession() { return (ISession *)sThread2Session.get(); }
-		static AfyDB::IStream * wrapClientStream(ISession * pSession, AfyDB::IStream * pClientStream);
-		static AfyKernel::StoreCtx * getStoreCtx(const char * pIdentity = NULL);
+		static Afy::IStream * wrapClientStream(ISession * pSession, Afy::IStream * pClientStream);
+		static Afy::IAffinity * getStoreCtx(const char * pIdentity = NULL);
 		static unsigned int getPageSize() { return Suite().mPageSize ; }
 
 		static bool deleteStore() ;
@@ -240,10 +239,10 @@ class MVTApp
 		static uint64_t generateRandDateTime(ISession *pSession, bool bAllowFuture=false) { return MVTRand::getDateTime(pSession,bAllowFuture) ; }
 
 		// These are being moved to util.h
-		static void mapURIs(ISession *pSession, const char * pPropName, int pNumProps, PropertyID *pPropIDs) { return MVTUtil::mapURIs( pSession, pPropName, pNumProps, pPropIDs ) ; }
-		static void mapURIs(ISession *pSession, const char * pPropName, int pNumProps, URIMap *pPropMaps) { return MVTUtil::mapURIs( pSession, pPropName, pNumProps, pPropMaps ) ; }
-		static void mapStaticProperty(ISession *pSession, const char * pPropName, URIMap &pPropMap) { MVTUtil::mapStaticProperty( pSession, pPropName, pPropMap ) ; }
-		static void mapStaticProperty(ISession *pSession, const char * pPropName, PropertyID &pPropID) { MVTUtil::mapStaticProperty( pSession, pPropName, pPropID ) ; } 
+		static void mapURIs(ISession *pSession, const char * pPropName, int pNumProps, PropertyID *pPropIDs, const char *base=NULL) { return MVTUtil::mapURIs( pSession, pPropName, pNumProps, pPropIDs, base ) ; }
+		static void mapURIs(ISession *pSession, const char * pPropName, int pNumProps, URIMap *pPropMaps, const char *base=NULL) { return MVTUtil::mapURIs( pSession, pPropName, pNumProps, pPropMaps, base ) ; }
+		static void mapStaticProperty(ISession *pSession, const char * pPropName, URIMap &pPropMap, const char *base=NULL) { MVTUtil::mapStaticProperty( pSession, pPropName, pPropMap, base ) ; }
+		static void mapStaticProperty(ISession *pSession, const char * pPropName, PropertyID &pPropID, const char *base=NULL) { MVTUtil::mapStaticProperty( pSession, pPropName, pPropID, base ) ; } 
 		static int countPinsFullScan(ISession * session) { return MVTUtil::countPinsFullScan( session ) ; }
 		static int countPinsFullScan(ICursor * result, ISession * session) { return MVTUtil::countPins( result, session ) ; }
 		static size_t getCollectionLength(Value const & pV) { return MVTUtil::getCollectionLength( pV ) ; }
@@ -266,6 +265,8 @@ class MVTApp
 		static void output(const PID & pid, std::ostream & pOs, ISession * pSession) { MVTUtil::output(pid,pOs,pSession) ; }
 		static void output(const IStoreNotification::NotificationEvent & event, std::ostream & pOs, ISession * pSession = NULL) { MVTUtil::output(event,pOs,pSession) ; }
 		static void outputTab(std::ostream & pOs, int pLevel) { for (int i = 0; i < pLevel; i++) pOs << "  "; }
+		static RC execStmt(ISession * pSession, char const * pStmtStr, ICursor ** pResult=NULL) {IStmt *st=pSession->createStmt(pStmtStr); return st!=NULL?CmvautoPtr<IStmt>(st)->execute(pResult):RC_SYNTAX;}
+		static uint64_t countStmt(ISession * pSession, char const * pStmtStr) {uint64_t lCnt=~0ULL; IStmt *st=pSession->createStmt(pStmtStr); if (st!=NULL) CmvautoPtr<IStmt>(st)->count(lCnt); return lCnt;}
 
 		// ---end obsolete methods---
 

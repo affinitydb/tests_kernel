@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -11,7 +11,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "mvstoreapi.h"
 //#include "dlmvstore.h"
 
-using namespace AfyDB;
+using namespace Afy;
 
 class MvStoreMessageReporter : public IReport
 {

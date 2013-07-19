@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -195,7 +195,7 @@ void TestMultiVarJoin::createPINs(int inCntPins, bool bLargePins)
 		}
 
 		PID pid;
-		TVERIFYRC(mSession->createPIN(pid,vals,CNT_SUB_QUERY));
+		TVERIFYRC(mSession->createPINAndCommit(pid,vals,CNT_SUB_QUERY));
 
 		Value strVal;
 
@@ -486,8 +486,8 @@ IStmt * TestMultiVarJoin::doImplicitJoin()
 
 	IStmt * joinQ = mSession->createStmt();
 
-	// Fill in ClassSpec structure for each family condition that the PIN should meet
-	ClassSpec families[CNT_SUB_QUERY];
+	// Fill in SourceSpec structure for each family condition that the PIN should meet
+	SourceSpec families[CNT_SUB_QUERY];
 	Value paramsToFamilies[CNT_SUB_QUERY];
 
 	size_t i ;	
@@ -496,7 +496,7 @@ IStmt * TestMultiVarJoin::doImplicitJoin()
 		paramsToFamilies[i].set(mRandLookups[i]);  // Value to check OP_GT against
 		paramsToFamilies[i].property=mProps[i];
 		
-		families[i].classID=mFamilies[i];
+		families[i].objectID=mFamilies[i];
 		families[i].nParams=1;
 		families[i].params=&paramsToFamilies[i];
 
@@ -514,8 +514,8 @@ IStmt * TestMultiVarJoin::doImplicitJoinWithClass(bool bClassFirst)
 	// As doImplicit but adding regular class as a condition
 	IStmt * joinQ = mSession->createStmt();
 
-	// Fill in ClassSpec structure for each family condition that the PIN should meet
-	ClassSpec families[CNT_SUB_QUERY+1];
+	// Fill in SourceSpec structure for each family condition that the PIN should meet
+	SourceSpec families[CNT_SUB_QUERY+1];
 	Value paramsToFamilies[CNT_SUB_QUERY];
 
 	size_t i ;
@@ -528,7 +528,7 @@ IStmt * TestMultiVarJoin::doImplicitJoinWithClass(bool bClassFirst)
 		familypos=1;
 	}
 
-	families[classpos].classID=mClass;
+	families[classpos].objectID=mClass;
 	families[classpos].nParams=0;
 	families[classpos].params=NULL;
 
@@ -537,7 +537,7 @@ IStmt * TestMultiVarJoin::doImplicitJoinWithClass(bool bClassFirst)
 		paramsToFamilies[i].set(mRandLookups[i]);  // Value to check OP_GT against
 		paramsToFamilies[i].property=mProps[i];
 		
-		families[familypos].classID=mFamilies[i];
+		families[familypos].objectID=mFamilies[i];
 		families[familypos].nParams=1;
 		families[familypos].params=&paramsToFamilies[i];
 	}
@@ -568,8 +568,8 @@ IStmt * TestMultiVarJoin::doExplicitJoin()
 		minVal.set(mRandLookups[i]); 
 		minVal.property=mProps[i];
 		
-		ClassSpec cs;
-		cs.classID=mFamilies[i];
+		SourceSpec cs;
+		cs.objectID=mFamilies[i];
 		cs.nParams=1;
 		cs.params=&minVal;
 		baseVars[i]=joinQ->addVariable(&cs,1);
@@ -615,8 +615,8 @@ IStmt * TestMultiVarJoin::do1FamilyAndExpressions()
 	minValFirstFam.set(mRandLookups[0]); 
 	minValFirstFam.property=mProps[0];
 
-	ClassSpec csFirstFamily;
-	csFirstFamily.classID=mFamilies[0];
+	SourceSpec csFirstFamily;
+	csFirstFamily.objectID=mFamilies[0];
 	csFirstFamily.nParams=1;
 	csFirstFamily.params=&minValFirstFam;
 
@@ -636,8 +636,8 @@ IStmt * TestMultiVarJoin::doClassAndExpressions()
 
 	CmvautoPtr<IExprTree> exprTreeRoot(getQueryAsExpression());
 
-	ClassSpec csClass;
-	csClass.classID=mClass;
+	SourceSpec csClass;
+	csClass.objectID=mClass;
 	csClass.nParams=0;
 	csClass.params=NULL;
 
@@ -661,16 +661,16 @@ IStmt * TestMultiVarJoin::doImplicitClassFamExpr(bool bClassFirst)
 	minValFirstFam.set(mRandLookups[0]); 
 	minValFirstFam.property=mProps[0];
 
-	ClassSpec cs[2];
+	SourceSpec cs[2];
 
 	int indexClass=bClassFirst?0:1;
 	int indexFamily=bClassFirst?1:0;
 
-	cs[indexFamily].classID=mFamilies[0];
+	cs[indexFamily].objectID=mFamilies[0];
 	cs[indexFamily].nParams=1;
 	cs[indexFamily].params=&minValFirstFam;
 
-	cs[indexClass].classID=mClass;
+	cs[indexClass].objectID=mClass;
 	cs[indexClass].nParams=0;
 	cs[indexClass].params=NULL;
 

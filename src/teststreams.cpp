@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -108,8 +108,8 @@ static inline bool testResultingStreams(TestLogger & pLogger, Value const * pVal
 
 		// Define a query for this class.
 		IStmt * const lQ = lSession->createStmt();
-		ClassSpec lCS;
-		lCS.classID = lClsid;
+		SourceSpec lCS;
+		lCS.objectID = lClsid;
 		lCS.nParams = 0;
 		lCS.params = NULL;
 		lQ->addVariable(&lCS, 1);
@@ -136,10 +136,10 @@ class TestStreamsReplCheck : public IStoreNotification
 {
 	protected:
 		ITest * mTest;
-		AfyDB::IStream * mCurInputStream;
+		Afy::IStream * mCurInputStream;
 	public:
 		TestStreamsReplCheck(ITest * pTest) : mTest(pTest), mCurInputStream(NULL) {}
-		void setCurInputStream(AfyDB::IStream * pStream) { mCurInputStream = pStream; }
+		void setCurInputStream(Afy::IStream * pStream) { mCurInputStream = pStream; }
 		virtual	void notify(NotificationEvent *events,unsigned nEvents,uint64_t txid) {}
 		virtual	void replicationNotify(NotificationEvent *events,unsigned nEvents,uint64_t txid)
 		{
@@ -193,7 +193,8 @@ int TestStreams::execute()
 			unsigned long lStreamLengths[] = {150, 6194304};
 
 			mLogger.out() << "Creating short stream" << std::endl;
-			SETVALUE(lV, lPropIDs[0], MVTApp::wrapClientStream(lSession, new MyStream(lStreamLengths[0])), OP_ADD);
+			MyStream* mystream1 = new MyStream(lStreamLengths[0]);
+			SETVALUE(lV, lPropIDs[0], MVTApp::wrapClientStream(lSession, mystream1), OP_ADD);
 			{
 				lReplCallback.setCurInputStream(lV.stream.is);
 				if (RC_OK != lPIN->modify(&lV, 1))
@@ -203,7 +204,7 @@ int TestStreams::execute()
 				}
 				lReplCallback.setCurInputStream(NULL);
 			}
-
+			
 			lV.stream.is->reset();
 			mLogger.out() << "Creating pin from short stream" << std::endl;
 			{
@@ -213,7 +214,8 @@ int TestStreams::execute()
 			}
 
 			mLogger.out() << "Creating long stream" << std::endl;
-			SETVALUE(lV, lPropIDs[1], MVTApp::wrapClientStream(lSession, new MyStream(lStreamLengths[1])), OP_ADD);
+			MyStream* mystream2 = new MyStream(lStreamLengths[1]);
+			SETVALUE(lV, lPropIDs[1], MVTApp::wrapClientStream(lSession, mystream2), OP_ADD);
 			{
 				lReplCallback.setCurInputStream(lV.stream.is);
 				if (RC_OK != lPIN->modify(&lV, 1))
@@ -223,7 +225,7 @@ int TestStreams::execute()
 				}
 				lReplCallback.setCurInputStream(NULL);
 			}
-
+			
 			int p;
 			for (p = 0; p < 2; p++)
 			{
@@ -236,7 +238,8 @@ int TestStreams::execute()
 				else if (!MyStream::checkStream(mLogger, *lVal, lStreamLengths[p]))
 					lSuccess = false;
 			}
-
+			delete mystream1;
+			delete mystream2;
 			lPIN->destroy();
 		}
 		#endif
@@ -294,19 +297,24 @@ int TestStreams::execute()
 		if (!MVTApp::isRunningSmokeTest())
 		{
 			unsigned long lStreamLengths1[] = {71520, 971520};
-			SETVALUE(lV, lPropIDs[1], MVTApp::wrapClientStream(lSession, new MyStream(lStreamLengths1[0])), OP_SET);
+			MyStream* mystream1 = new MyStream(lStreamLengths1[0]);  
+			SETVALUE(lV, lPropIDs[1], MVTApp::wrapClientStream(lSession, mystream1), OP_SET);
 			{
 				lReplCallback.setCurInputStream(lV.stream.is);
 				CREATEPIN(lSession, lPID2, &lV, 1);
 				lReplCallback.setCurInputStream(NULL);
 			}
+                      
 			IPIN *pin = lSession->getPIN(lPID2);
-			SETVALUE(lV, lPropIDs[1], MVTApp::wrapClientStream(lSession, new MyStream(lStreamLengths1[1])), OP_SET);
+			MyStream* mystream2 = new MyStream(lStreamLengths1[1]); 
+			SETVALUE(lV, lPropIDs[1], MVTApp::wrapClientStream(lSession, mystream2), OP_SET);
 			{
 				lReplCallback.setCurInputStream(lV.stream.is);
 				TVERIFYRC(pin->modify(&lV,1));
 				lReplCallback.setCurInputStream(NULL);
 			}
+			delete mystream1;
+			delete mystream2;
 			pin->destroy();
 			
 		}
@@ -346,7 +354,8 @@ int TestStreams::execute()
 				#endif
 
 				Value lV;
-				SETVALUE(lV, lPropIDs[0], MVTApp::wrapClientStream(lSession, new MyStream(lLens[i], lStartChars[i], lVTs[i])), OP_ADD);
+				MyStream* mystream1 = new MyStream(lLens[i], lStartChars[i], lVTs[i]); 
+				SETVALUE(lV, lPropIDs[0], MVTApp::wrapClientStream(lSession, mystream1), OP_ADD);
 				{
 					lReplCallback.setCurInputStream(lV.stream.is);
 					CREATEPIN(lSession, lPIDs[i], &lV, 1);
@@ -356,7 +365,8 @@ int TestStreams::execute()
 				IPIN * const lPIN = lSession->getPIN(lPIDs[i]);
 				for (j = 1; j < lCollectionSizes[i]; j++)
 				{
-					SETVALUE_C(lV, lPropIDs[0], MVTApp::wrapClientStream(lSession, new MyStream(lLens[i], lStartChars[i], lVTs[i])), OP_ADD, STORE_LAST_ELEMENT);
+					MyStream* mystream2 = new MyStream(lLens[i], lStartChars[i], lVTs[i]);
+					SETVALUE_C(lV, lPropIDs[0], MVTApp::wrapClientStream(lSession, mystream2), OP_ADD, STORE_LAST_ELEMENT);
 					{
 						lReplCallback.setCurInputStream(lV.stream.is);
 						if (RC_OK != lPIN->modify(&lV, 1))
@@ -366,11 +376,13 @@ int TestStreams::execute()
 						}
 						lReplCallback.setCurInputStream(NULL);
 					}
+					delete mystream2;
 				}
 
 				Value const * lVal = lPIN->getValue(lPropIDs[0]);
 				if (!testResultingStreams(mLogger, lVal, lLens[i], lStartChars[i], lVTs[i], lCollectionSizes[i]))
 					lSuccess = false;
+				delete mystream1;
 				lPIN->destroy();
 			}
 			mLogger.out() << std::endl << "Retesting them..." << std::endl;

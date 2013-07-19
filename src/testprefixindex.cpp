@@ -68,7 +68,7 @@ void TestPrefixIndex::doTest()
         value[0].set(str.c_str());
         value[0].property = ids[0];
         PID pid;
-        TVERIFYRC(mSession->createPIN(pid,value,1));
+        TVERIFYRC(mSession->createPINAndCommit(pid,value,1));
         if (i % 10 == 0) 
             cout << ".";
         if (i == NUMBER_PINS -1)
@@ -109,9 +109,9 @@ void TestPrefixIndex::doTest()
         // cout << iStmt->toString() <<endl;
         iExpr2->destroy();
         
-        ClassID classID = STORE_INVALID_CLASSID;
-        classID = MVTUtil::createUniqueClass(mSession, "TestPrefixIndex.CLASS", iStmt, NULL);
-        TVERIFY(STORE_INVALID_CLASSID != classID);
+        ClassID objectID = STORE_INVALID_CLASSID;
+        objectID = MVTUtil::createUniqueClass(mSession, "TestPrefixIndex.CLASS", iStmt, NULL);
+        TVERIFY(STORE_INVALID_CLASSID != objectID);
         iStmt->destroy();
                 
         /* validate the results, string values should be sorted in order */
@@ -119,9 +119,9 @@ void TestPrefixIndex::doTest()
         IStmt *qry = mSession->createStmt();
         TVERIFY(qry != NULL);
         
-        Value value[1]; ClassSpec spec;
+        Value value[1]; SourceSpec spec;
         value[0].set(str1.c_str()); value[0].property = ids[0];
-        spec.classID = classID; spec.params = &value[0]; spec.nParams = 1; 
+        spec.objectID = objectID; spec.params = &value[0]; spec.nParams = 1; 
         qry->addVariable(&spec,1);
         // cout << qry->toString() << endl;
 

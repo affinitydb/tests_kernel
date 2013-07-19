@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -114,7 +114,7 @@ void testmassiveclassification::createPins(int PinCount)
 	int i,j;
 	//Value tValue[mLargeClass+1];
 	Value* tValue = NULL; 
-	tValue = (Value*) mSession->alloc(sizeof(Value)*(mLargeClass+1));
+	tValue = (Value*) mSession->malloc(sizeof(Value)*(mLargeClass+1));
 	
 	std::cout<<endl<<"Creating "<<PinCount<< " pins."<<std::flush;
 	long lBef = getTimeInMs();
@@ -129,7 +129,7 @@ void testmassiveclassification::createPins(int PinCount)
 		tValue[j].set(j);
 		tValue[j].property=mProp[j+(i%COUNT_PROP-mLargeClass)];
 
-		lIPIN = mSession->createUncommittedPIN(tValue,j+1,MODE_COPY_VALUES);	
+		lIPIN = mSession->createPIN(tValue,j+1,MODE_COPY_VALUES);	
 		TVERIFYRC(mSession->commitPINs(&lIPIN,1)); 
 		lIPIN->destroy();
 		if(!(i%100))

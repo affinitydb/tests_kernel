@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -155,7 +155,7 @@ bool TestProtoBuf::createPINs()
 					break;
 			}
 		}	
-		if(NULL == (lPIN=mSession->createUncommittedPIN(lPVs,iV,MODE_COPY_VALUES))){
+		if(NULL == (lPIN=mSession->createPIN(lPVs,iV,MODE_COPY_VALUES))){
 			mLogger.out() << " Failed to create uncommitted pin " << std::endl;
 			lSuccess = false;
 		} else if (RC_OK != mSession->commitPINs(&lPIN,1)){

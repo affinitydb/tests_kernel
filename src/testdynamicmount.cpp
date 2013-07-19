@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -33,7 +33,7 @@ public:
 	bool &fStarted;
 	long &mCounter;
 	MVTestsPortability::Event *mFinish;
-	AfyKernel::StoreCtx *mStoreCtx;
+	Afy::IAffinity *mStoreCtx;
 	Tstring mIdentity;
 	Tstring mPassword;
 	Tstring mDirectory;	
@@ -152,11 +152,11 @@ protected:
 		if(mState == kSOpened) return true;
 
 		StartupParameters const lSP(0, mDirectory.c_str(), DEFAULT_MAX_FILES, MVTApp::Suite().mNBuffer,  
-		DEFAULT_ASYNC_TIMEOUT, NULL, NULL, mPassword.c_str(), NULL, NULL);
+										DEFAULT_ASYNC_TIMEOUT, NULL, NULL, mPassword.c_str(), NULL);
 		StoreCreationParameters lSCP(0, MVTApp::Suite().mPageSize, 0x200, mIdentity.c_str(), mStoreID, mPassword.c_str(), false); 
 		lSCP.fEncrypted = !mPassword.empty();
 
-		AfyKernel::StoreCtx *& lStoreCtx = mStoreCtx;
+		Afy::IAffinity *& lStoreCtx = mStoreCtx;
 
 		RC lRC = RC_OK;		
 		{
@@ -194,7 +194,7 @@ protected:
 	{		
 		MVTestsPortability::MutexP lLock(&mStoreLock);
 		//if(RC_OK == MVTApp::sDynamicLinkMvstore->shutdown(mStoreCtx, true))
-		if(RC_OK == shutdownStore(mStoreCtx))
+		if(RC_OK == mStoreCtx->shutdown())
 		{
 			mLock->lock();
 			mTest->getLogger().out() << std::endl << "Store shutdown for identity: " << mIdentity.c_str();
@@ -215,7 +215,7 @@ protected:
 		if(mState == kSClosing || mState == kSClosed) return NULL;
 		assert(mState == kSOpened || mStoreCtx != NULL);
 		//ISession *lSession = MVTApp::sDynamicLinkMvstore->startSession(mStoreCtx, mIdentity.c_str(), mPassword.c_str());
-		ISession *lSession = AfyDB::ISession::startSession(mStoreCtx, mIdentity.c_str(), mPassword.c_str());
+		ISession *lSession = mStoreCtx->startSession(mIdentity.c_str(), mPassword.c_str());
 		TV_R(lSession != NULL, mTest);
 		INTERLOCKEDI(&mSessionCount);
 		return lSession;
@@ -260,7 +260,7 @@ class TestDynamicMount : public ITest
 		TEST_DECLARE(TestDynamicMount);
 		virtual char const * getName() const { return "testdynamicmount"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "Simulates dynamic mounting: stores open/close in parallel"; }
+		virtual char const * getDescription() const { return "Simulates the dynamic mount feature in MozyLife. Stores open/close in parallel"; }
 		virtual bool includeInSmokeTest(char const *& pReason) const { pReason = "creates stores on its own..."; return false; }
 		virtual int execute();
 		virtual void destroy() { delete this; }	

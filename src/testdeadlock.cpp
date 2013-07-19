@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -122,7 +122,7 @@ true // actionReadAndModifyInOrder
 int TestDeadLock::execute()
 {
 	mClass = STORE_INVALID_CLASSID;
-	mProp = STORE_INVALID_PROPID;
+	mProp = STORE_INVALID_URIID;
 
 	bool bStarted = MVTApp::startStore() ;
 	if ( !bStarted ) { TVERIFY2(0,"Could not start store, bailing out completely") ; return RC_FALSE; }
@@ -152,7 +152,7 @@ int TestDeadLock::execute()
 		Value v[2]; 
 		v[0].set(0); v[0].property=PROP_SPEC_UPDATED;
 		v[1].set(i); v[1].property=mProp;
-		TVERIFYRC(pSession->createPIN(mPids[i],v,2));
+		TVERIFYRC(pSession->createPINAndCommit(mPids[i],v,2));
 	}
 
 	pSession->terminate() ; pSession=NULL;

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -76,12 +76,12 @@ void TestCollQuery::queryCollection( unsigned int cntElements )
 	{
 		// Put a unique value on each pin that could be queried for
 		Value v ; v.set( i ) ; v.property = mPinIDProp ;
-		TVERIFYRC(mSession->createPIN(referencedPins[i],&v,1));
+		TVERIFYRC(mSession->createPINAndCommit(referencedPins[i],&v,1));
 	}
 
 	// Create pin that points to all of the referencedPins
 	PID pinWithColl ;
-	TVERIFYRC(mSession->createPIN(pinWithColl,NULL,0));
+	TVERIFYRC(mSession->createPINAndCommit(pinWithColl,NULL,0));
 
 	// Create the references 
 	unsigned int k ;
@@ -175,7 +175,7 @@ void TestCollQuery::queryCollectionWithDuplicates( unsigned int cntElements, boo
 	unsigned int i ;
 	for ( i = 0 ; i < cntElements ; i++ )
 	{
-		TVERIFYRC(mSession->createPIN(referencedPins[i],NULL,0));
+		TVERIFYRC(mSession->createPINAndCommit(referencedPins[i],NULL,0));
 	}
 
 	Value bogus ; bogus.set( "something to ignore in collection" ) ; 
@@ -183,7 +183,7 @@ void TestCollQuery::queryCollectionWithDuplicates( unsigned int cntElements, boo
 	//bogus.meta = META_PROP_SSTORAGE ;
 
 	PID pinWithColl ;
-	TVERIFYRC(mSession->createPIN(pinWithColl,&bogus,1));
+	TVERIFYRC(mSession->createPINAndCommit(pinWithColl,&bogus,1));
 
 	unsigned int k ;
 	for ( k = 0 ; k < cntElements ; k++ )

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -90,8 +90,8 @@ void TestListValues::checkClass(
 
 		// Run family query based on this value
 		CmvautoPtr<IStmt> q( mSession->createStmt() );
-		ClassSpec r; 
-		r.classID = lCls ;
+		SourceSpec r; 
+		r.objectID = lCls ;
 		r.nParams=1 ;
 
 		// OP_IN must have a VT_RANGE, so pass same value as start/end

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -128,7 +128,7 @@ void TestBashPinDelete::createSimple()
 	for ( long i = 0 ; i < mCntPins ; i++ )
 	{
 		PID pid ;
-		TVERIFYRC(mSession->createPIN(pid, vals, cntVals)) ;
+		TVERIFYRC(mSession->createPINAndCommit(pid, vals, cntVals)) ;
 	}
 }
 
@@ -150,7 +150,7 @@ void TestBashPinDelete::createFTString()
 	for ( long i = 0 ; i < mCntPins ; i++ )
 	{
 		PID pid ;
-		TVERIFYRC(mSession->createPIN(pid, vals, cntVals)) ;
+		TVERIFYRC(mSession->createPINAndCommit(pid, vals, cntVals)) ;
 	}
 }
 
@@ -188,7 +188,7 @@ void TestBashPinDelete::createFTStringBigColl()
 	for ( i = 0 ; i < mCntPins ; i++ )
 	{
 		PID pid ;
-		TVERIFYRC(mSession->createPIN(pid, vals, 1, MODE_NO_EID)) ;
+		TVERIFYRC(mSession->createPINAndCommit(pid, vals, 1, MODE_NO_EID)) ;
 
 		// REVIEW: what is best way to build collection?
 		long k ;
@@ -228,7 +228,7 @@ void TestBashPinDelete::createPifsSSV()
 	{
 		lStream->reset() ;
 		PID pid ;
-		TVERIFYRC(mSession->createPIN(pid, vals, cntVals)) ;
+		TVERIFYRC(mSession->createPINAndCommit(pid, vals, cntVals)) ;
 	}
 }
 

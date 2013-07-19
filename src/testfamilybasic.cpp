@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -87,8 +87,8 @@ int TestFamilyBasic::execute()
 		//Use Class 1
 		CmvautoPtr<IStmt> lQUsingClass( mSession->createStmt() ) ;
 
-		ClassSpec cs ;
-		cs.classID = mClass1 ;
+		SourceSpec cs ;
+		cs.objectID = mClass1 ;
 		cs.nParams = 0 ;
 		cs.params = NULL ;
 
@@ -103,8 +103,8 @@ int TestFamilyBasic::execute()
 
 		CmvautoPtr<IStmt> lQUsingClass( mSession->createStmt() ) ;
 
-		ClassSpec cs ;
-		cs.classID = mClass1 ;
+		SourceSpec cs ;
+		cs.objectID = mClass1 ;
 		cs.nParams = 0 ;
 		cs.params = NULL ;
 
@@ -143,8 +143,8 @@ int TestFamilyBasic::execute()
 
 		Value paramVal ; paramVal.set( 'A' ) ;
 
-		ClassSpec cs ;
-		cs.classID = mFamily2 ;
+		SourceSpec cs ;
+		cs.objectID = mFamily2 ;
 		cs.nParams = 1 ;
 		cs.params = &paramVal ;
 
@@ -161,8 +161,8 @@ int TestFamilyBasic::execute()
 		CmvautoPtr<IStmt> lQFamilySorted( mSession->createStmt() ) ;
 
 		Value paramVal ; paramVal.set( 'A' ) ;
-		ClassSpec cs ;
-		cs.classID = mFamily2 ;
+		SourceSpec cs ;
+		cs.objectID = mFamily2 ;
 		cs.nParams = 1 ;
 		cs.params = &paramVal ;
 
@@ -226,8 +226,8 @@ int TestFamilyBasic::execute()
 		paramVals[0].set( 1 ) ;
 		paramVals[1].set( 'A' ) ;
 
-		ClassSpec cs ;
-		cs.classID = mFamily3 ;
+		SourceSpec cs ;
+		cs.objectID = mFamily3 ;
 		cs.nParams = 2 ;
 		cs.params = paramVals ;
 
@@ -242,8 +242,8 @@ int TestFamilyBasic::execute()
 		CmvautoPtr<IStmt> lQFamilyBasedOnClass( mSession->createStmt() ) ;
 
 		// Pins from Class1
-		ClassSpec cs ;
-		cs.classID = mClass1 ;
+		SourceSpec cs ;
+		cs.objectID = mClass1 ;
 		cs.nParams = 0 ;
 		cs.params = NULL ;
 
@@ -270,8 +270,8 @@ int TestFamilyBasic::execute()
 		Value paramVals[1] ; 
 		paramVals[0].set( 'A' ) ;
 
-		ClassSpec cs ;
-		cs.classID = mFamily4 ;
+		SourceSpec cs ;
+		cs.objectID = mFamily4 ;
 		cs.nParams = 1 ;
 		cs.params = paramVals ;
 
@@ -293,7 +293,7 @@ void TestFamilyBasic::addPIN( int propXVal, char propYVal )
 	vals[0].set( (int)(1+mPINs.size()) ) ; vals[0].property = mPropIndex ; 
 	vals[1].set( propXVal ) ; vals[1].property = mPropX ; 
 	vals[2].set( propYVal ) ; vals[2].property = mPropY ; 
-	TVERIFYRC(mSession->createPIN( pid, vals, 3 ) );	
+	TVERIFYRC(mSession->createPINAndCommit( pid, vals, 3 ) );	
 	mPINs.push_back( pid ) ;
 }
 

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -53,7 +53,7 @@ class scenariobase
 class TestClassRollBack : public ITest
 {
 	std::vector<PID> pidMap;
-	AfyKernel::StoreCtx *mStoreCtx;
+	Afy::IAffinity *mStoreCtx;
 	
 	public:		
 		PropertyID mPropIDs[sNumProps];
@@ -162,7 +162,7 @@ class TestClassRollBack : public ITest
 					string s;
 					set<PID>::iterator iter; 
 					
-					/* Step 1: creating simple family, storing query with classID within map... */
+					/* Step 1: creating simple family, storing query with objectID within map... */
 					createQueryPlusFamily();
 					
 					/* Step 2: Perform cases... */
@@ -211,7 +211,7 @@ class TestClassRollBack : public ITest
 				
 					for(iter = m_clsScn3Map.begin(); iter!= m_clsScn3Map.end(); ++iter)
 					{
-						ClassSpec lCS;
+						SourceSpec lCS;
 						Value arg;
 				  
 						IStmt * queryCS(pTest->mSession->createStmt()); 
@@ -219,7 +219,7 @@ class TestClassRollBack : public ITest
 						arg.set(s.c_str());arg.setPropID(pTest->mPropIDs[1]);
 			  
 						//Check first that count numbers are equal...      
-						lCS.classID = iter->first;
+						lCS.objectID = iter->first;
 						lCS.nParams = 1;  
 						lCS.params  = &arg; 
 						queryCS->addVariable(&lCS,1);
@@ -230,7 +230,7 @@ class TestClassRollBack : public ITest
 							  
 						uint64_t cnt =0 ;
 						queryCS->count( cnt ) ;
-						cout << std::hex << cnt << " PINs belong to the class {"<< lCS.classID << "}" << std::endl ;
+						cout << std::hex << cnt << " PINs belong to the class {"<< lCS.objectID << "}" << std::endl ;
 
 						char * strQueryFS = (iter->second)->toString() ; // TVERIFY( strlen( strQueryFS ) > 0 ) ;
 						cout << strQueryFS << endl;
@@ -281,7 +281,7 @@ class TestClassRollBack : public ITest
 					Tstring str;
 					MVTRand::getString(str,200,0,false,false);
 					val.set(str.c_str());val.setPropID(pTest->mPropIDs[1]);
-					TVRC_R(pTest->mSession->createPIN(pid,&val,1),pTest);
+					TVRC_R(pTest->mSession->createPINAndCommit(pid,&val,1),pTest);
 					return str;
 				}
 
@@ -293,7 +293,7 @@ class TestClassRollBack : public ITest
 					Value val;
 					PID   pid;
 					val.set(str.c_str());val.setPropID(pTest->mPropIDs[1]);
-					TVRC_R(pTest->mSession->createPIN(pid,&val,1),pTest);
+					TVRC_R(pTest->mSession->createPINAndCommit(pid,&val,1),pTest);
 					return str;
 				}
 		  
@@ -405,12 +405,12 @@ RC TestClassRollBack::compareClassVersaFSQuery()
 		    
 	for(iter = m_clsqryMap.begin(); iter!= m_clsqryMap.end(); ++iter)
 	{
-		ClassSpec lCS;
+		SourceSpec lCS;
 		  
 		IStmt * queryCS(mSession->createStmt()); 
 	  
 		//Check first that count numbers are equal...      
-		lCS.classID = iter->first;
+		lCS.objectID = iter->first;
 		lCS.nParams = 0;  
 		queryCS->addVariable(&lCS,1);
 			  
@@ -420,7 +420,7 @@ RC TestClassRollBack::compareClassVersaFSQuery()
 			  
 		uint64_t cnt =0 ;
 		queryCS->count( cnt ) ;
-		cout << std::hex << cnt << " PINs belong to the class {"<< lCS.classID << "}" << std::endl ;
+		cout << std::hex << cnt << " PINs belong to the class {"<< lCS.objectID << "}" << std::endl ;
 
 		char * strQueryFS = (iter->second)->toString() ;  TVERIFY( strlen( strQueryFS ) > 0 ) ;
 		cout << strQueryFS << endl;
@@ -495,7 +495,7 @@ PID TestClassRollBack::createPin()
 	//val[10].set(MVTApp::wrapClientStream(mSession, new MyStream(size))); val[10].setPropID(mPropIDs[10]);
 	val[10].set(MVTApp::wrapClientStream(mSession, &myTstStream)); val[10].setPropID(mPropIDs[10]);
 
-	TVERIFYRC(mSession->createPIN(pid,val,11));
+	TVERIFYRC(mSession->createPINAndCommit(pid,val,11));
 	return pid;
 }
 

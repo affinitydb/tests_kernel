@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -16,7 +16,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 // and other decisions
 #define SF_COLLECTION   0x01
 #define SF_FAMILY		0x02
-#define SF_FT			0x04  // Full text index (e.g. opposite of META_PROP_NOFTINDEX)
+#define SF_FT			0x04  // Full text index (equiv to META_PROP_FTINDEX)
 #define SF_SSV          0x08  // equiv to META_PROP_SSTORAGE
 #define SF_NOSTOPWORDS  0x10  // META_PROP_STOPWORDS
 
@@ -26,7 +26,7 @@ struct PropInfo
 	// and rules about the data that it contains
 
 	PropInfo()
-		: id(STORE_INVALID_PROPID)
+		: id(STORE_INVALID_URIID)
 		, index(0)
 		, type(VT_ANY)
 		, schemaFlags(0)
@@ -39,9 +39,9 @@ struct PropInfo
 	uint8_t meta()
 	{
 		uint8_t meta = 0 ;
-		if ( !hasFlag( SF_FT ) ) meta |= META_PROP_NOFTINDEX ;
+		if ( hasFlag( SF_FT ) ) meta |= META_PROP_FTINDEX ;
 		if ( hasFlag( SF_SSV ) ) meta |= META_PROP_SSTORAGE ;
-		if ( hasFlag( SF_NOSTOPWORDS ) ) meta |= META_PROP_STOPWORDS ;
+//		if ( hasFlag( SF_NOSTOPWORDS ) ) meta |= META_PROP_STOPWORDS ;
 		return meta ;
 	}
 
@@ -159,7 +159,7 @@ public:
 	PropertyID prop( const char * inPropName )
 	{
 		PropInfo * info = getPropInfo( inPropName ) ;
-		if ( info == NULL ) { assert(false) ; return STORE_INVALID_PROPID ; }
+		if ( info == NULL ) { assert(false) ; return STORE_INVALID_URIID ; }
 		return info->id ;
 	}
 
@@ -240,7 +240,7 @@ public:
 	{
 		assert( mVals == NULL ) ;
 
-		mVals = (Value*)mSession->alloc(sizeof(Value) * mSchema->numProps()) ;
+		mVals = (Value*)mSession->malloc(sizeof(Value) * mSchema->numProps()) ;
 		mValPos = 0 ;
 	}
 
@@ -280,7 +280,7 @@ public:
 			return true ;
 		}
 
-		char * copy = (char*) mSession->alloc( inVal.size() + 1 ) ;
+		char * copy = (char*) mSession->malloc( inVal.size() + 1 ) ;
 		memcpy( copy, inVal.c_str(), inVal.size() + 1 ) ;
 
 		mVals[mValPos].set( copy ) ;
@@ -306,12 +306,12 @@ public:
 			return true ; // Empty collection represented by missing property
 		}
 
-		Value * arrayVals = (Value*)mSession->alloc(sizeof(Value) * inStrs.size() ) ;	
+		Value * arrayVals = (Value*)mSession->malloc(sizeof(Value) * inStrs.size() ) ;	
 
 		for ( size_t i = 0 ; i < inStrs.size() ; i++ )
 		{
 			const string & str = inStrs[i] ;
-			char * copy = (char*) mSession->alloc( str.size() + 1 ) ;
+			char * copy = (char*) mSession->malloc( str.size() + 1 ) ;
 			memcpy( copy, str.c_str(), str.size() + 1 ) ;
 			arrayVals[i].set(copy) ;
 		}
@@ -363,7 +363,7 @@ protected:
 	{
 		switch( inType )
 		{
-		case(VT_RESERVED1):
+		case(VT_ENUM ):
 		case(VT_INT):
 		case(VT_UINT):
 		case(VT_INT64):

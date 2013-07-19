@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -12,7 +12,7 @@ class TestChangeIdentity : public ITest
 {
 		static const int sCharSize = 64;
 		char mOldStoreIdentity[sCharSize], mNewStoreIdentity[sCharSize];
-		AfyKernel::StoreCtx * mStoreCtx;
+		Afy::IAffinity * mStoreCtx;
 	public:
 		TEST_DECLARE(TestChangeIdentity);
 		virtual char const * getName() const { return "testChangeIdentity"; }

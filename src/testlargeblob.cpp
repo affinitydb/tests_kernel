@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -70,7 +70,7 @@ PID TestLargeBlob::createFilePin( int pageSize, int pagePerPageGroup, int testFi
    
 	RC rc ;
 	PID myPID;
-	TVERIFYRC(mSession->createPIN( myPID, 0, 0 ));
+	TVERIFYRC(mSession->createPINAndCommit( myPID, 0, 0 ));
 	
 	int currentSize = 0 ; // Assuming that caller is tracking file size
 

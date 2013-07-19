@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -81,8 +81,8 @@ void TestGetPageLock::testcreatemeta(ISession *session)
 		Value args[2];
 		PropertyID pids[1];
 
-		ClassSpec csp[1];
-		csp[0].classID = pagecls; // Based on class created above
+		SourceSpec csp[1];
+		csp[0].objectID = pagecls; // Based on class created above
 		csp[0].nParams = 0;
 		csp[0].params = NULL;
 		unsigned char var = query->addVariable(csp,1);
@@ -106,7 +106,7 @@ void TestGetPageLock::testGetPage(ISession *session)
 
 	Value val[6];
 	for (int i=0; i < cntPins; i++){
-		IPIN *pin = session->createUncommittedPIN();
+		IPIN *pin = session->createPIN();
 		val[0].set("photo/xyz");val[0].setPropID(mPropIDs[0]);
 		val[1].set("tag1");val[1].setPropID(mPropIDs[1]);val[1].op = OP_ADD;val[1].eid = STORE_LAST_ELEMENT;
 		val[2].set("tag2");val[2].setPropID(mPropIDs[1]);val[2].op = OP_ADD;val[2].eid = STORE_LAST_ELEMENT;
@@ -119,10 +119,10 @@ void TestGetPageLock::testGetPage(ISession *session)
 	}
 	//query the pin and remove a particular eid
 	IStmt *query = session->createStmt();
-	ClassSpec csp;
+	SourceSpec csp;
 	Value args[1];
 	args[0].set("tag5");
-	csp.classID = pagecls1;
+	csp.objectID = pagecls1;
 	csp.nParams = 1;
 	csp.params = args;
 	unsigned char var = query->addVariable(&csp,1);

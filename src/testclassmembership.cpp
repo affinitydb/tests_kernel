@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -82,7 +82,7 @@ void TestClassMembership::testClassMembership()
 	val[0].set("Bipasha");val[0].setPropID(pm[0]);
 	val[1].set("jism");val[1].setPropID(pm[1]);
 
-	TVERIFYRC(mSession->createPIN(pid,val,2,0));
+	TVERIFYRC(mSession->createPINAndCommit(pid,val,2,0));
 
 	//test for membership
 	pin = mSession->getPIN(pid);
@@ -150,13 +150,13 @@ void TestClassMembership::testClassMembership()
 
 	// Verify that pin having only one of the properties also shows up
 	val[0].set("Somethingelse");val[0].setPropID(pm[0]);
-	TVERIFYRC(mSession->createPIN(pid,val,1));
+	TVERIFYRC(mSession->createPINAndCommit(pid,val,1));
 	CmvautoPtr<IPIN> pin2(mSession->getPIN(pid));
 	TVERIFY(pin2->testClassMembership(clsopexist)) ;
 
 	// PIN with other props should not show up
 	val[0].set("uninteresting prop");val[0].setPropID(pm[2]);
-	TVERIFYRC(mSession->createPIN(pid,val,1));
+	TVERIFYRC(mSession->createPINAndCommit(pid,val,1));
 	CmvautoPtr<IPIN> pin3(mSession->getPIN(pid));
 	TVERIFY(!pin3->testClassMembership(clsopexist)) ;
 
@@ -259,7 +259,7 @@ void TestClassMembership::testFamilyMembership()
 			{
 				mLogger.out() << "PINs part of Family " << std::endl;
 				CmvautoPtr<IStmt> lQ( mSession->createStmt());
-				ClassSpec lCS = {lFamilyID, 0, NULL};
+				SourceSpec lCS = {lFamilyID, 0, NULL};
 				lQ->addVariable(&lCS, 1);
 				ICursor* lC = NULL;
 				TVERIFYRC(lQ->execute(&lC));

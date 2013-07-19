@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -31,7 +31,7 @@ class TestClone : public ITest
 		void ACLPinClone(ISession *session);
 		void PiExprTreeClone(ISession *session);
 	protected:
-		void comparePIN(ISession *session,IPIN *pin,const map<AfyDB::PropertyID,AfyDB::Value> &pvl,unsigned nLoops);
+		void comparePIN(ISession *session,IPIN *pin,const map<Afy::PropertyID,Afy::Value> &pvl,unsigned nLoops);
 		bool comparePIN2(IPIN* pin, IPIN* pin2,ISession *session ) ;
 		void reportResult(ICursor *result,ISession *session);
 };
@@ -71,10 +71,10 @@ void TestClone::pinClone(ISession *session)
 	PID pid;
 	char *p,buff[3000];
 
-	map<AfyDB::PropertyID,AfyDB::Value> pvl;
+	map<Afy::PropertyID,Afy::Value> pvl;
 	strcpy(buff,"");
 	//case 1: Uncommited pin clone.
-	pin = session->createUncommittedPIN();
+	pin = session->createPIN();
 	//add number of prop values
 	std::string buf = "http://www.yehhaicricket.com/india/Rahuld/rahul.html";
 	for (unsigned i=0;i<nLoops;i++) {
@@ -84,19 +84,19 @@ void TestClone::pinClone(ISession *session)
 		strcpy(bufnew,buf.c_str());
 		pv.setURL(bufnew); pv.setPropID(lPropIDs[i]);
 		//insert prop value pair into the map
-		pvl.insert(map<AfyDB::PropertyID,AfyDB::Value>::value_type(lPropIDs[i],pv));
+		pvl.insert(map<Afy::PropertyID,Afy::Value>::value_type(lPropIDs[i],pv));
 		TVERIFYRC(pin->modify(&pv,1));
 	}
 	TVERIFYRC(session->commitPINs(&pin,1));
 	pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
-	TVERIFY(pin1->isCommitted());
+	TVERIFY(pin1->isPersistent());
 	TVERIFY(pin1->getPID().pid != STORE_INVALID_PID ) ;
 	comparePIN(session,pin1,pvl,nLoops);
 	comparePIN2(pin,pin1,session);
 
 	//clone without the MODE_NEW_COMMIT
 	pin2 = pin->clone() ;
-	TVERIFY(!pin2->isCommitted() ) ;
+	TVERIFY(!pin2->isPersistent() ) ;
 	TVERIFY(pin2->getPID().pid == STORE_INVALID_PID ) ;
 	comparePIN(session,pin2,pvl,nLoops);
 	TVERIFYRC(session->commitPINs(&pin2,1)) ;
@@ -121,7 +121,7 @@ void TestClone::pinClone(ISession *session)
 	SETVALUE(pvs[1], pm[1].uid, "Karnataka", OP_SET);
 	SETVALUE(pvs[2], pm[2].uid, 560234, OP_SET);
 
-	session->createPIN(pid,pvs,2);
+	session->createPINAndCommit(pid,pvs,2);
 	pin = session->getPIN(pid);
 
 	//add nLoops more elements to City property 
@@ -135,7 +135,7 @@ void TestClone::pinClone(ISession *session)
 	pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
 	
 	size_t x = MVTApp::getCollectionLength(*pin1->getValue(pm[0].uid));
-	TVERIFY( x == (nLoops+1) && pin1->isCommitted()) ;
+	TVERIFY( x == (nLoops+1) && pin1->isPersistent()) ;
 
 	comparePIN2(pin, pin1,session ) ;
 
@@ -143,7 +143,7 @@ void TestClone::pinClone(ISession *session)
 	pin1->destroy();
 
 	// case 3: Clone Big collection (only fails with large nLoops)
-	session->createPIN(pid,NULL,0);
+	session->createPINAndCommit(pid,NULL,0);
 	pin = session->getPIN(pid);
 
 	for (unsigned i = 0; i<nLoops; i++) {
@@ -158,7 +158,7 @@ void TestClone::pinClone(ISession *session)
 	pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
 
 	TVERIFY( nLoops == MVTApp::getCollectionLength(*pin1->getValue(pm[0].uid)));
-	TVERIFY( pin1->isCommitted()) ;
+	TVERIFY( pin1->isPersistent()) ;
 
 	comparePIN2(pin, pin1,session ) ;
 
@@ -166,20 +166,20 @@ void TestClone::pinClone(ISession *session)
 	pin->destroy() ;	
 
 	//case 4: for overwrite values(simple)
-	pin =  session->createUncommittedPIN();
+	pin =  session->createPIN();
 	SETVALUE(pvs[0], lPropIDs[1], "Jaanu meri jaan", OP_SET);
 	SETVALUE(pvs[1], lPropIDs[2], "Mein tere qurbaan", OP_SET);
-	pvl.insert(map<AfyDB::PropertyID,AfyDB::Value>::value_type(lPropIDs[2],pvs[1]));
+	pvl.insert(map<Afy::PropertyID,Afy::Value>::value_type(lPropIDs[2],pvs[1]));
 	pin->modify(pvs,2);
 	
 	SETVALUE(pvs[0], lPropIDs[1], "jeete hain Shaan se", OP_SET);
-	pvl.insert(map<AfyDB::PropertyID,AfyDB::Value>::value_type(lPropIDs[1],pvs[0]));
+	pvl.insert(map<Afy::PropertyID,Afy::Value>::value_type(lPropIDs[1],pvs[0]));
 	pin1= pin->clone(pvs,1,MODE_NEW_COMMIT);
 	comparePIN(session,pin1,pvl,2);
 	// The clone is committed but the original is not
-	TVERIFY(pin1->isCommitted() ) ;	
+	TVERIFY(pin1->isPersistent() ) ;	
 	pin->refresh() ;
-	TVERIFY(!pin->isCommitted() ) ;
+	TVERIFY(!pin->isPersistent() ) ;
 //	MVTApp::output(*pin1,mLogger.out(),session);	
 	TVERIFYRC(session->commitPINs(&pin,1,0)) ;
 
@@ -195,14 +195,14 @@ void TestClone::pinClone(ISession *session)
 	SETVALUE(pvs[1], pm[1].uid, "Karnataka da huli", OP_SET);
 	SETVALUE(pvs[2], pm[2].uid, 7900, OP_SET);
 
-	session->createPIN(pid,pvs,3);
+	session->createPINAndCommit(pid,pvs,3);
 	pin = session->getPIN(pid);
 	//OP_DELETE
 	pvs[0].setDelete(pm[1].uid);
 	pin1 = pin->clone(pvs,1,MODE_NEW_COMMIT);
 	MVTApp::output(*pin1,mLogger.out(),session);
 	x=pin1->getNumberOfProperties();
-	TVERIFY(x==2) ; TVERIFY( pin1->isCommitted()) ;
+	TVERIFY(x==2) ; TVERIFY( pin1->isPersistent()) ;
 	pin->destroy();
 	pin1->destroy();
 
@@ -211,7 +211,7 @@ void TestClone::pinClone(ISession *session)
 	SETVALUE_C(pvs[1], pm[0].uid, "Karnataka da huli", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
 	SETVALUE_C(pvs[2], pm[0].uid, "Indiranagar", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
 	SETVALUE_C(pvs[3], pm[0].uid, "St Josephs Collge of commerce", OP_ADD, STORE_LAST_ELEMENT);
-	rc = session->createPIN(pid,pvs,4);
+	rc = session->createPINAndCommit(pid,pvs,4);
 	pin = session->getPIN(pid);
 	MVTApp::output(*pin,mLogger.out(),session);
 
@@ -234,7 +234,7 @@ void TestClone::pinClone(ISession *session)
 	
 	//case 1 : Big PINS
 #if 0
-	session->createUncommittedPIN();
+	session->createPIN();
 	for (unsigned i=0; i<100; i++){ //>100 no yet impl. ln:403,modifypin.cpp
 		pvs[i].set(i,"this is some string");
 	}
@@ -242,7 +242,7 @@ void TestClone::pinClone(ISession *session)
 
 	pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
 	TVERIFY(pin1->getNumberOfProperties() ==i ) ;
-	TVERIFY(pin1->isCommitted()) ;
+	TVERIFY(pin1->isPersistent()) ;
 #endif
 	
 	/*todo
@@ -262,7 +262,7 @@ void TestClone::CNavigClone(ISession *session)
 
 	SETVALUE_C(pvs[0], propID, "add0", OP_ADD, STORE_LAST_ELEMENT);
 	SETVALUE_C(pvs[1], propID, "add1", OP_ADD, STORE_LAST_ELEMENT);
-	rc =  session->createPIN(pid,pvs,2);
+	rc =  session->createPINAndCommit(pid,pvs,2);
 	pin = session->getPIN(pid);
 	pin->refresh();
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
@@ -273,7 +273,7 @@ void TestClone::CNavigClone(ISession *session)
 	} else if (pv->type==VT_ARRAY) {
 		pvs[0].set((Value*)pv->varray,pv->length); pvs[0].setPropID(propID); pvs[0].op=OP_ADD; pvs[0].eid=STORE_LAST_ELEMENT;
 	} else TVERIFYRC(RC_TYPE);
-	session->createPIN(pid,pvs,1);	
+	session->createPINAndCommit(pid,pvs,1);	
 	pin= session->getPIN(pid);
 	pin->refresh();
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
@@ -310,11 +310,11 @@ void TestClone::IQueryClone(ISession *session)
 	//create cpl pins to check simple query.
 	pvs[0].set("Lovely Liv Tyler");pvs[0].setPropID(pids[0]);
 	pvs[1].set("Steven Tyler aka Aerosmith ki beti");pvs[1].setPropID(pids[1]);
-	rc = session->createPIN(pid,pvs,2);
+	rc = session->createPINAndCommit(pid,pvs,2);
 
 	pvs[0].set("Amrageddon");pvs[0].setPropID(pids[0]);
 	pvs[1].set("Lord of the Rings");pvs[1].setPropID(pids[1]);
-	rc = session->createPIN(pid,pvs,2);
+	rc = session->createPINAndCommit(pid,pvs,2);
 
 	query = session->createStmt();
 	unsigned var = query->addVariable();	
@@ -370,7 +370,7 @@ void TestClone::IQueryClone(ISession *session)
 void TestClone::streamClone(ISession *session)
 {
 	/*IPIN *pin,*pin1;
-	session->createUncommittedPIN();
+	session->createPIN();
 	Value pvs[3];
 	Tstring streamstr;
 
@@ -398,10 +398,10 @@ void TestClone::ACLPinClone(ISession *session)
 
 	pvs[0].setIdentity(iid);
 	SETVATTR_C(pvs[0], PROP_SPEC_ACL, OP_ADD, STORE_LAST_ELEMENT);
-	pvs[0].meta = ACL_READ | ACL_WRITE;
+	pvs[0].meta = META_PROP_READ | META_PROP_WRITE;
 
 	SETVALUE(pvs[1], lPropIDs[0], "This is a test for clone and ACLS", OP_ADD);
-	TVERIFYRC(session->createPIN(pid,pvs,2));
+	TVERIFYRC(session->createPINAndCommit(pid,pvs,2));
 
 	IPIN *pin = session->getPIN(pid);
 	IPIN *pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
@@ -410,13 +410,13 @@ void TestClone::ACLPinClone(ISession *session)
 	pv = pin1->getValue(PROP_SPEC_ACL);
 
 	//REVIEW: Are || meant instead of &&?
-	if(pv->meta != (ACL_READ | ACL_WRITE) && pv->iid != iid && !pin1->isCommitted())
+	if(pv->meta != (META_PROP_READ | META_PROP_WRITE) && pv->iid != iid && !pin1->isPersistent())
 		TVERIFY2(0,"Invalid rights") ;
 
 	//modify the pin, change rights, clone and check again using overwrite values
 	pvs[0].setIdentity(iid1);
 	SETVATTR_C(pvs[0], PROP_SPEC_ACL, OP_ADD, STORE_LAST_ELEMENT);
-	pvs[0].meta = ACL_READ;
+	pvs[0].meta = META_PROP_READ;
 	
 	IPIN *pin2 = pin1->clone(pvs,1,MODE_NEW_COMMIT);
 	pv = pin2->getValue(PROP_SPEC_ACL);
@@ -445,13 +445,13 @@ void TestClone::PiExprTreeClone(ISession *session){
 	//Create some pins
 	pvs[0].set("Mumbai still inundated");pvs[0].setPropID(pids[0]);
 	pvs[1].set("Death toll 924");pvs[1].setPropID(pids[1]);
-	rc = session->createPIN(pid,pvs,2);
+	rc = session->createPINAndCommit(pid,pvs,2);
 
 	pvs[0].set("Heavy rains in Mumbai");pvs[0].setPropID(pids[0]);
 	pvs[1].set("Stay at home declared");pvs[1].setPropID(pids[1]);
 	pvs[2].set("Stay at home declared (1)");pvs[2].setPropID(pids[2]);
 	pvs[3].set("Stay at home declared (2)");pvs[3].setPropID(pids[3]);
-	rc = session->createPIN(pid,pvs,4);
+	rc = session->createPINAndCommit(pid,pvs,4);
 	
 	{		
 		PropertyID pid[1] = {pids[0]};
@@ -569,10 +569,10 @@ void TestClone::PiExprTreeClone(ISession *session){
 	// Add more cases here...
 }
 
-void TestClone::comparePIN(ISession *session,IPIN *pin,const map<AfyDB::PropertyID,AfyDB::Value> &pvl,unsigned nLoops)
+void TestClone::comparePIN(ISession *session,IPIN *pin,const map<Afy::PropertyID,Afy::Value> &pvl,unsigned nLoops)
 {
 	const Value *pv;
-	map<AfyDB::PropertyID,AfyDB::Value>::const_iterator iter;
+	map<Afy::PropertyID,Afy::Value>::const_iterator iter;
 	size_t size = pvl.size();
 	unsigned npins = pin->getNumberOfProperties();
 	if(size != pin->getNumberOfProperties()) {

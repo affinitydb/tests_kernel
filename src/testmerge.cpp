@@ -1,15 +1,11 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
 #include "app.h"
 #include "mvauto.h"
-
-#ifndef MODE_VERBOSE
-#define MODE_VERBOSE 0
-#endif
 
 #define NPINS	1000
 #define RANGE	100
@@ -110,7 +106,7 @@ int	TestMerge::execute()
 		lQ	= lSession->createStmt();
 		lV[0].setError(lPropIdRef); lV[1].setError(lPropIdRef); lV[2].setRange(&lV[0]);
 		lV[3].set(threshold); // Family query will find all pins with lPropIdVal < threshhold
-		ClassSpec classSpec[2]={{lClassFamilyOnRef,1,&lV[2]},{lClassVal,1,&lV[3]}};
+		SourceSpec classSpec[2]={{lClassFamilyOnRef,1,&lV[2]},{lClassVal,1,&lV[3]}};
 		unsigned char lVar1 = lQ->addVariable(&classSpec[0],1),lVar2 = lQ->addVariable(&classSpec[1],1);
 		lV[0].setVarRef(0,lPropIdRef);
 		lV[1].setVarRef(1,lPropIdPinId);
@@ -120,11 +116,11 @@ int	TestMerge::execute()
 		lQ->setOrder(&ord,1);
 
 		uint64_t lCnt = 0;
-		TVERIFYRC(lQ->count(lCnt,NULL,0,~0u,MODE_VERBOSE));
+		TVERIFYRC(lQ->count(lCnt,NULL,0,~0u));
 		TVERIFY(lCnt == lCount);
 
 		ICursor *lR= NULL;
-		TVERIFYRC(lQ->execute(&lR, NULL, 0,~0u,0,MODE_VERBOSE));
+		TVERIFYRC(lQ->execute(&lR, NULL, 0,~0u,0));
 		IPIN *pInResults;
 		while((pInResults=lR->next())!=NULL)
 		{

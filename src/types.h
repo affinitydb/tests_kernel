@@ -1,15 +1,17 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
+
+Written by Mark Venguerov 2004 - 2010
 
 **************************************************************************************/
 
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
-#include "rc.h"
+#include "../../kernel/include/affinity.h"
 
-using namespace AfyRC;
+using namespace Afy;
 
 #ifdef WIN32
 
@@ -48,7 +50,6 @@ inline	RC	createThread(LPTHREAD_START_ROUTINE pRoutine,LPVOID pParam,HANDLE& thr
 				{thread = ::CreateThread(NULL,0,pRoutine,pParam,0,NULL); return thread==NULL?convCode(GetLastError()):RC_OK;}
 inline	int		getNProcessors() {SYSTEM_INFO si; GetSystemInfo(&si); return si.dwNumberOfProcessors;}
 
-typedef	unsigned __int64	TIMESTAMP;
 #define	TS_DELTA			TIMESTAMP(0)
 inline	void	getTimestamp(TIMESTAMP& ts) {FILETIME ft; GetSystemTimeAsFileTime(&ft); ULARGE_INTEGER li={ft.dwLowDateTime,ft.dwHighDateTime}; ts=li.QuadPart/10+TS_DELTA;}
 
@@ -91,12 +92,15 @@ inline	void	getTimestamp(TIMESTAMP& ts) {FILETIME ft; GetSystemTimeAsFileTime(&f
 #include <algorithm>
 #include <wctype.h>
 #define	__cdecl
-#define	__forceinline inline
-#define _LX_FM		"%016LX"
-#define _LD_FM		"%Ld"
-#define _LU_FM		"%Lu"
-#define W_LD_FM		L"%Ld"
-#define W_LU_FM		L"%Lu"
+#if defined(__x86_64__) && !defined(__APPLE__) // or 64-bit ARM (what is its #define?)
+#define _LX_FM		"%016lX"
+#define _LD_FM		"%ld"
+#define _LU_FM		"%lu"
+#else
+#define _LX_FM		"%016llX"
+#define _LD_FM		"%lld"
+#define _LU_FM		"%llu"
+#endif
 typedef uint8_t		byte;
 typedef uint16_t	ushort;
 typedef	int			HANDLE;
@@ -129,7 +133,6 @@ inline	void		freeAligned(void *p) {free(p);}
 inline	int			getNProcessors() {return (int)sysconf(_SC_NPROCESSORS_ONLN);}
 
 
-typedef	uint64_t	TIMESTAMP;
 #define	TS_DELTA	TIMESTAMP(0x00295e9648864000ULL)
 
 #ifndef Darwin

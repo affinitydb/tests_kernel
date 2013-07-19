@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -73,12 +73,12 @@ void TestCount::testcount(ISession *session)
 	{
 		// Create many pins, all with the same string properties
 		if(i%50 == 0) mLogger.out() << ".";
-		pin = session->createUncommittedPIN();
-		val[0].set(str.c_str());val[0].setPropID(pids[0]);
+		pin = session->createPIN();
+		val[0].set(str.c_str());val[0].setPropID(pids[0]);val[0].meta = META_PROP_FTINDEX;
 
 		// Collection with two strings
-		val[1].set(strcl.c_str());val[1].setPropID(pids[1]);val[1].eid=STORE_LAST_ELEMENT;val[1].op=OP_ADD;
-		val[2].set(strcl1.c_str());val[2].setPropID(pids[1]);val[2].eid=STORE_LAST_ELEMENT;val[2].op=OP_ADD;
+		val[1].set(strcl.c_str());val[1].setPropID(pids[1]);val[1].eid=STORE_LAST_ELEMENT;val[1].op=OP_ADD;val[1].meta = META_PROP_FTINDEX;
+		val[2].set(strcl1.c_str());val[2].setPropID(pids[1]);val[2].eid=STORE_LAST_ELEMENT;val[2].op=OP_ADD;val[2].meta = META_PROP_FTINDEX;
 
 		RC rc = pin->modify(val,3);
 		rc = session->commitPINs(&pin,1);
@@ -146,8 +146,8 @@ void TestCount::testcount(ISession *session)
 	clsquery->destroy(); clsquery = NULL ;
 
 	//query
-	ClassSpec cs;
-	cs.classID = cls;
+	SourceSpec cs;
+	cs.objectID = cls;
 	cs.nParams=0;
 	cs.params=NULL;
 
@@ -180,8 +180,8 @@ void TestCount::testcount(ISession *session)
 	//REVIEW: clone call fails (if (fClass && (vars==NULL||nVars!=1||vars->condFT!=NULL||vars->nCondProps==0&&vars->nCondIdx==0&&vars->nConditions==0)) )
 	TVERIFYRC(defineClass(session,"counttest2",clsquery,&cls));
 
-	ClassSpec cs2;
-	cs2.classID = cls;
+	SourceSpec cs2;
+	cs2.objectID = cls;
 	cs2.nParams=0;
 	cs2.params=NULL;
 

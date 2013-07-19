@@ -93,9 +93,9 @@ void TestMultiColumnIndex2::doTest()
 	va[2].set((unsigned char*)"-77777.77777",12); va[2].property = ids[2]; 
 
 	PID pid;
-	mSession->createPIN(pid,va,3);
+	mSession->createPINAndCommit(pid,va,3);
 
-	ClassSpec spec;
+	SourceSpec spec;
 
 	Value rng[10];
 
@@ -103,7 +103,7 @@ void TestMultiColumnIndex2::doTest()
 	rng[2] = va[1]; rng[3] = va[1]; rng[7].setRange(&rng[2]);
 	rng[4] = va[2]; rng[5] = va[2]; rng[8].setRange(&rng[4]);
 
-	spec.classID = clsid; spec.params = &rng[6]; spec.nParams = 3;
+	spec.objectID = clsid; spec.params = &rng[6]; spec.nParams = 3;
 
 	query = mSession->createStmt();
 
@@ -119,7 +119,7 @@ void TestMultiColumnIndex2::doTest()
 	if (pin) pin->destroy();
 
 	res->destroy(); 
-	spec.classID = clsid2; spec.nParams = 1;
+	spec.objectID = clsid2; spec.nParams = 1;
 
 	query->destroy();
 	query = mSession->createStmt();

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -9,14 +9,12 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "md5stream.h"
 #include "mvauto.h"
 namespace AfyKernel { typedef uint8_t FileID; };
-#include "../../kernel/include/storeio.h"
 
-#define STORE_DYNAMIC_LINK
-#include "localbuilder.h"
+//#define STORE_DYNAMIC_LINK
+//#include "localbuilder.h"
 
 #if defined(WIN32)
 	#include <shellapi.h>
-//	#include <mvcore/sync.h>
 	#include <sys/timeb.h>		
 	#include <direct.h>
 	#ifdef _DEBUG
@@ -24,10 +22,12 @@ namespace AfyKernel { typedef uint8_t FileID; };
 		#define new new(_NORMAL_BLOCK, __FILE__, __LINE__)
 	#endif
 #else
+	#include <fcntl.h>
 	#include <dlfcn.h>
 	#include <signal.h>
 	#include <sys/wait.h>
 	#include <sys/time.h>
+	#include <sys/stat.h>
 #endif
 
 /*
@@ -1191,12 +1191,12 @@ int MVTUtil::executeProcess(
 			std::cout << "'" << lCommand.c_str() << "' succeeded" << std::endl;
 		}
 		return (int)lExitCode;
-	#else		
+	#else	
 		//Linux & Darwin 	
 		lBef = getTimeInMs(); getTimestamp(lBefTS);	
 		int const lForked = fork();
 		if (0 == lForked)
-		{			
+		{					
 			
 			// Child process
 			std::vector<char *> lArgs;
@@ -1269,9 +1269,10 @@ int MVTUtil::executeProcess(
 			// launching (parent) process
 			if ( bVerbose ) 
 				cout << "Launched child process " << lForked << endl;
-			int lExitCode=0;
-			if (lForked != waitpid(lForked, &lExitCode, 0))
-				std::cout << "Problem waiting for forked process!" << std::endl;
+			int lExitCode=0; pid_t ret;
+			while ((ret=waitpid(lForked, &lExitCode, 0))==(pid_t)-1 && errno==EINTR) lExitCode=0;
+			if (ret != lForked)
+				std::cout << "Problem waiting for forked process!" << errno << std::endl;
 			else
 			{
 				if(bIgnoreSignal && WIFSIGNALED(lExitCode))
@@ -1286,14 +1287,14 @@ int MVTUtil::executeProcess(
 				if ( outTS ) { *outTS = lAftTS - lBefTS; }
 				if(WIFSIGNALED(lExitCode))
 					cout << "By signal:" << WTERMSIG(lExitCode) << endl;
-			}				
+			}
 			cout << " Got exit code: " << lExitCode << endl;				
 			return lExitCode;
 		}
 	#endif
 }
 
-void MVTUtil::mapURIs(ISession *pSession, const char *pPropName, int pNumProps, PropertyID *pPropIDs)
+void MVTUtil::mapURIs(ISession *pSession, const char *pPropName, int pNumProps, PropertyID *pPropIDs, const char *base)
 {
 	// MVTUtil::mapURIs is convenient for testing because it mixes 
 	// a random string into the URI to ensure that the property ids are unique
@@ -1308,14 +1309,14 @@ void MVTUtil::mapURIs(ISession *pSession, const char *pPropName, int pNumProps, 
 	for(i = 0; i < pNumProps; i++)
 	{
 		sprintf(lB, "%s%s.%d", pPropName, lPropStr.c_str(), i);
-		lData.URI = lB; lData.uid = STORE_INVALID_PROPID; 
-		if(RC_OK!=pSession->mapURIs(1, &lData)) assert(false);
+		lData.URI = lB; lData.uid = STORE_INVALID_URIID; 
+		if(RC_OK!=pSession->mapURIs(1, &lData, base)) assert(false);
 		pPropIDs[i] = lData.uid;	
 	}
 }
 
 
-void MVTUtil::mapURIs(ISession *pSession, const char *pPropName, int pNumProps, URIMap *pPropMaps)
+void MVTUtil::mapURIs(ISession *pSession, const char *pPropName, int pNumProps, URIMap *pPropMaps, const char *base)
 {
 	char lB[100];	
 	Tstring lPropStr; MVTRand::getString(lPropStr,10,10,false,true);
@@ -1323,8 +1324,8 @@ void MVTUtil::mapURIs(ISession *pSession, const char *pPropName, int pNumProps, 
 	for(i = 0; i < pNumProps; i++)
 	{
 		sprintf(lB, "%s%s.%d", pPropName, lPropStr.c_str(), i);
-		pPropMaps[i].URI = lB; pPropMaps[i].uid = STORE_INVALID_PROPID; 
-		if(RC_OK!=pSession->mapURIs(1, &pPropMaps[i])) assert(false);		
+		pPropMaps[i].URI = lB; pPropMaps[i].uid = STORE_INVALID_URIID; 
+		if(RC_OK!=pSession->mapURIs(1, &pPropMaps[i],base)) assert(false);		
 	}
 }
 
@@ -1337,7 +1338,7 @@ PropertyID MVTUtil::getProp(ISession* inS, const char* inName)
 	if ( RC_OK == inS->mapURIs( 1, &pm ) )
 		return pm.uid ;
 	else
-		return STORE_INVALID_PROPID ;
+		return STORE_INVALID_URIID ;
 }
 
 PropertyID MVTUtil::getPropRand(ISession *pSession, const char *pPropName)
@@ -1350,17 +1351,17 @@ PropertyID MVTUtil::getPropRand(ISession *pSession, const char *pPropName)
 	return getProp( pSession, lFullProp.c_str() ) ;
 }
 
-void MVTUtil::mapStaticProperty(ISession *pSession, const char *pPropName, URIMap &pPropMap)
+void MVTUtil::mapStaticProperty(ISession *pSession, const char *pPropName, URIMap &pPropMap, const char *base)
 {
-	pPropMap.URI = pPropName; pPropMap.uid = STORE_INVALID_PROPID; 
-	if(RC_OK!=pSession->mapURIs(1, &pPropMap)) assert(false);
+	pPropMap.URI = pPropName; pPropMap.uid = STORE_INVALID_URIID; 
+	if(RC_OK!=pSession->mapURIs(1, &pPropMap, base)) assert(false);
 }
 
-void MVTUtil::mapStaticProperty(ISession *pSession, const char *pPropName, PropertyID &pPropID)
+void MVTUtil::mapStaticProperty(ISession *pSession, const char *pPropName, PropertyID &pPropID, const char *base)
 {
 	URIMap lData;
-	lData.URI = pPropName; lData.uid = STORE_INVALID_PROPID; 
-	if(RC_OK!=pSession->mapURIs(1, &lData)) assert(false);
+	lData.URI = pPropName; lData.uid = STORE_INVALID_URIID; 
+	if(RC_OK!=pSession->mapURIs(1, &lData, base)) assert(false);
 	pPropID = lData.uid;	
 }
 
@@ -1518,7 +1519,6 @@ bool MVTUtil::findDuplicatePins( IStmt * lQ, std::ostream & log  )
      
         for(IPIN *lPIN = lR->next(); lPIN!=NULL; lPIN=lR->next(), pos++ )
 	{					
-		bool fDuplicate = false;
 		PID lPID = lPIN->getPID();
 		
 		result = lFoundPIDs.find(lPID);
@@ -1535,7 +1535,6 @@ bool MVTUtil::findDuplicatePins( IStmt * lQ, std::ostream & log  )
 			{
 				log << "(only showing first 100 duplicates)" << std::endl ;
 			}
-			fDuplicate = true;
 			cntDupsFound++ ;
 		}
 		lFoundPIDs.insert(lPID);
@@ -1616,7 +1615,7 @@ ClassID MVTUtil::createUniqueClass(ISession* inS, const char* inPrefix, IStmt* i
 	return clsid;
 }
 
-//Encoding fucntions. adapted from AfyDB::utils.cpp and testosstringperfromance
+//Encoding fucntions. adapted from Afy::utils.cpp and testosstringperfromance
 
 /*
  * There is still open question within implementation below: 
@@ -1944,7 +1943,7 @@ bool MVTUtil::deleteStoreFiles(const char* inDir)
 	pathDatFile += STOREPREFIX DATAFILESUFFIX ;
 
 	#ifdef WIN32
-		//Note: this avoids deleting AfyDB*.dll!
+		//Note: this avoids deleting Afy*.dll!
 		if ( INVALID_FILE_ATTRIBUTES != ::GetFileAttributes(pathDatFile.c_str()) )
 		{
 			bRetVal = 0 != ::DeleteFile(pathDatFile.c_str());
@@ -1964,10 +1963,10 @@ bool MVTUtil::deleteStoreFiles(const char* inDir)
 			// Also any log files (left if store crashed)
 			lCmd = "/C if EXIST " ;
 			lCmd += lDir ;
-			lCmd += "AfyDB*.mv*"; // Catches LOGFILESUFFIX, but also s3io files like pirmap, piwmap
+			lCmd += "Afy*.mv*"; // Catches LOGFILESUFFIX, but also s3io files like pirmap, piwmap
 			lCmd += " ( del " ;
 			lCmd += lDir ;
-			lCmd += "AfyDB*.mv*";
+			lCmd += "Afy*.mv*";
 			lCmd += " )" ;
 			MVTUtil::executeProcess("cmd.exe", lCmd.c_str());
 
@@ -1999,7 +1998,7 @@ bool MVTUtil::deleteStoreFiles(const char* inDir)
 			// -f means silent if file not present
 			lCmd = "bash -c \"rm -f " ;
 			lCmd += lDir ;
-			lCmd += "AfyDB*.mv*"; // Catches LOGFILESUFFIX, but also s3io files like pirmap, piwmap
+			lCmd += "Afy*.mv*"; // Catches LOGFILESUFFIX, but also s3io files like pirmap, piwmap
 			lCmd += "\"" ;
 			if (-1 == system(lCmd.c_str()))
 			  { assert(false); }
@@ -2012,6 +2011,10 @@ bool MVTUtil::deleteStoreFiles(const char* inDir)
 	return bRetVal ;
 }
 
+#if !defined(WIN32) && !defined(Darwin)
+#include <dirent.h>
+#include <fnmatch.h>
+#endif
 
 bool MVTUtil::deleteStore(const char * inIOInit, const char * inStoreDir, const char * inLogDir, bool inbArchiveLogs)
 {
@@ -2025,17 +2028,13 @@ bool MVTUtil::deleteStore(const char * inIOInit, const char * inStoreDir, const 
 #ifdef Darwin        
         string pathDat = inStoreDir ;
         pathDat += "/" ;
-        string rm = "rm " +  pathDat + "affinity.db; rm -rf " + pathDat + "*.txlog";
+        string rm = "rm " +  pathDat + "affinity.store; rm -rf " + pathDat + "*.txlog";
         
 	//int ersh = system( "rm mv.store; rm -rf *.txlog;");
 	int ersh = system( rm.c_str());
 	std::cout << rm.c_str() << " ( " << ersh << ")" << endl;
         return true; 
 #else
-
-	CmvautoPtr<IStoreIO> pStoreIO(MVTUtil::storeIOFromString(inIOInit));
-
-	if ( !pStoreIO.IsValid() ) return false;
 
 	string pathDat = inStoreDir ;
 
@@ -2047,27 +2046,44 @@ bool MVTUtil::deleteStore(const char * inIOInit, const char * inStoreDir, const 
 
 	string datFile = pathDat + STOREPREFIX DATAFILESUFFIX ;
 
-	RC rc = pStoreIO->deleteFile(datFile.c_str());
-	if ( rc != RC_OK && rc != RC_NOTFOUND ) return false;
+#ifdef WIN32
+	::DeleteFile(datFile.c_str());
+#else
+	unlink(datFile.c_str());
+#endif
 
 	string logDir = inStoreDir ;
 	if ( inLogDir != NULL && *inLogDir != '\0' ) {
 		logDir = inLogDir;
 	}
 	#ifdef WIN32
-		logDir += "\\" ;
+		logDir += "\\";
 	#else
-		logDir += "/" ;
+		logDir += "/";
 	#endif	
 
-	pStoreIO->deleteLogFiles(~0u,logDir.c_str(),inbArchiveLogs);
-
-	// This files should be relatively harmless but probably safer to delete them
-	// if they are present
-	string s3iofile = pathDat + STOREPREFIX "afmap";
-	pStoreIO->deleteFile(s3iofile.c_str());
-	s3iofile = pathDat + STOREPREFIX "afwmap";
-	pStoreIO->deleteFile(s3iofile.c_str());
+#ifdef WIN32
+	string mask = logDir + LOGPREFIX"*"LOGFILESUFFIX;
+	WIN32_FIND_DATA findData; HANDLE h=FindFirstFile(mask.c_str(),&findData);
+	if (h!=INVALID_HANDLE_VALUE) {
+		do {string fname = logDir + findData.cFileName; ::DeleteFile(fname.c_str());} while (FindNextFile(h,&findData)==TRUE);
+		FindClose(h);
+	}
+#else
+	DIR *dirP=opendir(logDir.c_str());
+	if (dirP!=NULL) {
+		struct dirent *ep; char buf[PATH_MAX+1]; char *end;
+		while ((ep=readdir(dirP))!=NULL) if (fnmatch(LOGPREFIX"*"LOGFILESUFFIX,ep->d_name,FNM_PATHNAME|FNM_PERIOD)==0) {
+			if (inbArchiveLogs) {
+				// ???
+			}
+			else {
+				string fname = logDir + ep->d_name; unlink(fname.c_str());
+			}
+		}
+		closedir(dirP);
+	}
+#endif
 
 	removeReplicationFiles(pathDat.c_str());
 	return true;
@@ -2098,28 +2114,6 @@ bool MVTUtil::removeReplicationFiles(const char * inPathWithSlash)
 	#endif
 
 	return true;
-}
-
-
-
-IStoreIO *MVTUtil::storeIOFromString(const char * instr)
-{	
-	if ( instr == NULL || strlen(instr) < strlen("ioinit=") )
-	{
-		return BuildStack::LocalBuilder::createDefaultIO();
-	}
-
-	BuildStack::Stream l_stream(instr+strlen("ioinit="));
-	BuildStack::Tokenizer l_tokenizer( &l_stream );
-	BuildStack::LocalBuilder l_stackbuilder( &l_tokenizer );
-
-	if ( RC_OK != (RC)l_stackbuilder.parseStack() )
-	{
-		std::cout << "ERROR Parsing IO Stack" << endl;
-		return NULL;
-	}
-
-	return l_stackbuilder.getStack();
 }
 
 string MVTUtil::completeMultiStoreIOInitString(const string & strConfig, int storeIndex)
@@ -2168,4 +2162,18 @@ string MVTUtil::completeMultiStoreIOInitString(const string & strConfig, int sto
 		}
 	}
 	return strFinalConfig.str();
+}
+
+RC  MVTUtil::getHostname(char* hostname){
+    RC rc = RC_OK;
+    char dirbuf[50];
+    if (hostname==NULL) return RC_INVPARAM;
+#ifdef WIN32
+    DWORD lbuf=sizeof(dirbuf);
+    if (!::GetComputerName(dirbuf,&lbuf)) rc=convCode(GetLastError());
+#else
+    if (gethostname(dirbuf,sizeof(dirbuf))) rc=convCode(errno);
+#endif
+    if (rc!=RC_OK) {printf("%s", "Cannot get host name (%d)\n",rc); return rc;}
+    strncpy(hostname, dirbuf, strlen(dirbuf));return rc;
 }

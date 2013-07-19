@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -34,7 +34,7 @@ class TestFamilies2 : public ITest{
 		int mStartHistogram;
 		int mEndHistogram;
 		int mBoundaryHistogram;
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 
 		// For performance test of import
 #if TEST_IMPORT_PERF
@@ -68,7 +68,7 @@ class TestFamilies2 : public ITest{
 		//virtual bool isLongRunningTest()const {return true;}
 
 public:
-		bool createPINs(ISession *pSession, const int pNumPINs = 10000);
+		bool createPINs(ISession *pSession, const int pNumPINs = 1000);
 		bool modifyPINs(ISession *pSession, int pNumPINs = 10);
 		bool deletePINs(ISession *pSession, int pNumPINs = 100);
 		bool testImportFamily1(ISession *pSession);// For VT_STR
@@ -110,14 +110,14 @@ struct CreatePINThreadInfo
 	PropertyID *mPropIds;
 	int mNumProps;
 	MVTestsPortability::Mutex * mLock;
-	AfyKernel::StoreCtx *mStoreCtx;
+	Afy::IAffinity *mStoreCtx;
 	ITest* mTest ;
 };
 struct GetStreamThreadInfo
 {
 	std::vector<PID> mPIDs;
 	PropertyID mPropID;
-	AfyKernel::StoreCtx *mStoreCtx;
+	Afy::IAffinity *mStoreCtx;
 };
 
 struct RunFamilyThreadInfo
@@ -127,7 +127,7 @@ struct RunFamilyThreadInfo
 	ClassID mFamilyID;
 	int mExpNumPINs;
 	PropertyID mPropID;
-	AfyKernel::StoreCtx *mStoreCtx;
+	Afy::IAffinity *mStoreCtx;
 };
 THREAD_SIGNATURE TestFamilies2::createPINsAsync(void * pInfo)
 {
@@ -141,8 +141,9 @@ THREAD_SIGNATURE TestFamilies2::createPINsAsync(void * pInfo)
 		Value lV[3];		
 		SETVALUE(lV[0],lInfo->mPropIds[0], lInfo->mImageStr.c_str(), OP_SET);
 		SETVALUE(lV[1],lInfo->mPropIds[1], lRand?lInfo->mRandSubStr.c_str():lInfo->mRandStr.c_str(),OP_SET);
+		lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 		lV[2].setDateTime(ui64); lV[2].setPropID(lInfo->mPropIds[2]);
-		IPIN *lPIN = lSession->createUncommittedPIN(lV,3,MODE_COPY_VALUES);
+		IPIN *lPIN = lSession->createPIN(lV,3,MODE_COPY_VALUES);
 		TV_R(lPIN!=NULL,lInfo->mTest);
 		RC rc;
 		lInfo->mLock->lock();
@@ -188,9 +189,9 @@ THREAD_SIGNATURE TestFamilies2::RunFamilyAync(void * pInfo)
 		lParam1[1].setDateTime(lInfo->mEndDate);			
 		lParam[0].setRange(lParam1);
 				
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = lSession->createStmt();
-		lCS.classID = lInfo->mFamilyID;
+		lCS.objectID = lInfo->mFamilyID;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);
@@ -273,7 +274,7 @@ int	TestFamilies2::execute(){
 			{
 				char lB2[64];
 				sprintf(lB2, "TestFamilies2.prop%s.%d", lPropStr.c_str(), i);
-				lData.URI = lB2; lData.uid = STORE_INVALID_PROPID; lSession->mapURIs(1, &lData);
+				lData.URI = lB2; lData.uid = STORE_INVALID_URIID; lSession->mapURIs(1, &lData);
 				mPropIds[i] = lData.uid;
 				Tstring lTStr;MVTRand::getString(lTStr, 10, 50, false);mStr.push_back(lTStr);
 				//mLogger.out() << "mStr[" << i << "]=" << lTStr.c_str() << std::endl;
@@ -404,8 +405,8 @@ bool TestFamilies2::createPINs(ISession *pSession, const int pNumPINs){
 	{
 		if (0 == i % 100)
 			mLogger.out() << ".";
-		lPIN = pSession->createUncommittedPIN();
-		RefVID *lRef = (RefVID *)pSession->alloc(1*sizeof(RefVID));
+		lPIN = pSession->createPIN();
+		RefVID *lRef = (RefVID *)pSession->malloc(1*sizeof(RefVID));
 		int lNumProps = (int)((float)(mNumProps + 1) * rand() / RAND_MAX); // 1 or more properties.
 		lNumProps = lNumProps == 0?1:lNumProps;
 		for (j = 0, iV = 0; j < lNumProps; j++)
@@ -415,7 +416,7 @@ bool TestFamilies2::createPINs(ISession *pSession, const int pNumPINs){
 					{
 						int lIndex = (int)((float)mNumProps * rand() / RAND_MAX); 
 						lIndex = lIndex == mNumProps?mNumProps-1:lIndex;
-						SETVALUE(lPVs[iV], mPropIds[j], mStr[lIndex].c_str(), OP_SET);iV++;
+						SETVALUE(lPVs[iV], mPropIds[j], mStr[lIndex].c_str(), OP_SET);lPVs[iV].meta=META_PROP_FTINDEX;iV++;
 						mNumPINsImportTestStr[lIndex]++; mNumPINsWithStr++;
 					}
 					break;
@@ -423,7 +424,7 @@ bool TestFamilies2::createPINs(ISession *pSession, const int pNumPINs){
 					{
 						int lIndex = (int)((float)mNumProps * rand() / RAND_MAX); 
 						lIndex = lIndex == mNumProps?mNumProps-1:lIndex;
-						SETVALUE(lPVs[iV], mPropIds[j], mWStr[lIndex].c_str(), OP_SET);iV++;
+						SETVALUE(lPVs[iV], mPropIds[j], mWStr[lIndex].c_str(), OP_SET);lPVs[iV].meta=META_PROP_FTINDEX;iV++;
 						mNumPINsImportTestWStr[lIndex]++; mNumPINsWithUStr++;
 					}
 					break;
@@ -538,7 +539,7 @@ bool TestFamilies2::modifyPINs(ISession *pSession, int pNumPINs){
 						{
 							int lIndex = (int)((float)mNumProps * rand() / RAND_MAX);
 							lIndex = lIndex == mNumProps?mNumProps-1:lIndex;
-							SETVALUE(lPVs[iV], mPropIds[j], mStr[lIndex].c_str(), OP_SET);iV++;
+							SETVALUE(lPVs[iV], mPropIds[j], mStr[lIndex].c_str(), OP_SET);lPVs[iV].meta=META_PROP_FTINDEX;iV++;
 							if(lPIN->defined(&mPropIds[j],1)){
 								const Value *lVal = lPIN->getValue(mPropIds[j]);
 								int k;
@@ -553,7 +554,7 @@ bool TestFamilies2::modifyPINs(ISession *pSession, int pNumPINs){
 						{
 							int lIndex = (int)((float)mNumProps * rand() / RAND_MAX);
 							lIndex = lIndex == mNumProps?mNumProps-1:lIndex;
-							SETVALUE(lPVs[iV], mPropIds[j], mWStr[lIndex].c_str(), OP_SET);iV++;
+							SETVALUE(lPVs[iV], mPropIds[j], mWStr[lIndex].c_str(), OP_SET);lPVs[iV].meta=META_PROP_FTINDEX;iV++;
 							if(lPIN->defined(&mPropIds[j],1)){
 								const Value *lVal = lPIN->getValue(mPropIds[j]);
 								int k;
@@ -748,9 +749,9 @@ bool TestFamilies2::testImportFamily1(ISession *pSession){
 		Value lParam[1];
 		int lIndex = (int)((float)mNumProps * rand() / RAND_MAX);
 		lParam[0].set(mStr[lIndex].c_str());		
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID1;
+		lCS.objectID = lCLSID1;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -769,9 +770,9 @@ bool TestFamilies2::testImportFamily1(ISession *pSession){
 			Value lParam[1];
 			int lIndex = (int)((float)(mNumProps - 1) * rand() / RAND_MAX);
 			lParam[0].set(mStr[lIndex].c_str());		
-			ClassSpec lCS;
+			SourceSpec lCS;
 			IStmt * lQ = pSession->createStmt();
-			lCS.classID = lCLSID1;
+			lCS.objectID = lCLSID1;
 			lCS.nParams = 1;
 			lCS.params = lParam;
 			lQ->addVariable(&lCS, 1);		
@@ -795,9 +796,9 @@ bool TestFamilies2::testImportFamily1(ISession *pSession){
 				int lIndex = (int)((float)(mNumProps - 1) * rand() / RAND_MAX);
 			#endif
 			lParam[0].set(mStr[lIndex].c_str());		
-			ClassSpec lCS;
+			SourceSpec lCS;
 			IStmt * lQ = pSession->createStmt();
-			lCS.classID = lCLSID1;
+			lCS.objectID = lCLSID1;
 			lCS.nParams = 1;
 			lCS.params = lParam;
 			lQ->addVariable(&lCS, 1);
@@ -859,9 +860,9 @@ bool TestFamilies2::testImportFamily1(ISession *pSession){
 			Value lParam[1];
 			int lIndex = (int)((float)(mNumProps - 1) * rand() / RAND_MAX);
 			lParam[0].set(mStr[lIndex].c_str());		
-			ClassSpec lCS;
+			SourceSpec lCS;
 			IStmt * lQ = pSession->createStmt();
-			lCS.classID = lCLSID1;
+			lCS.objectID = lCLSID1;
 			lCS.nParams = 1;
 			lCS.params = lParam;
 			lQ->addVariable(&lCS, 1);
@@ -947,9 +948,9 @@ bool TestFamilies2::testImportFamily3(ISession *pSession){
 		lParams[1].set(200);
 		Value lParam[1];
 		lParam[0].setRange(lParams);
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID1;
+		lCS.objectID = lCLSID1;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -1051,9 +1052,9 @@ bool TestFamilies2::testHistogramFamily(ISession *pSession, bool pBoundaryInclud
 		Value lParam[2];
 		lParam[0].set(mStartHistogram);				
 		lParam[1].set(mEndHistogram);				
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 2;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -1083,7 +1084,7 @@ bool TestFamilies2::testHistogramDateFamily(ISession *pSession){
 	{
 		char lB[100];
 		sprintf(lB, "TestFamilies2.testHistogramDateFamily%s.%d", lPropStr.c_str(), i);
-		lData.URI = lB; lData.uid = STORE_INVALID_PROPID; pSession->mapURIs(1, &lData);
+		lData.URI = lB; lData.uid = STORE_INVALID_URIID; pSession->mapURIs(1, &lData);
 		lPropIDs[i] = lData.uid;
 	}
 	uint64_t lui641, lui642, lui643;	
@@ -1105,7 +1106,7 @@ bool TestFamilies2::testHistogramDateFamily(ISession *pSession){
 		Value lV[2];
 		SETVALUE(lV[0],lPropIDs[0], i, OP_SET);
 		lV[1].setDateTime(ui64); lV[1].setPropID(lPropIDs[1]);
-		IPIN *lPIN = pSession->createUncommittedPIN(lV,2,MODE_COPY_VALUES);
+		IPIN *lPIN = pSession->createPIN(lV,2,MODE_COPY_VALUES);
 		TVERIFYRC(pSession->commitPINs(&lPIN,1));
 		lPIN->destroy();
 	}
@@ -1148,7 +1149,7 @@ bool TestFamilies2::testHistogramDateFamily(ISession *pSession){
 			Value lV[2];
 			SETVALUE(lV[0],lPropIDs[0], i, OP_SET);
 			lV[1].setDateTime(ui64); lV[1].setPropID(lPropIDs[1]);
-			IPIN *lPIN = pSession->createUncommittedPIN(lV,2,MODE_COPY_VALUES);
+			IPIN *lPIN = pSession->createPIN(lV,2,MODE_COPY_VALUES);
 			TVERIFY(lPIN!=NULL);
 			if (lPIN!=NULL) {
 				TVERIFYRC(pSession->commitPINs(&lPIN,1));
@@ -1163,9 +1164,9 @@ bool TestFamilies2::testHistogramDateFamily(ISession *pSession){
 		Value lParam[2];
 		lParam[0].setDateTime(lui641);				
 		lParam[1].setDateTime(lui642);
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 2;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -1227,7 +1228,7 @@ bool TestFamilies2::testHistogramDateFamily2(ISession *pSession){
 	{
 		char lB[100];
 		sprintf(lB, "TestFamilies2.testHistogramDateFamily2%s.%d", lPropStr.c_str(), i);
-		lData.URI = lB; lData.uid = STORE_INVALID_PROPID; pSession->mapURIs(1, &lData);
+		lData.URI = lB; lData.uid = STORE_INVALID_URIID; pSession->mapURIs(1, &lData);
 		lPropIDs[i] = lData.uid;
 	}
 	uint64_t mStartDate, mEndDate;
@@ -1246,7 +1247,7 @@ bool TestFamilies2::testHistogramDateFamily2(ISession *pSession){
 		Value lV[2];
 		SETVALUE(lV[0],lPropIDs[0], i, OP_SET);
 		lV[1].setDateTime(ui64); lV[1].setPropID(lPropIDs[1]);
-		IPIN *lPIN = pSession->createUncommittedPIN(lV,2,MODE_COPY_VALUES);
+		IPIN *lPIN = pSession->createPIN(lV,2,MODE_COPY_VALUES);
 		TVERIFY(lPIN!=NULL);
 		if (lPIN!=NULL) {
 			TVERIFYRC(pSession->commitPINs(&lPIN,1));
@@ -1311,10 +1312,10 @@ bool TestFamilies2::testHistogramDateFamily2(ISession *pSession){
 			lNumParams = 1;
 		#endif		
 		
-		ClassSpec lCS;
+		SourceSpec lCS;
 		int lNumActualPINs = 0;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID;
+		lCS.objectID = lCLSID;
 		lCS.nParams = lNumParams;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -1428,7 +1429,7 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 	{
 		char lB[100];
 		sprintf(lB, "TestFamilies2.testFamilyWithMultiConditions%s.%d", lPropStr.c_str(), i);
-		lData.URI = lB; lData.uid = STORE_INVALID_PROPID; pSession->mapURIs(1, &lData);
+		lData.URI = lB; lData.uid = STORE_INVALID_URIID; pSession->mapURIs(1, &lData);
 		lPropIDs[i] = lData.uid;
 	}
 	/*
@@ -1461,8 +1462,9 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 			Value lV[3];		
 			SETVALUE(lV[0],lPropIDs[0], lImageStr.c_str(), OP_SET);
 			SETVALUE(lV[1],lPropIDs[1], lRand?lRandSubStr.c_str():lRandStr.c_str(),OP_SET);
+			lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 			lV[2].setDateTime(ui64); lV[2].setPropID(lPropIDs[2]);
-			IPIN *lPIN = pSession->createUncommittedPIN(lV,3,MODE_COPY_VALUES);
+			IPIN *lPIN = pSession->createPIN(lV,3,MODE_COPY_VALUES);
 			TVERIFY(lPIN!=NULL);
 			if (lPIN!=NULL) {
 				TVERIFYRC(pSession->commitPINs(&lPIN,1));
@@ -1498,8 +1500,8 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 
 
 		lQ = pSession->createStmt();
-		ClassSpec lRange[1];
-		lRange[0].classID = lCLSImageID;
+		SourceSpec lRange[1];
+		lRange[0].objectID = lCLSImageID;
 		lRange[0].nParams = 0;
 		lRange[0].params = NULL;
 
@@ -1553,8 +1555,9 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 			Value lV[3];		
 			SETVALUE(lV[0],lPropIDs[0], lImageStr.c_str(), OP_SET);
 			SETVALUE(lV[1],lPropIDs[1], lRand?lRandSubStr.c_str():lRandStr.c_str(),OP_SET);
+			lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 			lV[2].setDateTime(ui64); lV[2].setPropID(lPropIDs[2]);
-			IPIN *lPIN = pSession->createUncommittedPIN(lV,3,MODE_COPY_VALUES);
+			IPIN *lPIN = pSession->createPIN(lV,3,MODE_COPY_VALUES);
 			if(RC_OK!=pSession->commitPINs(&lPIN,1)) 
 				mLogger.out() << "Hit 1730 assert ";
 			else
@@ -1577,10 +1580,10 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 			lNumExpectedPINs = lNumExpPINs;			
 			lParam[0].set(lRandSubStr.c_str());
 		}		
-		ClassSpec lCS;
+		SourceSpec lCS;
 		int lNumActualPINs = 0;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -1626,7 +1629,7 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 	{
 		char lB[100];
 		sprintf(lB, "TestFamilies2.testAsyncPINCreationWithFamily%s.%d", lPropStr.c_str(), i);
-		lData.URI = lB; lData.uid = STORE_INVALID_PROPID; pSession->mapURIs(1, &lData);
+		lData.URI = lB; lData.uid = STORE_INVALID_URIID; pSession->mapURIs(1, &lData);
 		lPropIDs[i] = lData.uid;
 	}
 	/*
@@ -1694,8 +1697,8 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 
 
 	IStmt *lQ = pSession->createStmt();
-	ClassSpec lRange[1];
-	lRange[0].classID = lCLSImageID;
+	SourceSpec lRange[1];
+	lRange[0].objectID = lCLSImageID;
 	lRange[0].nParams = 0;
 	lRange[0].params = NULL;
 	unsigned char lVar = lQ->addVariable(lRange,1);
@@ -1726,9 +1729,9 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 		lParam1[1].setDateTime(lEndDate);			
 		lParam[0].setRange(lParam1);
 		int lNumPINsInFamily = 0;
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -1764,7 +1767,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 	{
 		char lB[100];
 		sprintf(lB, "TestFamilies2.testClassInClassFamily%s.%d", lPropStr.c_str(), i);
-		lData.URI = lB; lData.uid = STORE_INVALID_PROPID; pSession->mapURIs(1, &lData);
+		lData.URI = lB; lData.uid = STORE_INVALID_URIID; pSession->mapURIs(1, &lData);
 		lPropIDs[i] = lData.uid;
 	}
 	/*
@@ -1812,8 +1815,8 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		unsigned char lVar;
 		if(pUseClass)
 		{
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			lVar = lQ->addVariable(lRange,1);
@@ -1846,8 +1849,8 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		unsigned char lVar;
 		if(pUseClass)
 		{
-			ClassSpec lRange[1];
-			lRange[0].classID = lCLSImageID;
+			SourceSpec lRange[1];
+			lRange[0].objectID = lCLSImageID;
 			lRange[0].nParams = 0;
 			lRange[0].params = NULL;
 			lVar = lQ->addVariable(lRange,1);
@@ -1882,8 +1885,8 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 	{
 		IStmt *lQ = pSession->createStmt();
 		lQ = pSession->createStmt();
-		ClassSpec lRange[1];
-		lRange[0].classID = lCLSBelongID;
+		SourceSpec lRange[1];
+		lRange[0].objectID = lCLSBelongID;
 		lRange[0].nParams = 0;
 		lRange[0].params = NULL;
 		unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -1910,8 +1913,8 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 	{
 		IStmt *lQ = pSession->createStmt();
 		lQ = pSession->createStmt();
-		ClassSpec lRange[1];
-		lRange[0].classID = lCLSNotBelongID;
+		SourceSpec lRange[1];
+		lRange[0].objectID = lCLSNotBelongID;
 		lRange[0].nParams = 0;
 		lRange[0].params = NULL;
 		unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -1940,8 +1943,9 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		Value lV[3];		
 		SETVALUE(lV[0],lPropIDs[0], lImageStr.c_str(), OP_SET);
 		SETVALUE(lV[1],lPropIDs[1], lRand?lRandSubStr.c_str():lRandStr.c_str(),OP_SET);
+		lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 		lV[2].setDateTime(ui64); lV[2].setPropID(lPropIDs[2]);
-		IPIN *lPIN = pSession->createUncommittedPIN(lV,3,MODE_COPY_VALUES);
+		IPIN *lPIN = pSession->createPIN(lV,3,MODE_COPY_VALUES);
 		TVERIFY(lPIN!=NULL);
 		if (lPIN!=NULL) {
 			TVERIFYRC(pSession->commitPINs(&lPIN,1));
@@ -1961,9 +1965,9 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		lParam1[1].setDateTime(lEndDate);			
 		lParam[0].setRange(lParam1);
 				
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSIDBelong;
+		lCS.objectID = lCLSIDBelong;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);
@@ -1987,9 +1991,9 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		lParam1[1].setDateTime(lEndDate);			
 		lParam[0].setRange(lParam1);
 				
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSIDNotBelong;
+		lCS.objectID = lCLSIDNotBelong;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);
@@ -2036,9 +2040,9 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		lParam1[1].setDateTime(lEndDate);			
 		lParam[0].setRange(lParam1);
 				
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSIDBelong;
+		lCS.objectID = lCLSIDBelong;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);
@@ -2088,9 +2092,9 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		lParam1[1].setDateTime(lEndDate);			
 		lParam[0].setRange(lParam1);
 				
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSIDNotBelong;
+		lCS.objectID = lCLSIDNotBelong;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);
@@ -2123,7 +2127,7 @@ bool TestFamilies2::testFamilyWithOrderBy(ISession *pSession, int pOrderBy)
 	{
 		char lB[100];
 		sprintf(lB, "TestFamilies2.testFamilyWithOrderBy%s.%d", lPropStr.c_str(), i);
-		lData.URI = lB; lData.uid = STORE_INVALID_PROPID; pSession->mapURIs(1, &lData);
+		lData.URI = lB; lData.uid = STORE_INVALID_URIID; pSession->mapURIs(1, &lData);
 		lPropIDs[i] = lData.uid;
 	}
 	Tstring lImageStr; MVTRand::getString(lImageStr,10,50,false,false);
@@ -2157,13 +2161,14 @@ bool TestFamilies2::testFamilyWithOrderBy(ISession *pSession, int pOrderBy)
 		Tstring lPropStr; MVTRand::getString(lPropStr,10,50,true,false);
 		SETVALUE(lV[0],lPropIDs[0], lPropStr.c_str(), OP_SET);
 		SETVALUE(lV[1],lPropIDs[1], lRand?lRandStr.c_str():lImageStr.c_str(),OP_SET);
+		lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 		lV[2].setDateTime(ui64); lV[2].setPropID(lPropIDs[2]);
 		SETVALUE(lV[3],lPropIDs[3],i,OP_SET);
 		int lSize = (int) ((float)rand() * 20000/RAND_MAX);
 		IStream *lStream1 = MVTApp::wrapClientStream(pSession, new MyFamilyStream(lSize > 0? lSize:2000));
-		lV[4].set(lStream1);lV[4].setPropID(lPropIDs[4]);lV[4].setMeta(META_PROP_NOFTINDEX |META_PROP_SSTORAGE);
+		lV[4].set(lStream1);lV[4].setPropID(lPropIDs[4]);lV[4].setMeta(META_PROP_SSTORAGE);
 
-		IPIN *lPIN = pSession->createUncommittedPIN(lV,5,MODE_COPY_VALUES);
+		IPIN *lPIN = pSession->createPIN(lV,5,MODE_COPY_VALUES);
 		TVERIFYRC(pSession->commitPINs(&lPIN,1));
 		if(lRand) lNumExpPINs++;
 		lPIN->destroy();
@@ -2173,9 +2178,9 @@ bool TestFamilies2::testFamilyWithOrderBy(ISession *pSession, int pOrderBy)
 	{
 		Value lParam[1];
 		lParam[0].set(lRandStr.c_str());		
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -2282,8 +2287,8 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 	{
 		IStmt *lQ = pSession->createStmt();
 		unsigned char lVar;
-		ClassSpec lRange[1];
-		lRange[0].classID = lCLSImageID;
+		SourceSpec lRange[1];
+		lRange[0].objectID = lCLSImageID;
 		lRange[0].nParams = 0;
 		lRange[0].params = NULL;
 		lVar = lQ->addVariable(lRange,1);		
@@ -2330,8 +2335,8 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 		// pin is lCLSSubImageID and prop2 IN var1 (range of dates)
 
 		IStmt *lQ = pSession->createStmt();
-		ClassSpec lRange[1];
-		lRange[0].classID = lCLSSubImageID;
+		SourceSpec lRange[1];
+		lRange[0].objectID = lCLSSubImageID;
 		lRange[0].nParams = 0;
 		lRange[0].params = NULL;
 		unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -2369,14 +2374,14 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 			/* Put full string in, so that this PIN will drop out of the class (because of prop1 != 'xyz' clause) */
 			SETVALUE(lV[1],lPropIDs[1], lRandStr.c_str(),OP_SET);	
 		}
-
+		lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 		lV[2].setDateTime(ui64); lV[2].setPropID(lPropIDs[2]);		
 
 		/* Use stream to simulate creation of a large binary blob, similar to photo data on a photo */
 		IStream *lStream = MVTApp::wrapClientStream(pSession,new MyFamilyStream(1000));
-		SETVALUE(lV[3],lPropIDs[3], lStream, OP_SET); lV[3].meta = META_PROP_NOFTINDEX | META_PROP_SSTORAGE;		
+		SETVALUE(lV[3],lPropIDs[3], lStream, OP_SET); lV[3].meta = META_PROP_SSTORAGE;		
 
-		IPIN *lPIN = pSession->createUncommittedPIN(lV,4,MODE_COPY_VALUES);
+		IPIN *lPIN = pSession->createPIN(lV,4,MODE_COPY_VALUES);
 		TVERIFYRC(pSession->commitPINs(&lPIN,1)); 
 		if(ui64 >= lStartDate && ui64 <= lEndDate && bNoMatchOnExcludeString) ++lExpNumPINs;
 		lPIDList.push_back(lPIN->getPID());
@@ -2402,8 +2407,8 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 		lParam1[1].setDateTime(lEndDate);			
 		lParam[0].setRange(lParam1);
 				
-		ClassSpec lCS;
-		lCS.classID = lFamilyID;
+		SourceSpec lCS;
+		lCS.objectID = lFamilyID;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 
@@ -2570,9 +2575,9 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	{
 		Value lParam[1];
 		lParam[0].set(lVArrayINT, lINT);
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -2586,9 +2591,9 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	{
 		Value lParam[1];
 		lParam[0].set(lVArrayString, lSTRING);
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID1;
+		lCS.objectID = lCLSID1;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -2602,9 +2607,9 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	{
 		Value lParam[1];
 		lParam[0].set(lVArrayUString, lUSTR);
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID2;
+		lCS.objectID = lCLSID2;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -2618,9 +2623,9 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	{
 		Value lParam[1];
 		lParam[0].set(lCNAVIGATORINT);
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -2634,9 +2639,9 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	{
 		Value lParam[1];
 		lParam[0].set(lCNAVIGATORSTRING);
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID1;
+		lCS.objectID = lCLSID1;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -2650,9 +2655,9 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	{
 		Value lParam[1];
 		lParam[0].set(lCNAVIGATORUSTR);
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lCLSID2;
+		lCS.objectID = lCLSID2;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);		
@@ -2704,6 +2709,7 @@ void TestFamilies2::AddRandomTagCollection( ISession* pSession, const std::vecto
 			MVTRand::getString(lStr,10,10,false/*words*/,false/*keepcase*/);
 			lStrList[j] =lStr;
 			SETVALUE_C(lV[j],prop, lStrList[j].c_str(),OP_ADD, STORE_LAST_ELEMENT);
+			lV[j].meta = META_PROP_FTINDEX;
 		}
 		IPIN *lPIN = pSession->getPIN(pids[i]); TVERIFY(lPIN != NULL) ;
 		TVERIFYRC(lPIN->modify(lV,lNumElements));
@@ -2723,7 +2729,7 @@ void TestFamilies2::AddKnownTag( ISession* pSession, const std::vector<PID> & pi
 	{
 		Value val ;
 		val.set( inTag ) ; val.property = prop ; val.op = OP_ADD ;
-
+		val.meta = META_PROP_FTINDEX;
 		IPIN *lPIN = pSession->getPIN(pids[i]); TVERIFY(lPIN != NULL) ;
 		TVERIFYRC(lPIN->modify(&val,1));
 		lPIN->destroy();
@@ -2744,7 +2750,7 @@ bool TestFamilies2::testImageImportPerf(ISession *pSession){
 		sprintf(lB1, "prop%d", i);
 		sprintf(lB2, "TestFamilies2.imageimportprop%d", i);
 
-		lData.URI = lB2; lData.uid = STORE_INVALID_PROPID; pSession->mapURIs(1, &lData);
+		lData.URI = lB2; lData.uid = STORE_INVALID_URIID; pSession->mapURIs(1, &lData);
 		mImagePropIds[i] = lData.uid;
 	}
 	Tstring lStr, lBaseStr; int lIter = 1000, k;
@@ -2818,9 +2824,9 @@ bool TestFamilies2::testImageImportPerf(ISession *pSession){
 			#else
 				lParam[0].set(mImageStr[lStrIndex].c_str());
 			#endif
-			ClassSpec lCS;
+			SourceSpec lCS;
 			IStmt * lQ = pSession->createStmt();
-			lCS.classID = lCLSID;
+			lCS.objectID = lCLSID;
 			lCS.nParams = 1;
 			lCS.params = lParam;
 			lQ->addVariable(&lCS, 1);
@@ -2919,7 +2925,7 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 	for(i = 0, k = 0;i < pNumPINs && lSuccess; i++, k++){
 		if (0 == i % 100)
 			mLogger.out() << ".";		
-		//lPIN = pSession->createUncommittedPIN(0,0,MODE_COPY_VALUES);
+		//lPIN = pSession->createPIN(0,0,MODE_COPY_VALUES);
 
 				// 'fs_path_index' property
 		#if USE_LESS_STRINGS
@@ -2936,7 +2942,7 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 		#endif
 
 		// 'mime' property		
-		SETVALUE(lPVs[1],mImagePropIds[1],"image/jpeg",OP_SET);lPVs[1].setMeta(META_PROP_NOFTINDEX);
+		SETVALUE(lPVs[1],mImagePropIds[1],"image/jpeg",OP_SET);
 
 		// 'name' property
 		Tstring lStr;MVTRand::getString(lStr,15,50,false,false);
@@ -2951,7 +2957,7 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 		// 'binary' property
 		int lSize = (int) ((float)1000 * rand()/RAND_MAX);
 		IStream *lStream1 = MVTApp::wrapClientStream(pSession, new MyFamilyStream(lSize > 0? lSize:80));
-		lPVs[5].set(lStream1);lPVs[5].setPropID(mImagePropIds[1]);lPVs[5].setMeta(META_PROP_NOFTINDEX |META_PROP_SSTORAGE);
+		lPVs[5].set(lStream1);lPVs[5].setPropID(mImagePropIds[1]);lPVs[5].setMeta(META_PROP_SSTORAGE);
 
 		// 'date' property
 		if(pTime!=0)
@@ -2969,6 +2975,7 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 
 		// 'exif_mode1' property
 		SETVALUE(lPVs[7],mImagePropIds[8],"canon",OP_SET);
+		lPVs[7].meta = META_PROP_FTINDEX;
 
 		// 'exif_fnumber' property
 		SETVALUE(lPVs[8],mImagePropIds[9],float(1.0),OP_SET);
@@ -2994,13 +3001,14 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 		// 'preview' property
 		lSize = (int) ((float)1000 * rand()/RAND_MAX);
 		IStream *lStream2 = MVTApp::wrapClientStream(pSession, new MyFamilyStream(lSize > 0? lSize:40));
-		lPVs[15].set(lStream2);lPVs[15].setPropID(mImagePropIds[16]);lPVs[15].setMeta(META_PROP_NOFTINDEX|META_PROP_SSTORAGE);
+		lPVs[15].set(lStream2);lPVs[15].setPropID(mImagePropIds[16]);lPVs[15].setMeta(META_PROP_SSTORAGE);
 
 		// 'exif_make' property
 		SETVALUE(lPVs[16],mImagePropIds[17],"",OP_SET);
 
 		// 'refresh-node-id' property
-		SETVALUE(lPVs[17],mImagePropIds[2],"007-pinode.mvstore.org",OP_SET);lPVs[17].setMeta(META_PROP_NOFTINDEX);
+		SETVALUE(lPVs[17],mImagePropIds[2],"007-pinode.mvstore.org",OP_SET);
+		lPVs[17].meta = META_PROP_FTINDEX;
 
 		// 'exif_width' property
 		SETVALUE(lPVs[18],mImagePropIds[19],665,OP_SET);
@@ -3023,7 +3031,7 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 			lSuccess = false;
 		}
 		*/
-		lPIN = pSession->createUncommittedPIN(lPVs,mImageNumProps+2,MODE_COPY_VALUES);
+		lPIN = pSession->createPIN(lPVs,mImageNumProps+2,MODE_COPY_VALUES);
 		if(lCluster){
 			lClusterPINs.push_back(lPIN);
 		}else{
@@ -3112,8 +3120,8 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		IStmt *lQ = pSession->createStmt();
 		lQ = pSession->createStmt();
 		unsigned char lVar;
-		ClassSpec lRange[1];
-		lRange[0].classID = lCLSImageID;
+		SourceSpec lRange[1];
+		lRange[0].objectID = lCLSImageID;
 		lRange[0].nParams = 0;
 		lRange[0].params = NULL;
 		lVar = lQ->addVariable(lRange,1);		
@@ -3158,8 +3166,8 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 	{
 		IStmt *lQ = pSession->createStmt();
 		lQ = pSession->createStmt();
-		ClassSpec lRange[1];
-		lRange[0].classID = lCLSSubImageID;
+		SourceSpec lRange[1];
+		lRange[0].objectID = lCLSSubImageID;
 		lRange[0].nParams = 0;
 		lRange[0].params = NULL;
 		unsigned const char lVar = lQ->addVariable(lRange,1);		
@@ -3188,10 +3196,10 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		TIMESTAMP ui64 = MVTRand::getDateTime(pSession);
 		bool lRand = (int)((float)rand() * lNumPINsToCreate/RAND_MAX) > (int)lNumPINsToCreate/2;
 		Value lV[25]; int lIndex = 0;   		
-		SETVALUE(lV[lIndex],lPropIDs[0], lImageStr.c_str(), OP_SET);lIndex++;
-		SETVALUE(lV[lIndex],lPropIDs[1], lRand?lRandSubStr.c_str():lRandStr.c_str(),OP_SET);lIndex++;
+		SETVALUE(lV[lIndex],lPropIDs[0], lImageStr.c_str(), OP_SET);lV[lIndex].meta=META_PROP_FTINDEX;lIndex++;
+		SETVALUE(lV[lIndex],lPropIDs[1], lRand?lRandSubStr.c_str():lRandStr.c_str(),OP_SET);lV[lIndex].meta=META_PROP_FTINDEX;lIndex++;
 		lV[lIndex].setDateTime(ui64); lV[lIndex].setPropID(lPropIDs[2]);lIndex++;
-		SETVALUE(lV[lIndex],lPropIDs[lIndex], "Life is a bitch, FUCK it!", OP_SET);lIndex++;
+		SETVALUE(lV[lIndex],lPropIDs[lIndex], "Life is a bitch, FUCK it!", OP_SET);lV[lIndex].meta=META_PROP_FTINDEX;lIndex++;
 		std::vector<Tstring> lStrList; Tstring lStr;
 		if(pCollWithCommit)
 		{
@@ -3206,9 +3214,10 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 			for(j = 0; j < lNumElements; j++,lIndex++)
 			{			
 				SETVALUE_C(lV[lIndex],lPropIDs[1], lStrList[j].c_str(),OP_ADD, STORE_LAST_ELEMENT);
+				lV[lIndex].meta=META_PROP_FTINDEX;
 			}
 		}
-		IPIN *lPIN = pSession->createUncommittedPIN(lV,lIndex,MODE_COPY_VALUES);
+		IPIN *lPIN = pSession->createPIN(lV,lIndex,MODE_COPY_VALUES);
 		TVERIFYRC(pSession->commitPINs(&lPIN,1));
 		if(ui64 >= lStartDate && ui64 <= lEndDate && lRand) ++lExpNumPINs;
 		lPIDList.push_back(lPIN->getPID());
@@ -3236,6 +3245,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 			for(j = 0; j < lNumElements; j++)
 			{			
 				SETVALUE_C(lV[j],lPropIDs[1], lStrList[j].c_str(),OP_ADD, STORE_LAST_ELEMENT);
+				lV[j].meta=META_PROP_FTINDEX
 			}
 			IPIN *lPIN = pSession->getPIN(lPIDList[i]); TVERIFY(lPIN!=NULL);
 			if (lPIN!=NULL) {
@@ -3255,9 +3265,9 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		lParam1[1].setDateTime(lEndDate);			
 		lParam[0].setRange(lParam1);
 				
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lFamilyID;
+		lCS.objectID = lFamilyID;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);
@@ -3305,9 +3315,9 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		lParam1[1].setDateTime(lEndDate);			
 		lParam[0].setRange(lParam1);
 				
-		ClassSpec lCS;
+		SourceSpec lCS;
 		IStmt * lQ = pSession->createStmt();
-		lCS.classID = lFamilyID;
+		lCS.objectID = lFamilyID;
 		lCS.nParams = 1;
 		lCS.params = lParam;
 		lQ->addVariable(&lCS, 1);

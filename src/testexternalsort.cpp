@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -122,7 +122,6 @@ void TestExternalSort::doTest(int newpins)
 			baseStr[0]='a'+MVTRand::getRange(0,25);
 
 			v[0].set(baseStr); 
-			v[0].meta=META_PROP_NOFTINDEX;
 			v[0].property=mProp1;
 
 			ulong cntProps=1;
@@ -141,7 +140,7 @@ void TestExternalSort::doTest(int newpins)
 			}
 
 			PID pid ;
-			TVERIFYRC(mSession->createPIN(pid,v,cntProps));
+			TVERIFYRC(mSession->createPINAndCommit(pid,v,cntProps));
 		}
 		mSession->commit(true);
 	}

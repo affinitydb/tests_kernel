@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -54,11 +54,11 @@ void TestRename::testrename(ISession *session)
 	Tstring str;
 	/*
 	//declare a few properties
-	pm[0].URI ="Name";pm[0].displayName = "Name";pm[0].uid=STORE_INVALID_PROPID;
-	pm[1].URI ="Age";pm[1].displayName = "Age";pm[1].uid=STORE_INVALID_PROPID;
-	pm[2].URI ="Club";pm[2].displayName = "Club";pm[2].uid=STORE_INVALID_PROPID;
-	pm[3].URI ="Country";pm[3].displayName = "Country";pm[3].uid=STORE_INVALID_PROPID;
-	pm[4].URI ="Position";pm[4].displayName = "Position";pm[4].uid=STORE_INVALID_PROPID;
+	pm[0].URI ="Name";pm[0].displayName = "Name";pm[0].uid=STORE_INVALID_URIID;
+	pm[1].URI ="Age";pm[1].displayName = "Age";pm[1].uid=STORE_INVALID_URIID;
+	pm[2].URI ="Club";pm[2].displayName = "Club";pm[2].uid=STORE_INVALID_URIID;
+	pm[3].URI ="Country";pm[3].displayName = "Country";pm[3].uid=STORE_INVALID_URIID;
+	pm[4].URI ="Position";pm[4].displayName = "Position";pm[4].uid=STORE_INVALID_URIID;
 	session->mapURIs(5,pm);
 	*/
 	MVTApp::mapURIs(session,"TestOpRename.testrename",6,pm);
@@ -69,7 +69,7 @@ void TestRename::testrename(ISession *session)
 	MVTRand::getString(str,100,0,true,true);
 	val[1].set(str.c_str());val[1].setPropID(pm[1].uid);
 
-	RC rc = session->createPIN(pid,val,2);
+	RC rc = session->createPINAndCommit(pid,val,2);
 	pin = session->getPIN(pid);
 
 	//rename the property 2 to property 5
@@ -102,7 +102,7 @@ void TestRename::testrename(ISession *session)
 	MVTRand::getString(str,100,0,true,true);
 	val[1].set(str.c_str());val[1].setPropID(pm[3].uid);
 
-	rc = session->createPIN(pid,val,2);
+	rc = session->createPINAndCommit(pid,val,2);
 	pin = session->getPIN(pid);
 
 	//rename the property 3 to property 1
@@ -119,7 +119,7 @@ void TestRename::testrename(ISession *session)
 	MVTRand::getString(str,100,0,true,true);
 	val[0].set(str.c_str());val[0].setPropID(pm[2].uid);
 	val[1].set(12345);val[1].setPropID(pm[0].uid);
-	pin = session->createUncommittedPIN(val,2,MODE_COPY_VALUES);
+	pin = session->createPIN(val,2,MODE_COPY_VALUES);
 
 	val[0].setRename(pm[2].uid,pm[1].uid);
 	rc = pin->modify(val,1);
@@ -137,7 +137,7 @@ void TestRename::testrename(ISession *session)
 	MVTRand::getString(str,75,100,true,true);
 	val[1].set(str.c_str());val[1].setPropID(pm[0].uid);
 	val[1].op = OP_ADD; val[1].eid = STORE_LAST_ELEMENT;
-	rc = session->createPIN(pid,val,2);
+	rc = session->createPINAndCommit(pid,val,2);
 	
 	if(RC_OK == rc){
 		pin = session->getPIN(pid);
@@ -150,7 +150,7 @@ void TestRename::testrename(ISession *session)
 	}
 	//case 5: rename a pin with a stream property.
 	val[0].set(MVTApp::wrapClientStream(session, new MyStream(120000)));val[0].setPropID(pm[0].uid);
-	rc = session->createPIN(pid,val,1);
+	rc = session->createPINAndCommit(pid,val,1);
 
 	if(RC_OK == rc){
 		pin = session->getPIN(pid);
@@ -183,7 +183,7 @@ void TestRename::testrename(ISession *session)
 	
 	MVTRand::getString(str,100,0,true,true);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);
-	rc = session->createPIN(pid,val,1);
+	rc = session->createPINAndCommit(pid,val,1);
 
 	if(RC_OK == rc){
 		pin = session->getPIN(pid);

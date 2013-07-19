@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -51,7 +51,7 @@ void TestFTIndexRebuild::testFTRebuild(ISession *session)
 	CFileStream *lfilestream = new CFileStream(lfilePath,false);
 	IStream *stream = MVTApp::wrapClientStream(session,lfilestream);
 	PID pid;
-	TVERIFYRC(session->createPIN(pid,NULL,0));
+	TVERIFYRC(session->createPINAndCommit(pid,NULL,0));
 
 	Value val[1];
 	IPIN *pin = session->getPIN(pid);
@@ -96,8 +96,8 @@ void TestFTIndexRebuild::verifyMiscOps(ISession *session)
 {
 	Value val[4];
 	//case 1: META_PROP_NOFTINDEX should be honored
-	IPIN *pin = session->createUncommittedPIN();
-	val[0].set("Wollongabba");val[0].setPropID(mPropIds[1]);val[0].meta = META_PROP_NOFTINDEX;
+	IPIN *pin = session->createPIN();
+	val[0].set("Wollongabba");val[0].setPropID(mPropIds[1]);
 	TVERIFYRC(pin->modify(val,1));
 	TVERIFYRC(session->commitPINs(&pin,1));
 	pin->destroy();
@@ -105,19 +105,19 @@ void TestFTIndexRebuild::verifyMiscOps(ISession *session)
 	TVERIFY(verify2(session,"Wollongabba",0));
 
     //case 2: META_PROP_STOPWORDS should be honored
-	pin = session->createUncommittedPIN();
-	val[0].set("brisbane is somewhere");val[0].setPropID(mPropIds[1]);val[0].meta = META_PROP_STOPWORDS;
+	pin = session->createPIN();
+	val[0].set("brisbane is somewhere");val[0].setPropID(mPropIds[1]);	//val[0].meta = META_PROP_STOPWORDS;	-- always excludes stopwords
 	TVERIFYRC(pin->modify(val,1));
 	TVERIFYRC(session->commitPINs(&pin,1));
 	pin->destroy();
 	TVERIFYRC(session->rebuildIndexFT());
 	TVERIFY(verify2(session,"somewhere",0));
 
-    //case 3: PIN_NOINDEX should be honored
-	pin = session->createUncommittedPIN();
+    //case 3: PIN_HIDDEN should be honored
+	pin = session->createPIN();
 	val[0].set("adeleide is somewhere");val[0].setPropID(mPropIds[1]);
 	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1,PIN_NO_INDEX));
+	TVERIFYRC(session->commitPINs(&pin,1,PIN_HIDDEN));
 	pin->destroy();
 	TVERIFYRC(session->rebuildIndexFT());
 	TVERIFY(verify2(session,"adeleide",0));

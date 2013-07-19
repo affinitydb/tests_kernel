@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -67,10 +67,6 @@ void TestMigrationQueryPerf::preTestInitialize()
 
 void TestMigrationQueryPerf::initializeTest()
 {
-	mPinPageAllocCtrl.arrayThreshold = ~0ul ; // Use internal ARRAY_THRESHOLD (256)
-	mPinPageAllocCtrl.ssvThreshold = ~0ul ;  // REVIEW
-	mPinPageAllocCtrl.pctPageFree = mFreeSpacePercentage ; 
-	TVERIFYRC(mSession->setPINAllocationParameters(&mPinPageAllocCtrl)) ;
 
 	PhotoScenario::initializeTest() ;
 
@@ -84,7 +80,7 @@ void TestMigrationQueryPerf::addACLs(PID & inPID, const char ** ids, unsigned in
 		Value aclVal ;
 		aclVal.setIdentity( mSession->getIdentityID(ids[i]) ) ;
 		aclVal.property = PROP_SPEC_ACL ;
-		aclVal.meta = ACL_READ ;
+		aclVal.meta = META_PROP_READ ;
 		aclVal.op = OP_ADD ;  // Important for building collection
 		TVERIFYRC(mSession->modifyPIN( inPID, &aclVal, 1 )) ;
 	}
@@ -118,7 +114,6 @@ void TestMigrationQueryPerf::populateStore()
 	{		
 		MVTRand::getString( strRandom[k], 50, 10 ) ;
 		extraVals[k].set( strRandom[k].c_str() ) ;
-		extraVals[k].meta = META_PROP_NOFTINDEX ; /* don't want extra FT index to slow down test results */		
 		extraVals[k].property = ids[k] ;
 	}
 
@@ -339,7 +334,7 @@ PID TestMigrationQueryPerf::addPhotoPin(Value * pExtra, unsigned int cntExtra)
 	unsigned long lStrmsize = MVTRand::getRange(1,10000) ;
 
 	IStream *lStream = MVTApp::wrapClientStream(mSession,new TestStringStream(lStrmsize,VT_BSTR));
-	vals[2].set( lStream ) ; vals[2].property=binary_id ; vals[2].meta = META_PROP_NOFTINDEX | META_PROP_SSTORAGE;
+	vals[2].set( lStream ) ; vals[2].property=binary_id ; vals[2].meta = META_PROP_SSTORAGE;
 
 	uint64_t lDate = MVTRand::getDateTime(mSession) ;
 
@@ -354,7 +349,7 @@ PID TestMigrationQueryPerf::addPhotoPin(Value * pExtra, unsigned int cntExtra)
 	}
 
 	PID newpin ;
-	TVERIFYRC( mSession->createPIN( newpin, vals, basePropCount + cntExtra ) );
+	TVERIFYRC( mSession->createPINAndCommit( newpin, vals, basePropCount + cntExtra ) );
 
 #if 1  //#ifdef WIN32
 	if ( newpin.pid == 0x1000000001400073ll )
@@ -378,8 +373,8 @@ void TestMigrationQueryPerf::check14407Index()
 			
 		v.property=6;
 
-		ClassSpec cs;
-		cs.classID=29;
+		SourceSpec cs;
+		cs.objectID=29;
 		cs.nParams=1;
 		cs.params=&v;
 

@@ -22,7 +22,7 @@ class TestIndexNav : public ITest
         virtual void destroy() { delete this; }
 
     protected:
-        ClassID classID;
+        ClassID objectID;
         URIID ids[10];
         void doTest();
         void populate();
@@ -76,9 +76,9 @@ void TestIndexNav::doTest()
     cout << iExpr->toString() <<endl;
     iExpr->destroy();
     
-    ClassID classID = STORE_INVALID_CLASSID;
-    classID = MVTUtil::createUniqueClass(mSession, "testIndexNav.CLASS", iStmt, NULL);
-    TVERIFY(STORE_INVALID_CLASSID != classID);
+    ClassID objectID = STORE_INVALID_CLASSID;
+    objectID = MVTUtil::createUniqueClass(mSession, "testIndexNav.CLASS", iStmt, NULL);
+    TVERIFY(STORE_INVALID_CLASSID != objectID);
     iStmt->destroy();
 
     /* 
@@ -88,7 +88,7 @@ void TestIndexNav::doTest()
      * while iterating this btree index to further test GO_FIRST and GO_LAST
      */
     mLogger.out() << "begin to test IndexNav::next() ... " << endl;
-    TVERIFYRC(mSession->createIndexNav(classID,inav));
+    TVERIFYRC(mSession->createIndexNav(objectID,inav));
     TVERIFY(inav != NULL);
     
     value =  inav->next();
@@ -108,7 +108,7 @@ void TestIndexNav::doTest()
      * iterate key one by one, it should be in order. 
      */
     mLogger.out() << "begin to test IndexNav::next(PID&) with GO_NEXT ... " << endl;
-    TVERIFYRC(mSession->createIndexNav(classID,inav));
+    TVERIFYRC(mSession->createIndexNav(objectID,inav));
     TVERIFY(inav != NULL);
     
     TVERIFYRC(inav->next(pid1));
@@ -196,7 +196,7 @@ void TestIndexNav::populate() {
             values[j+1].property = ids[j+1];
         }
         PID pid;
-        TVERIFYRC(mSession->createPIN(pid,values,cnt+1));
+        TVERIFYRC(mSession->createPINAndCommit(pid,values,cnt+1));
         if (i % 10 == 0) 
             cout << ".";
         if (i == NUMBER_PINS -1)

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -17,7 +17,6 @@ class TestDropBaseClass:  public ITest
 		virtual char const * getName() const { return "testdropbaseclass"; }
 		virtual char const * getHelp() const { return ""; }
 		virtual char const * getDescription() const { return " test to check working of derived class if base class is dropped"; }
-		virtual bool includeInSmokeTest(char const *& pReason) const { return false; }
 		virtual void destroy() { delete this; }
 		virtual int execute();		
 	private:
@@ -71,7 +70,7 @@ void TestDropBaseClass::createMeta()
 	mDerivedClassID = STORE_INVALID_CLASSID;
 	{	
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
-		ClassSpec lCS = {mBaseClassID, 0, NULL};
+		SourceSpec lCS = {mBaseClassID, 0, NULL};
 		unsigned char lVar = lQ->addVariable(&lCS, 1);
 		{
 			Value lV[2];
@@ -85,9 +84,9 @@ void TestDropBaseClass::createMeta()
 	mDerived2ClassID = STORE_INVALID_CLASSID;
 	{	
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
-		ClassSpec lCS[2];
-		lCS[0].classID = mBaseClassID; lCS[0].nParams = 0; lCS[0].params = NULL;
-		lCS[1].classID = mBase2ClassID; lCS[1].nParams = 0; lCS[1].params = NULL;
+		SourceSpec lCS[2];
+		lCS[0].objectID = mBaseClassID; lCS[0].nParams = 0; lCS[0].params = NULL;
+		lCS[1].objectID = mBase2ClassID; lCS[1].nParams = 0; lCS[1].params = NULL;
 		unsigned char lVar = lQ->addVariable(lCS, 2);
 		{
 			Value lV[2];
@@ -107,7 +106,7 @@ void TestDropBaseClass::createMeta()
 	mDerivedFamilyID = STORE_INVALID_CLASSID;
 	{	
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
-		ClassSpec lCS = {mBaseClassID, 0, NULL};
+		SourceSpec lCS = {mBaseClassID, 0, NULL};
 		unsigned char lVar = lQ->addVariable(&lCS, 1);
 		{
 			Value lV[2];
@@ -141,10 +140,10 @@ void TestDropBaseClass::createPINs(int pNumPINs)
 unsigned long TestDropBaseClass::queryCount(ClassID pClassID)
 {
 	CmvautoPtr<IStmt> lQ(mSession->createStmt());			
-	ClassSpec lCS = {pClassID, 0 , NULL};
+	SourceSpec lCS = {pClassID, 0 , NULL};
 	lQ->addVariable(&lCS, 1);
 	uint64_t lCount = 0;
-	TVERIFYRC(lQ->count(lCount, 0, 0, ~0, MODE_VERBOSE));
+	TVERIFYRC(lQ->count(lCount, 0, 0, ~0));
 	return (unsigned long)lCount;
 }
 

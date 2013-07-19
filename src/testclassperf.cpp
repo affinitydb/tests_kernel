@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -135,7 +135,7 @@ void TestClassPerf::createPINS(ISession *session)
 		if (((double)100.0 * rand() / RAND_MAX) <= 1.0)
 		{
 			val[0].set("class pin");val[0].setPropID(pm[0].uid);
-			lPIN = session->createUncommittedPIN(val,1,MODE_COPY_VALUES);
+			lPIN = session->createPIN(val,1,MODE_COPY_VALUES);
 		}
 		//create ordinary pin.
 		else
@@ -144,7 +144,7 @@ void TestClassPerf::createPINS(ISession *session)
 			// Note: avoid lengthy ft-indexing...
 			val[0].set((unsigned char *)str.c_str(), (unsigned)str.length());val[0].setPropID(pm[0].uid);
 			val[1].set((unsigned char *)str.c_str(), (unsigned)str.length());val[1].setPropID(pm[1].uid);
-			lPIN = session->createUncommittedPIN(val,2,MODE_COPY_VALUES);
+			lPIN = session->createPIN(val,2,MODE_COPY_VALUES);
 		}
 
 		if (lPIN)
@@ -188,8 +188,8 @@ bool TestClassPerf::testclassperf(ISession *session, int pWhich)
 	{
 		// Case 1 : class query
 		IStmt * const query = session->createStmt();
-		ClassSpec cs;
-		cs.classID = cls;
+		SourceSpec cs;
+		cs.objectID = cls;
 		cs.nParams = 0;
 		cs.params = NULL;
 		query->addVariable(&cs, 1);

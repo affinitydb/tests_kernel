@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -77,7 +77,7 @@ int TestEmailImport::execute()
 	mSession = MVTApp::startSession();
 	TVERIFY( mSession != NULL ) ;
 
-	mSession->setURIBase( "http://vmware.com/core" ) ;
+	//mSession->setURIBase( "http://vmware.com/core" ) ;
 
 	EmailImporter gen(mSession,this, batchSize) ;
 

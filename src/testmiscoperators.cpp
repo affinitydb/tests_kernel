@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -40,11 +40,11 @@ int TestMiscOperators::execute()
 		ISession * const session = MVTApp::startSession();
 		/*
 		memset(pm,0,5*sizeof(URIMap));
-		pm[0].URI="Prop1";pm[0].uid=STORE_INVALID_PROPID;
-		pm[1].URI="Prop2";pm[1].uid=STORE_INVALID_PROPID;
-		pm[2].URI="Prop3";pm[2].uid=STORE_INVALID_PROPID;
-		pm[3].URI="Prop4";pm[3].uid=STORE_INVALID_PROPID;
-		pm[4].URI="Prop5";pm[4].uid=STORE_INVALID_PROPID;
+		pm[0].URI="Prop1";pm[0].uid=STORE_INVALID_URIID;
+		pm[1].URI="Prop2";pm[1].uid=STORE_INVALID_URIID;
+		pm[2].URI="Prop3";pm[2].uid=STORE_INVALID_URIID;
+		pm[3].URI="Prop4";pm[3].uid=STORE_INVALID_URIID;
+		pm[4].URI="Prop5";pm[4].uid=STORE_INVALID_URIID;
 		session->mapURIs(5,pm);
 		*/
 		MVTApp::mapURIs(session,"TestMiscOperators.prop",6,pm);
@@ -68,7 +68,7 @@ void TestMiscOperators::testOPContains(ISession *session)
 	Value args[2];
 	uint64_t cnt=0;
 
-	IPIN *pin=session->createUncommittedPIN();
+	IPIN *pin=session->createPIN();
 	MVTRand::getString(str,15,0,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);
 	MVTRand::getString(str1,10,0,false);
@@ -96,7 +96,7 @@ void TestMiscOperators::testOPContains(ISession *session)
 	query->destroy();
 
 	//case 2: OP_CONTAINS with no case sensitive op
-	pin=session->createUncommittedPIN();
+	pin=session->createPIN();
 	MVTRand::getString(str,45,0,true,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);
 	MVTRand::getString(str1,30,0,false);
@@ -124,7 +124,7 @@ void TestMiscOperators::testOPContains(ISession *session)
 	query->destroy();
 
 	//case 3: collections
-	pin=session->createUncommittedPIN();
+	pin=session->createPIN();
 
 	MVTRand::getString(str,15,0,true,false);
 	MVTRand::getString(str1,40,0,true);
@@ -167,7 +167,7 @@ void TestMiscOperators::testOPContains(ISession *session)
 	char lTmpStr[1] = {ch};
 	str.insert(0,lTmpStr);
 	val[0].set(str.c_str());val[0].setPropID(pm[5].uid);
-	pin = session->createUncommittedPIN(val,1,MODE_COPY_VALUES);
+	pin = session->createPIN(val,1,MODE_COPY_VALUES);
 	session->commitPINs(&pin,1);
 
 	query =  session->createStmt();
@@ -199,7 +199,7 @@ void TestMiscOperators::testOPBegins(ISession *session)
 	Value args[2];
 	uint64_t cnt=0;
 
-	IPIN *pin = session->createUncommittedPIN();
+	IPIN *pin = session->createPIN();
 	MVTRand::getString(str,30,0,false,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[1].uid);
 	val[1].set("xyzxyz");val[1].setPropID(pm[2].uid);
@@ -226,7 +226,7 @@ void TestMiscOperators::testOPBegins(ISession *session)
 	query->destroy();
 
 	//case 2: with collections.
-	pin = session->createUncommittedPIN();
+	pin = session->createPIN();
 	MVTRand::getString(str,25,0,true,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);val[0].eid=STORE_FIRST_ELEMENT;val[0].op=OP_ADD;
 	MVTRand::getString(str1,25,0,true,false);
@@ -276,14 +276,14 @@ void TestMiscOperators::testOPBegins(ISession *session)
 	int x;
 
 	for (x=0;x<1000;x++){
-		IPIN *clspin = session->createUncommittedPIN();
+		IPIN *clspin = session->createPIN();
 		val[0].set("euphoriaic");val[0].setPropID(pm[2].uid);
 		clspin->modify(val,1);
 		session->commitPINs(&clspin,1);
 		clspin->destroy();
 	}
-	ClassSpec csp;
-	csp.classID=cls;
+	SourceSpec csp;
+	csp.objectID=cls;
 	csp.nParams=0;
 	csp.params=NULL;
 
@@ -306,7 +306,7 @@ void TestMiscOperators::testOPEnds(ISession *session)
 	uint64_t cnt;
 
 	//case 1: OP_ENDS
-	IPIN *pin = session->createUncommittedPIN();
+	IPIN *pin = session->createPIN();
 	MVTRand::getString(str,25,0,true,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[1].uid);
 	MVTRand::getString(str1,30,0,false,true);
@@ -333,7 +333,7 @@ void TestMiscOperators::testOPEnds(ISession *session)
 	query->destroy();
 
     //case 2: OP_ENDS with collections.
-	pin = session->createUncommittedPIN();
+	pin = session->createPIN();
 	MVTRand::getString(str,40,0,true,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);val[0].eid=STORE_LAST_ELEMENT;val[0].op=OP_ADD_BEFORE;
 	MVTRand::getString(str1,50,0,true,false);

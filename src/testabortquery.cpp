@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -63,7 +63,7 @@ class TestAbortQuery : public ITest
 		void resetAbortQ();
 		
 		ISession * mSession ;
-		AfyKernel::StoreCtx *mStoreCtx;	
+		Afy::IAffinity *mStoreCtx;	
 		void quickTest();
 };
 TEST_IMPLEMENT(TestAbortQuery, TestLogger::kDStdOut);

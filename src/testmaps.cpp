@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -59,7 +59,7 @@ int TestMaps::execute()
 				Tstring lS;
 				MVTRand::getString(lS2[j], 10, 256, false);
 				lData[j].URI = lS2[j].c_str();
-				lData[j].uid = STORE_INVALID_PROPID;
+				lData[j].uid = STORE_INVALID_URIID;
 			}
 			lSession->mapURIs(5, lData);
 			for (j = 0; j < 5; j++)

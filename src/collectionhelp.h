@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -31,7 +31,7 @@ namespace MvStoreEx
 		// 
 		// History: Stolen from SAPI implementation!
 	public:
-		CollectionIterator( AfyDB::IPIN* in_Pin, AfyDB::PropertyID in_Prop )
+		CollectionIterator( Afy::IPIN* in_Pin, Afy::PropertyID in_Prop )
 			: m_value( NULL ), m_index(0), m_size(0)
 		{
 			if ( in_Pin )
@@ -40,7 +40,7 @@ namespace MvStoreEx
 			}
 			Init() ;
 		}
-		CollectionIterator( AfyDB::Value const *in_value )
+		CollectionIterator( Afy::Value const *in_value )
 			: m_value( in_value ), m_index(0), m_size(0)
 		{
 			Init() ;
@@ -53,11 +53,11 @@ namespace MvStoreEx
 				// representation of an empty collection 
 				m_size = 0 ;
 			}
-			else if ( m_value->type == AfyDB::VT_ARRAY )
+			else if ( m_value->type == Afy::VT_ARRAY )
 			{
 				m_size = m_value->length;
 			}
-			else if ( m_value->type == AfyDB::VT_COLLECTION )
+			else if ( m_value->type == Afy::VT_COLLECTION )
 			{
 				m_size = m_value->nav->count();
 			}
@@ -70,54 +70,54 @@ namespace MvStoreEx
 		{
 			return m_size;
 		}
-		AfyDB::Value const* getFirst( void )
+		Afy::Value const* getFirst( void )
 		{
 			m_index = 0;
 
 			if ( m_value == NULL ) return NULL ;
 
-			if ( m_value->type == AfyDB::VT_ARRAY )
+			if ( m_value->type == Afy::VT_ARRAY )
 			{
 				return m_value->varray + m_index;
 			}
-			else if ( m_value->type == AfyDB::VT_COLLECTION )
+			else if ( m_value->type == Afy::VT_COLLECTION )
 			{
-				return m_value->nav->navigate( AfyDB::GO_FIRST );
+				return m_value->nav->navigate( Afy::GO_FIRST );
 			}
 			return m_value;
 		}
-		AfyDB::Value const* getLast( void )
+		Afy::Value const* getLast( void )
 		{
 			if ( m_value == NULL ) return NULL ;
 
 			m_index = m_size -1 ;
 
-			if ( m_value->type == AfyDB::VT_ARRAY )
+			if ( m_value->type == Afy::VT_ARRAY )
 			{
 				return m_value->varray + m_size - 1;
 			}
-			else if ( m_value->type == AfyDB::VT_COLLECTION )
+			else if ( m_value->type == Afy::VT_COLLECTION )
 			{
-				return m_value->nav->navigate( AfyDB::GO_LAST );
+				return m_value->nav->navigate( Afy::GO_LAST );
 			}
 			return m_value;
 		}
-		AfyDB::Value const* getNext( void )
+		Afy::Value const* getNext( void )
 		{
 			++m_index ;
 			if ( m_value == NULL ) return NULL ;
 
-			if ( m_value->type == AfyDB::VT_ARRAY && m_index < m_size )
+			if ( m_value->type == Afy::VT_ARRAY && m_index < m_size )
 			{
 				return m_value->varray + m_index;
 			}
-			else if ( m_value->type == AfyDB::VT_COLLECTION )
+			else if ( m_value->type == Afy::VT_COLLECTION )
 			{
-				return m_value->nav->navigate( AfyDB::GO_NEXT );
+				return m_value->nav->navigate( Afy::GO_NEXT );
 			}
 			return 0;
 		}
-		AfyDB::Value const* getElementId( AfyDB::ElementID in_id )
+		Afy::Value const* getElementId( Afy::ElementID in_id )
 		{
 			if ( m_value == NULL ) return NULL ;
 
@@ -127,7 +127,7 @@ namespace MvStoreEx
 			if ( in_id == STORE_FIRST_ELEMENT )
 				return getFirst() ;
 
-			if ( m_value->type == AfyDB::VT_ARRAY )
+			if ( m_value->type == Afy::VT_ARRAY )
 			{
 				for ( uint32_t i=0; i < m_size; ++i )
 				{
@@ -139,10 +139,10 @@ namespace MvStoreEx
 				}
 				return 0;
 			}
-			else if ( m_value->type == AfyDB::VT_COLLECTION )
+			else if ( m_value->type == Afy::VT_COLLECTION )
 			{
 				// m_index is no longer valid!
-				return m_value->nav->navigate( AfyDB::GO_FINDBYID, in_id );
+				return m_value->nav->navigate( Afy::GO_FINDBYID, in_id );
 			}
 
 			if ( in_id == STORE_COLLECTION_ID ||
@@ -163,7 +163,7 @@ namespace MvStoreEx
 		CollectionIterator() {;}
 
 	protected:
-		AfyDB::Value const *m_value;
+		Afy::Value const *m_value;
 		uint32_t m_index;
 		uint32_t m_size;
 	};

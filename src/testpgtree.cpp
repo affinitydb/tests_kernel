@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -288,7 +288,7 @@ void TestPGTree::testPART1(PARTCtx & pCtx)
 		checkAllKeysByFamily(*pCtx.mSession, pCtx.mKeys_str, iC, kPSecond);
 
 	// Merge all properties (corresponding to different insertion order) into a single series of pins, and redo the validations.
-	mergeAllInOneSeries(*pCtx.mSession, pCtx.mKeys_str, STORE_INVALID_PROPID);
+	mergeAllInOneSeries(*pCtx.mSession, pCtx.mKeys_str, STORE_INVALID_URIID);
 	if (RC_OK == mRCUpdates)
 	{
 		checkAllKeysFT_str(*pCtx.mSession, pCtx.mKeys_str);
@@ -363,7 +363,7 @@ void TestPGTree::testPART5(PARTCtx & pCtx)
 	// issue: at the moment this generates tons of "Error 1 updating(1) index 87" errors...
 	mLogger.out() << std::endl << "MORPH STRING KEYS" << std::endl;
 	Value lV;
-	SETVALUE(lV, STORE_INVALID_PROPID, "hello", OP_SET);
+	SETVALUE(lV, STORE_INVALID_URIID, "hello", OP_SET);
 	simpleInsertRepeatedValue(*pCtx.mSession, lV, pCtx.mKeys_str.size(), mProps[kCMorph1]);
 	morph1(*pCtx.mSession, pCtx.mKeys_str, mProps[kCMorph1]);
 	if (RC_OK == mRCUpdates)
@@ -389,7 +389,7 @@ void TestPGTree::insertKey(ISession & pSession, Value const & pKey, PropertyID p
 		default: TVERIFY2(false, "Unexpected value type"); mRCUpdates = RC_OTHER; return;
 	}
 	PID lPID;
-	if (RC_OK != (mRCUpdates = pSession.createPIN(lPID, &lV, 1)))
+	if (RC_OK != (mRCUpdates = pSession.createPINAndCommit(lPID, &lV, 1)))
 		mLogger.out() << "  RC=" << mRCUpdates << std::endl;
 }
 
@@ -435,7 +435,7 @@ void TestPGTree::checkKeys(Tkeys_str const & pExpected, Tstrings const & pActual
 	for (iK = pActual.begin(), iKe = pExpected.begin(); pActual.end() != iK && pExpected.end() != iKe; iK++, iKe++)
 	{
 		Value lV;
-		SETVALUE(lV, STORE_INVALID_PROPID, (*iK).c_str(), OP_SET);
+		SETVALUE(lV, STORE_INVALID_URIID, (*iK).c_str(), OP_SET);
 		if (pExpected.end() == pExpected.find(lV) || (lCheckOrder && !Tkeys_str::key_compare::eq(lV, *iKe)))
 		{
 			lNumErrors++;
@@ -735,7 +735,7 @@ void TestPGTree::enumKeysFT_str(ISession & pSession, Tstrings & pResult, char pL
 	lBuf[0] = pLetter;
 	lBuf[1] = 0;
 
-	AfyDB::StringEnum * lSE = NULL;
+	Afy::StringEnum * lSE = NULL;
 	TVERIFYRC(pSession.listWords(lBuf, lSE));
 	if (lSE)
 	{
@@ -806,7 +806,7 @@ void TestPGTree::checkAllKeysByFamily1(ISession & pSession, Keys const & pKeys, 
 	mLogger.out() << "  === checkAllKeysByFamily1 (ISession::listValues) (prop " << pPropIndex << ", pass " << pPassIndex << ", type " << Keys::key_compare::getType() << ")" << std::endl;
 	Tvalues lKeys;
 
-	AfyDB::IndexNav * lVE;
+	Afy::IndexNav * lVE;
 	TVERIFYRC(pSession.listValues(mFamilies[pPassIndex][pPropIndex], mProps[pPropIndex], lVE));
 	if (lVE)
 	{
@@ -851,8 +851,8 @@ void TestPGTree::checkAllKeysByFamily2(ISession & pSession, Keys const & pKeys, 
 		CmvautoPtr<IStmt> lQ(pSession.createStmt(lStmtStr, &mProps[pPropIndex], 1));
 	#else
 		CmvautoPtr<IStmt> lQ(pSession.createStmt());
-		ClassSpec lCS;
-		lCS.classID = mFamilies[pPassIndex][pPropIndex];
+		SourceSpec lCS;
+		lCS.objectID = mFamilies[pPassIndex][pPropIndex];
 		lCS.nParams = 0; lCS.params = NULL;
 		lQ->addVariable(&lCS, 1);
 		OrderSeg const lOrder = {NULL, mProps[pPropIndex], ORD_NCASE, 0, 0};
@@ -976,10 +976,10 @@ void TestPGTree::defineKeys_str(ISession & pSession, Tkeys_str & pKeys, size_t p
 		for (iD = 0; iD < lMaxD;)
 		{
 			MVTRand::getString(lKeyStr, iLen, 0, false, false); // Note: For now I use case-insensitive strings, because I don't know how to control case in all types of validations that I want to use...
-			SETVALUE(lKey, STORE_INVALID_PROPID, lKeyStr.c_str(), OP_SET);
+			SETVALUE(lKey, STORE_INVALID_URIID, lKeyStr.c_str(), OP_SET);
 			if (pKeys.end() == pKeys.find(lKey) && lStopW.end() == lStopW.find(lKey)) // Note: Just to be very explicit...
 			{
-				char * lBuf = (char *)pSession.alloc(lKeyStr.length() + 1);
+				char * lBuf = (char *)pSession.malloc(lKeyStr.length() + 1);
 				memcpy(lBuf, lKeyStr.c_str(), lKeyStr.length());
 				lBuf[lKeyStr.length()] = 0;
 
@@ -997,7 +997,7 @@ void TestPGTree::defineKeys_int(Tkeys_int & pKeys, Tkeys_str const & pKeysStr)
 	for (i = 0; i < int(pKeysStr.size()); i++)
 	{
 		Value lKey;
-		SETVALUE(lKey, STORE_INVALID_PROPID, i, OP_SET);
+		SETVALUE(lKey, STORE_INVALID_URIID, i, OP_SET);
 		pKeys.insert(lKey);
 	}
 	Tkeys_str::const_iterator iK;
@@ -1014,7 +1014,7 @@ void TestPGTree::defineKeys_int(Tkeys_int & pKeys, Tkeys_str const & pKeysStr)
 			lUi64 += (uint64_t)lMd5[iDigit] * (uint64_t)pow(256.0, (7.0 - iDigit));
 
 		Value lKey;
-		lKey.setI64(int64_t(lUi64)); lKey.property = STORE_INVALID_PROPID; lKey.op = OP_SET;
+		lKey.setI64(int64_t(lUi64)); lKey.property = STORE_INVALID_URIID; lKey.op = OP_SET;
 		pKeys.insert(lKey);
 	}
 }
@@ -1026,7 +1026,7 @@ void TestPGTree::defineKeys_dbl(Tkeys_dbl & pKeys)
 	for (i = 0; i < 3000; i++)
 	{
 		Value lKey;
-		SETVALUE(lKey, STORE_INVALID_PROPID, (double)i, OP_SET);
+		SETVALUE(lKey, STORE_INVALID_URIID, (double)i, OP_SET);
 		pKeys.insert(lKey);
 	}
 	assert(pKeys.size() == 3000);
@@ -1036,7 +1036,7 @@ void TestPGTree::defineKeys_dbl(Tkeys_dbl & pKeys)
 	for (d = 1.1, i = 0; i < 3000; i++, d += std::numeric_limits<double>::epsilon())
 	{
 		Value lKey;
-		SETVALUE(lKey, STORE_INVALID_PROPID, d, OP_SET);
+		SETVALUE(lKey, STORE_INVALID_URIID, d, OP_SET);
 		pKeys.insert(lKey);
 	}
 	assert(pKeys.size() == 6000);
@@ -1045,7 +1045,7 @@ void TestPGTree::defineKeys_dbl(Tkeys_dbl & pKeys)
 	for (d = pow(10.0, std::numeric_limits<double>::min_exponent10 + 3), i = 0; i < 3000; i++, d += std::numeric_limits<double>::epsilon())
 	{
 		Value lKey;
-		SETVALUE(lKey, STORE_INVALID_PROPID, d, OP_SET);
+		SETVALUE(lKey, STORE_INVALID_URIID, d, OP_SET);
 		pKeys.insert(lKey);
 	}
 	assert(pKeys.size() == 9000);
@@ -1054,7 +1054,7 @@ void TestPGTree::defineKeys_dbl(Tkeys_dbl & pKeys)
 	for (d = pow(10.0, std::numeric_limits<double>::max_exponent10 - 3), i = 0; i < 3000; i++, d += pow(10.0, std::numeric_limits<double>::max_exponent10 - 8))
 	{
 		Value lKey;
-		SETVALUE(lKey, STORE_INVALID_PROPID, d, OP_SET);
+		SETVALUE(lKey, STORE_INVALID_URIID, d, OP_SET);
 		pKeys.insert(lKey);
 	}
 	assert(pKeys.size() == 12000);

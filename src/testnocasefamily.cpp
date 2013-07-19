@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -26,7 +26,7 @@ class TestNoCaseFamily : public ITest
 		void testNoCaseMeta(ISession *session);
 		void testNoCasePins(ISession *session);
 		void testNoCaseQueries(ISession *session);
-		AfyDB::Value testNoCaseString(Tstring &str,int x, int op);
+		Afy::Value testNoCaseString(Tstring &str,int x, int op);
 };
 TEST_IMPLEMENT(TestNoCaseFamily, TestLogger::kDStdOut);
 
@@ -96,37 +96,37 @@ void TestNoCaseFamily::testNoCasePins(ISession *session)
 	for (int i=0; i<NOCASEPINS; i++){
 		if (i%100==0)
 			mLogger.out()<<".";
-		val = (Value *)session->alloc(sNumProps*sizeof(Value));
+		val = (Value *)session->malloc(sNumProps*sizeof(Value));
 
 		x = 20 + rand() % 235; 	
 		MVTRand::getString(str,x,0,false);
 		vOpEqStr.push_back(str);
-		tmp = (char *)session->alloc((str.length() + 1)*sizeof(char));
+		tmp = (char *)session->malloc((str.length() + 1)*sizeof(char));
 		strcpy(tmp,str.c_str());
 		val[0].set(tmp);val[0].setPropID(mPropIDs[0]);
 
 		x = 20 + rand() % 235; 	
 		MVTRand::getString(str,x,0,false);
 		vOpBegStr.push_back(str);
-		tmp = (char *)session->alloc((str.length() + 1)*sizeof(char));
+		tmp = (char *)session->malloc((str.length() + 1)*sizeof(char));
 		strcpy(tmp,str.c_str());
 		val[1].set(tmp);val[1].setPropID(mPropIDs[1]);
 
 		x = 20 + rand() % 235; 	
 		MVTRand::getString(str,x,0,false);
 		vOpConStr.push_back(str);
-		tmp = (char *)session->alloc((str.length() + 1)*sizeof(char));
+		tmp = (char *)session->malloc((str.length() + 1)*sizeof(char));
 		strcpy(tmp,str.c_str());
 		val[2].set(tmp);val[2].setPropID(mPropIDs[2]);
 
 		x = 20 + rand() % 235; 	
 		MVTRand::getString(str,x,0,false);
 		vOpEndStr.push_back(str);
-		tmp = (char *)session->alloc((str.length() + 1)*sizeof(char));
+		tmp = (char *)session->malloc((str.length() + 1)*sizeof(char));
 		strcpy(tmp,str.c_str());
 		val[3].set(tmp);val[3].setPropID(mPropIDs[3]);
 
-		IPIN *pin = session->createUncommittedPIN(val,4);
+		IPIN *pin = session->createPIN(val,4);
 		TVERIFYRC(session->commitPINs(&pin,1));
 		pin->destroy();
 	}
@@ -143,7 +143,7 @@ void TestNoCaseFamily::testNoCaseQueries(ISession *session)
 		mLogger.out()<<".";
 		IStmt *query;
 		uint64_t cnt=0;
-		ClassSpec csp;
+		SourceSpec csp;
 		Value args[1];
 		unsigned char var;
 		x = rand() % 4;
@@ -151,7 +151,7 @@ void TestNoCaseFamily::testNoCaseQueries(ISession *session)
 		query = session->createStmt();
 		cls = STORE_INVALID_CLASSID;
 		session->getClassID(mFamilyNames[0].c_str(),cls);
-		csp.classID = cls;
+		csp.objectID = cls;
 		csp.nParams = 1;
 		csp.params = args;
 		var = query->addVariable(&csp,1);
@@ -168,14 +168,14 @@ void TestNoCaseFamily::testNoCaseQueries(ISession *session)
 		mLogger.out()<<".";
 		IStmt *query;
 		uint64_t cnt=0;
-		ClassSpec csp;
+		SourceSpec csp;
 		Value args[1];
 		unsigned char var;
 		x = rand() % 4;
 		args[0] = testNoCaseString(*it,x,1);
 		query = session->createStmt();
 		session->getClassID(mFamilyNames[1].c_str(),cls);
-		csp.classID = cls;
+		csp.objectID = cls;
 		csp.nParams = 1;
 		csp.params = args;
 		var = query->addVariable(&csp,1);
@@ -187,7 +187,7 @@ void TestNoCaseFamily::testNoCaseQueries(ISession *session)
 	mLogger.out()<<"Done"<<std::endl;
 }
 
-AfyDB::Value TestNoCaseFamily::testNoCaseString(Tstring &str,int x,int op)
+Afy::Value TestNoCaseFamily::testNoCaseString(Tstring &str,int x,int op)
 {
 	Value args;
 	size_t i,y;

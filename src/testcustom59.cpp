@@ -1,11 +1,10 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
 #include "app.h"
-using namespace AfyKernel; // InterLock
 
 // Publish this test.
 class TestCustom59 : public ITest
@@ -22,7 +21,7 @@ class TestCustom59 : public ITest
 		enum eSteps { kSWaiting = 0, kSSleepAndGo, kSSleep, kSLastSynchroStep = kSSleep, kSStartTx, kSCommitTx, kSRead1, kSRead2, kSRead3, kSWrite1, kSWrite2, kSWrite3, kSQuickCheckFTIndexingIsolation };
 		typedef std::vector<eSteps> TThreadProgram;
 		typedef std::vector<TThreadProgram> TDeadlockProgram;
-		AfyKernel::StoreCtx * mStoreCtx;
+		Afy::IAffinity * mStoreCtx;
 		MVTestsPortability::Mutex mSteppingL, mLoggingL;
 		PID mPID1, mPID2, mPID3;
 		PropertyID mPropIds[2];
@@ -142,6 +141,7 @@ THREAD_SIGNATURE TestCustom59::threadTestCustom59(void * pC)
 		Value lV[2];
 		SETVALUE(lV[0], lC->mTest.mPropIds[0], "pomme poire banane", OP_SET);
 		SETVALUE_C(lV[1], lC->mTest.mPropIds[1], (int)lC->mThreadId, OP_ADD, STORE_LAST_ELEMENT);
+		lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 		long const lStepIndex = *lStepPtr;
 		TestCustom59::eSteps const lStep = lC->mSteps[lStepIndex];
 		if (TestCustom59::kSLastSynchroStep < lStep)
@@ -279,13 +279,13 @@ int TestCustom59::execute()
 	return lSuccess ? 0 : 1;
 }
 
-static bool containsValue(AfyDB::Value const & pV, long pValue)
+static bool containsValue(Afy::Value const & pV, long pValue)
 {
 	switch (pV.type)
 	{
-		case AfyDB::VT_INT: return (int32_t)pValue == pV.i;
-		case AfyDB::VT_ARRAY: { size_t i; for (i = 0; i < pV.length; i++) if (containsValue(pV.varray[i], pValue)) return true; } return false;
-		case AfyDB::VT_COLLECTION: if (pV.nav) { Value const * lNext; for (lNext = pV.nav->navigate(GO_FIRST); NULL != lNext; lNext = pV.nav->navigate(GO_NEXT)) { if (containsValue(*lNext, pValue)) return true; } } return false;
+		case Afy::VT_INT: return (int32_t)pValue == pV.i;
+		case Afy::VT_ARRAY: { size_t i; for (i = 0; i < pV.length; i++) if (containsValue(pV.varray[i], pValue)) return true; } return false;
+		case Afy::VT_COLLECTION: if (pV.nav) { Value const * lNext; for (lNext = pV.nav->navigate(GO_FIRST); NULL != lNext; lNext = pV.nav->navigate(GO_NEXT)) { if (containsValue(*lNext, pValue)) return true; } } return false;
 		default: return false;
 	}
 }

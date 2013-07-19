@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -84,8 +84,8 @@ int	TestPINIn::execute(){
 	//Case #2: With a Class
 	{
 		ClassID lCLSID; createClass(lSession,lCLSID);
-		ClassSpec lCS;
-		lCS.classID = lCLSID;
+		SourceSpec lCS;
+		lCS.objectID = lCLSID;
 		lCS.nParams = 0;
 		lCS.params = NULL;
 		IStmt *lQ = lSession->createStmt();	
@@ -104,13 +104,13 @@ int	TestPINIn::execute(){
 	//Case #3: With 2 Classes
 	{
 		ClassID lCLSID; createClass(lSession,lCLSID);
-		ClassSpec lCS[2];
-		lCS[0].classID = lCLSID;
+		SourceSpec lCS[2];
+		lCS[0].objectID = lCLSID;
 		lCS[0].nParams = 0;
 		lCS[0].params = NULL;
 
 		createClass(lSession,lCLSID,1);
-		lCS[1].classID = lCLSID;
+		lCS[1].objectID = lCLSID;
 		lCS[1].nParams = 0;
 		lCS[1].params = NULL;
 
@@ -139,7 +139,7 @@ void TestPINIn::createBasePINs(ISession *pSession){
 	{
 		char lB2[64];
 		sprintf(lB2, "TestPINIn.%s.prop%d", lStr.c_str(), i);
-		lData.URI = lB2; lData.uid = STORE_INVALID_PROPID; pSession->mapURIs(1, &lData);
+		lData.URI = lB2; lData.uid = STORE_INVALID_URIID; pSession->mapURIs(1, &lData);
 		mPropIds[i] = lData.uid;
 	}
 
@@ -148,11 +148,11 @@ void TestPINIn::createBasePINs(ISession *pSession){
 		Value lVal[6];
 		Tstring str,str2,wstr;
 		MVTRand::getString(str, 50, 0, false);
-		SETVALUE(lVal[0], mPropIds[0], str.c_str(), OP_SET); lVal[0].meta=META_PROP_NOFTINDEX;
+		SETVALUE(lVal[0], mPropIds[0], str.c_str(), OP_SET);
 		MVTRand::getString(str2, 50, 0, false);
-		SETVALUE(lVal[1],  mPropIds[1], str2.c_str(), OP_SET); lVal[1].meta=META_PROP_NOFTINDEX;
+		SETVALUE(lVal[1],  mPropIds[1], str2.c_str(), OP_SET);
 		wstr=MVTRand::getString2(50, 0, false);
-		SETVALUE(lVal[2],  mPropIds[2], wstr.c_str(), OP_SET); lVal[2].meta=META_PROP_NOFTINDEX;
+		SETVALUE(lVal[2],  mPropIds[2], wstr.c_str(), OP_SET);
 		double lDouble = (double) 1000.0 * rand()/RAND_MAX;
 		SETVALUE(lVal[3],  mPropIds[3], lDouble > 0? lDouble: (double)i, OP_SET);
 		int lNum = (int) 1000.0 * rand()/RAND_MAX;

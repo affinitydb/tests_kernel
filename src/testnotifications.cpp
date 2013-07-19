@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -47,7 +47,7 @@ class PITNotification
 		ElementID mEid;
 		IStoreNotification::NotificationEventType mAction;
 		PITNotification(PID pPID, ClassID pCLSID, IStoreNotification::NotificationEventType pAction)
-			: mPID(pPID), mCLSID(pCLSID), mPropID(STORE_INVALID_PROPID), mEid(STORE_COLLECTION_ID), mAction(pAction) {}
+			: mPID(pPID), mCLSID(pCLSID), mPropID(STORE_INVALID_URIID), mEid(STORE_COLLECTION_ID), mAction(pAction) {}
 		PITNotification(PID pPID, PropertyID pPropID, ElementID pEid)
 			: mPID(pPID), mCLSID(STORE_INVALID_CLASSID), mPropID(pPropID), mEid(pEid), mAction(IStoreNotification::NE_PIN_UPDATED) {}
 };
@@ -285,7 +285,7 @@ int TestNotifications::execute()
 			Value lV[2];
 			SETVALUE(lV[0], lPropIDPinIndex, (int)i, OP_ADD);
 			SETVALUE(lV[1], lPropIDTestPass, lTestPass.c_str(), OP_ADD); /*lV[1].setMeta(META_PROP_NOFTINDEX);*/
-			if (RC_OK != (rc=lSession->createPIN(lPID, &lV[0], 2)))
+			if (RC_OK != (rc=lSession->createPINAndCommit(lPID, &lV[0], 2)))
 			{
 				lSuccess = false;
 				mLogger.out()<<"Failed with RC:"<<rc<<std::endl;
@@ -316,7 +316,7 @@ int TestNotifications::execute()
 					lPID.ident = STORE_OWNER;
 					lPID.pid = STORE_INVALID_PID;
 					lV[0].set((unsigned char *)lSpacerT, 1024); lV[0].setPropID(PropertyID(mPropID999[0])); lV[0].setOp(OP_ADD);
-					if (RC_OK != lSession->createPIN(lPID, &lV[0], 1))
+					if (RC_OK != lSession->createPINAndCommit(lPID, &lV[0], 1))
 						assert(false);
 				}
 			#endif
@@ -326,8 +326,8 @@ int TestNotifications::execute()
 
 		#if ISOLATE_1647b
 			IStmt * const lQ1647 = lSession->createStmt();
-			ClassSpec lCS1647;
-			lCS1647.classID = 0x11;
+			SourceSpec lCS1647;
+			lCS1647.objectID = 0x11;
 			lCS1647.nParams = 0;
 			lCS1647.params = NULL;
 			unsigned const lVar = lQ1647->addVariable(&lCS1647, 1);
@@ -514,7 +514,7 @@ int TestNotifications::execute()
 					mLogger.out() << " (expected: " << std::hex << LOCALPID(lPID) << ")." << std::endl;
 					*/
 				}
-				else if (lNotif.mPropID != lPropID && lNotif.mPropID != STORE_INVALID_PROPID)
+				else if (lNotif.mPropID != lPropID && lNotif.mPropID != STORE_INVALID_URIID)
 				{
 					/*
 					See 6436, 5600
@@ -635,7 +635,7 @@ int TestNotifications::execute()
 									lMask1647 |= (1 << lTP - lPropIDBase);
 							if ((lC11Mask & lMask1647) != lC11Mask)
 								std::cout << "?(" << std::hex << lMask1647 << ")";
-							else if (!lPinsForClasses[lCS1647.classID].test(lV->i))
+							else if (!lPinsForClasses[lCS1647.objectID].test(lV->i))
 							{
 								std::cout << "[PID:" << LOCALPID(lP->getPID()) << ",m=" << lMask1647 << "]";
 								std::cout << "*";
@@ -669,8 +669,8 @@ int TestNotifications::execute()
 			
 			IStmt * const lQ = lSession->createStmt();
 
-			ClassSpec lCS;
-			lCS.classID = lClass.mCLSID;
+			SourceSpec lCS;
+			lCS.objectID = lClass.mCLSID;
 			lCS.nParams = 0;
 			lCS.params = NULL;
 			unsigned const lVar = lQ->addVariable(&lCS, 1);

@@ -1,10 +1,11 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
 #include "app.h"
+
 
 class testunitconversionqueries : public ITest
 {
@@ -20,7 +21,7 @@ public:
 	ISession * mySession ;
 	PropertyID	myProp[30] ;
 	IPIN *myIPIN;
-	ClassSpec lCS;
+	SourceSpec lCS;
 	
 	struct TestUnits
 	{
@@ -182,7 +183,7 @@ void testunitconversionqueries::createUnitPins(void)
 		testvalue[1].set(d,units[i].pu);
 		testvalue[1].property=myProp[units[i].UnitType];
 
-		myIPIN = mySession->createUncommittedPIN(testvalue,2);	
+		myIPIN = mySession->createPIN(testvalue,2);	
 		TVERIFYRC(mySession->commitPINs(&myIPIN,1)); 
 	}
 	
@@ -194,7 +195,7 @@ void testunitconversionqueries::createUnitPins(void)
 	defineClass(mySession, propName1, pAllPINsWithUnit, &CLSID ) ;
 	pAllPINsWithUnit->destroy();
 
-	lCS.classID = CLSID;
+	lCS.objectID = CLSID;
 	lCS.nParams = 0;
 	lCS.params = NULL;
 
@@ -338,12 +339,12 @@ void testunitconversionqueries::verifyMulDiv(double d1,Units u1,ExprOp op,double
 
 	TVERIFYRC(lQ1->execute(&myResult));
 	while( pin = myResult->next() )
-	{
+		{
 		rV=pin->getValue(myProp[units[expectedUnit-1].UnitType]);
 		TVERIFY(rV->qval.units==expectedUnit);
-	}
+		}
 
-	lE2->destroy();
+		lE2->destroy();
 	myResult->destroy();
 	lQ1->destroy();
 }

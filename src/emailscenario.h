@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -212,7 +212,7 @@ public:
 		mCntEmails++ ;
 		// Not specifying MODE_COPY_VALUES so memory ownership passes to store
 		long lBeginTime = getTimeInMs() ;	
-		IPIN * pin = mSession->createUncommittedPIN( ioPinCreator->mVals, ioPinCreator->mValPos, 0 ) ;
+		IPIN * pin = mSession->createPIN( ioPinCreator->mVals, ioPinCreator->mValPos, 0 ) ;
 		long lCommitTime = getTimeInMs() - lBeginTime ;
 
 		mBatchPinCreateTimes += lCommitTime ;
@@ -284,7 +284,7 @@ private:
 	EmailPinHelp mEmailHelp ;
 	TimedActionReporter mActionReporter ;
 
-	long mBatchPinCreateTimes ; // Accumulated createUncommittedPIN cost for this batch
+	long mBatchPinCreateTimes ; // Accumulated createPIN cost for this batch
 	long mCommitTimes ;
 	int mCntEmails ;	
 } ;

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -83,6 +83,7 @@ void TestMultiPinModif::testmultimodif(ISession *session)
 	
 	MVTRand::getString(str,30,0,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[0]);
+	val[0].meta  = META_PROP_FTINDEX;
 	val[1].set(123456);val[1].setPropID(pm[3]);
 	query->addCondition(0,expr);
 	query->setValues(val,2);
@@ -105,6 +106,7 @@ void TestMultiPinModif::testmultimodif(ISession *session)
 	val[0].set(str.c_str());val[0].setPropID(pm[3]);val[0].eid=STORE_LAST_ELEMENT;val[0].op=OP_ADD;
 	val[1].set(str1.c_str());val[1].setPropID(pm[3]);val[1].eid=STORE_LAST_ELEMENT;val[1].op=OP_ADD;
 	val[2].set(str2.c_str());val[2].setPropID(pm[3]);val[2].eid=STORE_LAST_ELEMENT;val[2].op=OP_ADD;
+	val[0].meta = val[1].meta = val[2].meta = META_PROP_FTINDEX;
 	query->setValues(val,3);
 	
 	TVERIFYRC(query->count(cnt));
@@ -124,10 +126,11 @@ void TestMultiPinModif::testmultimodif(ISession *session)
 	val[0].set(str.c_str());val[0].setPropID(pm[0]);
 	val[1].set(str1.c_str());val[1].setPropID(pm[1]);
 	val[2].set(str2.c_str());val[2].setPropID(pm[2]);
+	val[0].meta = val[1].meta = val[2].meta = META_PROP_FTINDEX;
 	
 	IStmt *clsq = session->createStmt(STMT_UPDATE);
-	ClassSpec csp;
-	csp.classID=cls;
+	SourceSpec csp;
+	csp.objectID=cls;
 	csp.nParams=0;
 	csp.params=NULL;
 	clsq->addVariable(&csp,1);
@@ -144,7 +147,7 @@ void TestMultiPinModif::testmultimodif(ISession *session)
 	createPINS(session,pm,sizeof(pm)/sizeof(pm[0]),3);
 	expr = createExprTree(session,*query,3);
 	IStmt *comboq = session->createStmt(STMT_UPDATE);
-	csp.classID=cls;
+	csp.objectID=cls;
 	csp.nParams=0;
 	csp.params=NULL;
 	unsigned char var2 = comboq->addVariable(&csp,1);
@@ -198,10 +201,11 @@ void TestMultiPinModif::createPINS(ISession *session,PropertyID *pm,int npm,cons
 			qmap.insert(map<int,Tstring>::value_type(qCase,str));
 			std::cout<<str<<" while insert"<<std::endl;
 			for(int i=0;i<NOFPINS;i++){
-				IPIN *pin = session->createUncommittedPIN();
+				IPIN *pin = session->createPIN();
 				val[0].set(str.c_str());val[0].setPropID(pm[0]);
 				val[1].set(str1.c_str());val[1].setPropID(pm[1]);
 				val[2].set(str2.c_str());val[2].setPropID(pm[2]);
+				val[0].meta = val[1].meta = val[2].meta = META_PROP_FTINDEX;
 				pin->modify(val,3);
 				TVERIFYRC(session->commitPINs(&pin,1));
 				pin->destroy();
@@ -215,11 +219,12 @@ void TestMultiPinModif::createPINS(ISession *session,PropertyID *pm,int npm,cons
 			MVTRand::getString(str2,20,0,false);
 			qmap.insert(map<int,Tstring>::value_type(qCase,str2));
 			for(int i=0;i<NOFPINS;i++){
-				IPIN *pin = session->createUncommittedPIN();
+				IPIN *pin = session->createPIN();
 				val[0].set(str.c_str());val[0].setPropID(pm[0]);
 				val[1].set(str1.c_str());val[1].setPropID(pm[1]);
 				val[2].set(str2.c_str());val[2].setPropID(pm[2]);
 				val[3].set((unsigned)123456);val[3].setPropID(pm[4]);
+				val[0].meta = val[1].meta = val[2].meta =META_PROP_FTINDEX;
 				TVERIFYRC(pin->modify(val,4));
 				TVERIFYRC(session->commitPINs(&pin,1));
 				pin->destroy();
@@ -232,11 +237,12 @@ void TestMultiPinModif::createPINS(ISession *session,PropertyID *pm,int npm,cons
 			MVTRand::getString(str2,20,0,false);
 			qmap.insert(map<int,Tstring>::value_type(qCase,str1));
 			for(int i=0;i<NOFPINS;i++){
-				IPIN *pin = session->createUncommittedPIN();
+				IPIN *pin = session->createPIN();
 				val[0].set(str.c_str());val[0].setPropID(pm[0]);
 				val[1].set(str1.c_str());val[1].setPropID(pm[1]);
 				val[2].set("multimodftstr");val[2].setPropID(pm[2]);
 				val[3].setURL("http://www.vmware.com");val[3].setPropID(pm[5]);
+				val[0].meta = val[1].meta = val[2].meta = val[3].meta = META_PROP_FTINDEX;
 				TVERIFYRC(pin->modify(val,4));
 				TVERIFYRC(session->commitPINs(&pin,1));
 				pin->destroy();
@@ -431,8 +437,8 @@ void TestMultiPinModif::testmultidelete(ISession *session)
 	expr = createExprTree(session,*query,6);
 
 	IStmt *clsquery = session->createStmt(STMT_DELETE);
-	ClassSpec csp;
-	csp.classID=clsd;
+	SourceSpec csp;
+	csp.objectID=clsd;
 	csp.nParams=0;
 	csp.params=NULL;
 

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -30,7 +30,7 @@ class TestUndelete : public ITest
 		void doTest() ;
 		void createMeta();
 		void createData();
-		IStmt * getQuery(int pQueryType, PropertyID pPropID = STORE_INVALID_PROPID, Value *pPropValue = NULL, STMT_OP=STMT_QUERY);
+		IStmt * getQuery(int pQueryType, PropertyID pPropID = STORE_INVALID_URIID, Value *pPropValue = NULL, STMT_OP=STMT_QUERY);
 		void quickTest();
 		void undeletePINs(int pUndeleteType, PID *pPIDs, int pNumPIDs);
 		void deletePINs(int pDelType, PID *pPIDs, int pNumPIDs);
@@ -195,7 +195,7 @@ void TestUndelete::quickTest()
 	if(!lPIN) TVERIFY(!"Cannot retrieve PIN that is not deleted");
 	else 
 	{
-		TVERIFY( !lPIN->isDeleted() ) ;
+		TVERIFY( (lPIN->getFlags()&PIN_DELETED)==0 ) ;
 		lPIN->destroy();
 	}
 
@@ -204,7 +204,7 @@ void TestUndelete::quickTest()
 	else 
 	{
 		// Retrieving same PIN with MODE_DELETED says that it is deleted 
-		TVERIFY( !lPIN->isDeleted()) ;
+		TVERIFY( (lPIN->getFlags()&PIN_DELETED)==0 ) ;
 		lPIN->destroy();
 	}
 
@@ -225,7 +225,7 @@ void TestUndelete::quickTest()
 	if(!lPIN) TVERIFY(false && "Deleted pin cannot be retrieved with MODE_DELETED");
 	else
 	{
-		TVERIFY( lPIN->isDeleted() ) ;
+		TVERIFY( (lPIN->getFlags()&PIN_DELETED)!=0 ) ;
 		lPIN->destroy();
 	}
 
@@ -242,7 +242,7 @@ void TestUndelete::quickTest()
 	if(!lPIN) TVERIFY(false && "undeleted PIN cannot be retrieved");
 	else 
 	{
-		TVERIFY( !lPIN->isDeleted() ) ;
+		TVERIFY( (lPIN->getFlags()&PIN_DELETED)==0 ) ;
 		lPIN->destroy();
 	}
 
@@ -296,7 +296,7 @@ void TestUndelete::quickTest()
 		Value val[1];Tstring str;PID delPid;
 		MVTRand::getString(str,10,0);
 		val[0].set(str.c_str());val[0].setPropID(mPropIDs[3]);
-		TVERIFYRC(mSession->createPIN(delPid,val,1));
+		TVERIFYRC(mSession->createPINAndCommit(delPid,val,1));
 		IPIN *pin = mSession->getPIN(delPid);
 		//softdelete the pin
 		TVERIFYRC(mSession->deletePINs(&pin,1));
@@ -319,7 +319,7 @@ void TestUndelete::undeletePINs(int pDelType, PID *pPIDs, int pNumPIDs)
 	{
 		case 0: //IPIN::undelete() not ALLOWED on ISession::getPIN()
 			/*{
-				ClassSpec lCS; lCS.classID = mCLSID; lCS.nParams = 0; lCS.params = NULL;
+				SourceSpec lCS; lCS.objectID = mCLSID; lCS.nParams = 0; lCS.params = NULL;
 				IStmt *lQ = mSession->createStmt();
 				unsigned char lVar = lQ->addVariable(&lCS, 1);
 				lQ->setPIDs(lVar, pPIDs, pNumPIDs);
@@ -378,9 +378,9 @@ void TestUndelete::deletePINs(int pUndeleteType, PID *pPIDs, int pNumPIDs)
 
 			TVERIFYRC(mSession->deletePINs(pPIDs, pNumPIDs,0));
 
-			TVERIFY(!lPIN->isDeleted());		// pin doesn't know that it is deleted
+			TVERIFY((lPIN->getFlags()&PIN_DELETED)==0);		// pin doesn't know that it is deleted
 			TVERIFY(RC_DELETED == lPIN->refresh()) ;
-			TVERIFY(lPIN->isDeleted());
+			TVERIFY((lPIN->getFlags()&PIN_DELETED)!=0);
 			lPIN->destroy() ;
 
 			break;
@@ -405,7 +405,7 @@ void TestUndelete::createMeta()
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 0);
-		TVERIFYRC(defineClass(mSession,lB, lQ, &mFamilyID, true));
+		TVERIFYRC(defineClass(mSession,lB, lQ, &mFamilyID));
 	}
 
 	// Create a Family on PIN Index aka prop1
@@ -419,7 +419,7 @@ void TestUndelete::createMeta()
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 1);
-		TVERIFYRC(defineClass(mSession,lB, lQ, &mFamilyID1, true));
+		TVERIFYRC(defineClass(mSession,lB, lQ, &mFamilyID1));
 	}
 
 	// Create a Family on prop2
@@ -433,7 +433,7 @@ void TestUndelete::createMeta()
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 2);
-		TVERIFYRC(defineClass(mSession,lB, lQ, &mFamilyID2, true));
+		TVERIFYRC(defineClass(mSession,lB, lQ, &mFamilyID2));
 	}
 
 	// Create a Class
@@ -446,7 +446,7 @@ void TestUndelete::createMeta()
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 3);
-		TVERIFYRC(defineClass(mSession,lB, lQ, &mCLSID, true));
+		TVERIFYRC(defineClass(mSession,lB, lQ, &mCLSID));
 	}
 	// Create a family for specific case purge after undelete
 	{
@@ -459,7 +459,7 @@ void TestUndelete::createMeta()
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 4);
-		TVERIFYRC(defineClass(mSession,lB, lQ, &mFamilyID3, true));
+		TVERIFYRC(defineClass(mSession,lB, lQ, &mFamilyID3));
 	}
 }
 
@@ -501,7 +501,7 @@ void TestUndelete::createData()
 
 		if(lRepl)
 		{
-			IPIN *lPIN = mSession->createUncommittedPIN(lV, j, MODE_COPY_VALUES|MODE_FORCE_EIDS, &lPID);
+			IPIN *lPIN = mSession->createPIN(lV, j, MODE_COPY_VALUES|MODE_FORCE_EIDS, &lPID);
 			if(lPIN) TVERIFYRC(mSession->commitPINs(&lPIN, 1));
 			else lPID.pid = STORE_INVALID_PID;
 			if(lPIN) lPIN->destroy();			
@@ -510,7 +510,7 @@ void TestUndelete::createData()
 		}	
 		else
 		{		
-			TVERIFYRC(mSession->createPIN(lPID, lV, j));
+			TVERIFYRC(mSession->createPINAndCommit(lPID, lV, j));
 		}
 		if(lPID.pid != STORE_INVALID_PID) { mPIDs.push_back(lPID); mPIDStr.push_back(lPropStr1);}
 		if((i % 100) == 0) mLogger.out() << ".";
@@ -526,12 +526,12 @@ IStmt * TestUndelete::getQuery(int pQueryType, PropertyID pPropID, Value *pPropV
 	switch(pQueryType)
 	{
 		case 0: // FT Query on VT_STRING
-			assert(pPropID!=STORE_INVALID_PROPID || pPropValue != NULL);
+			assert(pPropID!=STORE_INVALID_URIID || pPropValue != NULL);
 			lVar = lQ->addVariable();
 			lQ->setConditionFT(lVar, pPropValue->str, 0, &pPropID, 1);
 			break;
 		case 1: // Full Scan
-			assert(pPropID!=STORE_INVALID_PROPID || pPropValue != NULL);
+			assert(pPropID!=STORE_INVALID_URIID || pPropValue != NULL);
 			lVar = lQ->addVariable();
 			{
 				Value lV[2];
@@ -544,8 +544,8 @@ IStmt * TestUndelete::getQuery(int pQueryType, PropertyID pPropID, Value *pPropV
 			break;
 		case 2: // Class Query
 			{
-				ClassSpec lCS;
-				lCS.classID = mCLSID;
+				SourceSpec lCS;
+				lCS.objectID = mCLSID;
 				lCS.nParams = 0;
 				lCS.params = NULL;
 				lVar = lQ->addVariable(&lCS, 1);
@@ -554,8 +554,8 @@ IStmt * TestUndelete::getQuery(int pQueryType, PropertyID pPropID, Value *pPropV
 		case 3: // Family Query
 			{
 				assert(pPropValue != NULL);
-				ClassSpec lCS;
-				lCS.classID = mFamilyID;
+				SourceSpec lCS;
+				lCS.objectID = mFamilyID;
 				lCS.nParams = 1;
 				lCS.params = pPropValue;
 				lVar = lQ->addVariable(&lCS, 1);
@@ -564,15 +564,15 @@ IStmt * TestUndelete::getQuery(int pQueryType, PropertyID pPropID, Value *pPropV
 		case 4: // Family with PIN Index
 			assert(pPropValue != NULL || pPropValue->i >= 0);
 			{
-				ClassSpec lCS;
-				lCS.classID = mFamilyID1;
+				SourceSpec lCS;
+				lCS.objectID = mFamilyID1;
 				lCS.nParams = 1;
 				lCS.params = pPropValue;
 				lVar = lQ->addVariable(&lCS, 1);
 			}
 			break;
 		case 5: // Full Scan on PIN Index
-			assert(pPropID!=STORE_INVALID_PROPID || pPropValue != NULL || pPropValue->i >= 0);
+			assert(pPropID!=STORE_INVALID_URIID || pPropValue != NULL || pPropValue->i >= 0);
 			lVar = lQ->addVariable();
 			{
 				Value lV[2];
@@ -586,8 +586,8 @@ IStmt * TestUndelete::getQuery(int pQueryType, PropertyID pPropID, Value *pPropV
 		case 6: // Family with prop2
 			assert(pPropValue != NULL || pPropValue->str != NULL);
 			{
-				ClassSpec lCS;
-				lCS.classID = mFamilyID2;
+				SourceSpec lCS;
+				lCS.objectID = mFamilyID2;
 				lCS.nParams = 1;
 				lCS.params = pPropValue;
 				lVar = lQ->addVariable(&lCS, 1);

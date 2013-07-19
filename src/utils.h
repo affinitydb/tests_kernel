@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -11,6 +11,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include <string> 
 #include <sstream>
 #include <cctype>
+#include <stdio.h>
 
 #ifdef WIN32
 #include <Windows.h>

@@ -67,11 +67,11 @@ void TestClassCreation::doTest()
 		Value va[6];
 		std::string lS = MVTRand::getString2(7, -1, false);
 		va[0].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[0].property = ids[0];
-		va[1].set(lS.c_str()); va[1].property = ids[1]; va[1].meta = META_PROP_NOFTINDEX;
+		va[1].set(lS.c_str()); va[1].property = ids[1];
 		va[2].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[2].property = ids[2];
-		va[3].set(lS.c_str()); va[3].property = ids[3]; va[3].meta = META_PROP_NOFTINDEX;
+		va[3].set(lS.c_str()); va[3].property = ids[3];
 		va[4].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[4].property = ids[4];
-		pins[i] = mSession->createUncommittedPIN(va,5,MODE_COPY_VALUES);
+		pins[i] = mSession->createPIN(va,5,MODE_COPY_VALUES);
 	}
 	IPIN *cpins[650];
 	int counter1 = 0;
@@ -92,7 +92,7 @@ void TestClassCreation::doTest()
 		if (i % 10000==0) std::cout << "." << flush;
 	}
 
-	ClassSpec spec;
+	SourceSpec spec;
 	Tstring st;
 	IPIN *class_pins[10];
 	ClassID clsids[10];
@@ -101,25 +101,24 @@ void TestClassCreation::doTest()
 	{
 		if (i < 3) query = mSession->createStmt("select where $0 in :0 and $1 in :1 and $2 in :2",&ids[i],3);
 		else query = mSession->createStmt("select where exists($0) and exists($1) and exists($2)",&ids[i-3],3);
-		Value va[2];
-		va[0].set(query); va[0].property = PROP_SPEC_PREDICATE;
-		MVTRand::getString(st,10,0,true);
-		va[1].set(st.c_str()); va[1].property = PROP_SPEC_URI;
-		class_pins[i] = mSession->createUncommittedPIN(va,2,MODE_COPY_VALUES);
+		Value va[2]; MVTRand::getString(st,10,0,true);
+		va[0].set(st.c_str()); va[0].property = PROP_SPEC_OBJID;
+		va[1].set(query); va[1].property = PROP_SPEC_PREDICATE; va[1].meta = META_PROP_INDEXED;
+		class_pins[i] = mSession->createPIN(va,2,MODE_COPY_VALUES);
 		query->destroy();
 	}
 	mSession->commitPINs(class_pins,6);
-	clsid = class_pins[0]->getValue(PROP_SPEC_CLASSID)->uid;
+	clsid = class_pins[0]->getValue(PROP_SPEC_OBJID)->uid;
 	std::set<PID> *pid_set = new std::set<PID>();
 	std::vector<PID> *vecs = new std::vector<PID>[6];
 	std::vector<PID> *miss_mvecs = new std::vector<PID>[6];
 	for (int i = 0; i < 6; i++)
 	{
 		int counter2 = 0;
-		clsids[i] = class_pins[i]->getValue(PROP_SPEC_CLASSID)->uid;
+		clsids[i] = class_pins[i]->getValue(PROP_SPEC_OBJID)->uid;
 		clsid = clsids[i];
 		pid_set->clear();
-		spec.classID = clsid; spec.nParams = 0; spec.params = NULL;
+		spec.objectID = clsid; spec.nParams = 0; spec.params = NULL;
 		query=  mSession->createStmt();
 		query->addVariable(&spec,1,NULL);
 		ICursor *res = NULL;

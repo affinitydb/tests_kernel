@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -36,7 +36,7 @@ class TestAcls : public ITest
 		std::vector<IdentityID> mIdentities;
 		TPINsInfo mPINs;
 		MVTestsPortability::Mutex mLock;
-		AfyKernel::StoreCtx *mStoreCtx;
+		Afy::IAffinity *mStoreCtx;
 		long volatile mFinalResult; // Non-zero means test failed
 };
 TEST_IMPLEMENT(TestAcls, TestLogger::kDStdOut);
@@ -82,8 +82,8 @@ class PINInfo
 {
 	public:
 		enum eRight { kRFirst = 0, kRRead = kRFirst, kRWrite, kRTOT };
-		static uint8_t getMeta(eRight pRight) { if (kRRead == pRight) return ACL_READ; else if (kRWrite == pRight) return ACL_WRITE; else return 0; }
-		static char const * getMetaTxt(uint8_t pMeta) { return ACL_READ == pMeta ? "R" : (ACL_WRITE == pMeta ? "W" : (0 == pMeta ? "none" : "RW")); }
+		static uint8_t getMeta(eRight pRight) { if (kRRead == pRight) return META_PROP_READ; else if (kRWrite == pRight) return META_PROP_WRITE; else return 0; }
+		static char const * getMetaTxt(uint8_t pMeta) { return META_PROP_READ == pMeta ? "R" : (META_PROP_WRITE == pMeta ? "W" : (0 == pMeta ? "none" : "RW")); }
 		static char const * getMetaTxt(eRight pRight) { return kRRead == pRight ? "R" : (kRWrite == pRight ? "W" : "none"); }
 	protected:
 		PID const mPID;
@@ -298,14 +298,14 @@ int TestAcls::execute()
 			{
 				lPV[j].setIdentity(mIdentities[j]);
 				SETVATTR_C(lPV[j], PROP_SPEC_ACL, OP_ADD, STORE_LAST_ELEMENT);
-				lPV[j].meta = ACL_READ | ACL_WRITE;
+				lPV[j].meta = META_PROP_READ | META_PROP_WRITE;
 			}
 			SETVALUE(lPV[j], PropertyID(mPropIDs[0]), "basic property for all pins in this test, for read access check", OP_ADD);
-			lPINCreated = (RC_OK == lSession->createPIN(lPID, lPV, 1 + j));
+			lPINCreated = (RC_OK == lSession->createPINAndCommit(lPID, lPV, 1 + j));
 		#else
 			Value lPV;
 			SETVALUE(lPV[j], PropertyID(1mPropIDs[0]), "basic property for all pins in this test, for read access check", OP_ADD);
-			lPINCreated = (RC_OK == lSession->createPIN(lPID, &lPV, 1));
+			lPINCreated = (RC_OK == lSession->createPINAndCommit(lPID, &lPV, 1));
 		#endif
 
 		// Create redundant info, and adjust the pin's acl and parenting.
@@ -358,7 +358,7 @@ int TestAcls::execute()
 					Value lPV;
 					lPV.setIdentity(mIdentities[j]);
 					SETVATTR_C(lPV, PROP_SPEC_ACL, OP_ADD, STORE_LAST_ELEMENT);
-					lPV.meta = ACL_READ | ACL_WRITE;
+					lPV.meta = META_PROP_READ | META_PROP_WRITE;
 					if (RC_OK != lPIN->modify(&lPV, 1))
 						assert(false);
 					else
@@ -428,7 +428,7 @@ void PINInfo::showState(char const * pTitle, Tstring & pOutput, SessionInfo & pS
 	PINGrab lPIN(pSI, mPID, pPIN);
 	eRight lR;
 	bool lCanRead = true;
-	uint8_t const lCurIdentRights = (mAllow[kRRead].test(pSI.mIdentityIndex) ? ACL_READ : 0) | (mAllow[kRWrite].test(pSI.mIdentityIndex) ? ACL_WRITE : 0);
+	uint8_t const lCurIdentRights = (mAllow[kRRead].test(pSI.mIdentityIndex) ? META_PROP_READ : 0) | (mAllow[kRWrite].test(pSI.mIdentityIndex) ? META_PROP_WRITE : 0);
 
 	lOs << "[pin:" << std::hex << LOCALPID(mPID) << ",thread:" << getThreadId();
 	lOs << ",right:" << getMetaTxt(lCurIdentRights);
@@ -495,7 +495,7 @@ bool PINInfo::changeRights(eRight pRight, bool * pChangedSomething, SessionInfo 
 			size_t const lACLLength = lACLColl ? MVTApp::getCollectionLength(*lACLColl) : 0;
 		#endif
 		Value const * const lACL = lACLColl ? findACL(lIID, lACLColl) : NULL;
-		uint8_t const lOldMeta = lACL ? lACL->meta : ((eval(kRRead, i) ? ACL_READ : 0) | (eval(kRWrite, i) ? ACL_WRITE : 0));
+		uint8_t const lOldMeta = lACL ? lACL->meta : ((eval(kRRead, i) ? META_PROP_READ : 0) | (eval(kRWrite, i) ? META_PROP_WRITE : 0));
 		if ((lYes && !eval(pRight, i)) || (!lYes && eval(pRight, i)))
 		{
 			Value lPV;

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -80,16 +80,16 @@ void testcustomjoin::createPins(int numPins)
 		Value v[2] ; 
 		v[0].set( i ) ; v[0].property = mProp[1] ;
 		v[1].set( i ) ; v[1].property = mProp[2] ;
-		TVERIFYRC(mSession->createPIN(referencedPins[i],&v[0],2));
+		TVERIFYRC(mSession->createPINAndCommit(referencedPins[i],&v[0],2));
 		
 		Value v1[2] ; 
 		v1[0].set(i) ; v1[0].property = mProp[3] ;
 		v1[1].set(referencedPins[i]) ; v1[1].property = mProp[4] ;
-		TVERIFYRC(mSession->createPIN(classPins[i],v1,2));
+		TVERIFYRC(mSession->createPINAndCommit(classPins[i],v1,2));
 	}
 
 	// Create pin that points to all of the referencedPins
-	TVERIFYRC(mSession->createPIN(pinid[0],NULL,0));
+	TVERIFYRC(mSession->createPINAndCommit(pinid[0],NULL,0));
 
 	// Create the references 
 	for ( i = 0 ; i < cntElements ; i++ )
@@ -114,8 +114,8 @@ void testcustomjoin::customQuery()
 	PropertyID propspec = PROP_SPEC_PINID;
 	//Case 0 : LHS and RHS has the same set of pins
 	{
-		ClassSpec lclassSpec1;
-		lclassSpec1.classID = mClass[2];	lclassSpec1.nParams =0 ;
+		SourceSpec lclassSpec1;
+		lclassSpec1.objectID = mClass[2];	lclassSpec1.nParams =0 ;
 		IStmt *lQuery = mSession->createStmt();
 		if(lQuery)
 		{
@@ -133,8 +133,8 @@ void testcustomjoin::customQuery()
 	}
 	//Case 1 : LHS and RHS has different set of pins ---Fails Bug# 28777
 	{
-		ClassSpec lclassSpec1;
-		lclassSpec1.classID = mClass[3];	lclassSpec1.nParams =0 ;
+		SourceSpec lclassSpec1;
+		lclassSpec1.objectID = mClass[3];	lclassSpec1.nParams =0 ;
 		IStmt *lQuery = mSession->createStmt();
 		if(lQuery)
 		{
@@ -152,8 +152,8 @@ void testcustomjoin::customQuery()
 	}
 	//Case 2 : LHS and RHS has different set of pins and expression has vt_refid from RHS ---Fails Bug# 28777
 	{
-		ClassSpec lclassSpec1;
-		lclassSpec1.classID = mClass[3];	lclassSpec1.nParams =0 ;
+		SourceSpec lclassSpec1;
+		lclassSpec1.objectID = mClass[3];	lclassSpec1.nParams =0 ;
 		IStmt *lQuery = mSession->createStmt();
 		if(lQuery)
 		{

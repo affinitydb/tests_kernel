@@ -28,8 +28,8 @@ class TestMultiColumnIndex : public ITest
         struct DescrCondition
         {
             size_t mPropIndex; // The index of the property involved in this condition (in mProps).
-            AfyDB::ExprOp mCondType; // The operator that compares the property to the indexed parameter.
-            DescrCondition(size_t pPropIndex, AfyDB::ExprOp pCondType) : mPropIndex(pPropIndex), mCondType(pCondType) {}
+            Afy::ExprOp mCondType; // The operator that compares the property to the indexed parameter.
+            DescrCondition(size_t pPropIndex, Afy::ExprOp pCondType) : mPropIndex(pPropIndex), mCondType(pCondType) {}
         };
         typedef std::vector<DescrCondition> DescrIndex; // Multi-column indexes are defined by multiple conditions.
         typedef std::vector<ClassID> ClassIDs;
@@ -112,8 +112,8 @@ class TestMultiColumnIndex : public ITest
             unsigned char lVars[255];
             for (i = 0; i < pF.mDescr.size(); i++)
             {       
-                ClassSpec lCS;
-                lCS.classID = pF.mSingles[i];
+                SourceSpec lCS;
+                lCS.objectID = pF.mSingles[i];
                 lCS.params = &pValues[i];
                 lCS.nParams = 1;
                 lVars[i] = lStmt->addVariable(&lCS, 1);
@@ -139,8 +139,8 @@ class TestMultiColumnIndex : public ITest
             // Evaluate pF.mMulti with pValues (assumed to match the count of conditions in pF).
             TPIDs lResult;
             CmvautoPtr<IStmt> lStmt(mSession->createStmt());
-            ClassSpec lCS;
-            lCS.classID = pF.mMulti;
+            SourceSpec lCS;
+            lCS.objectID = pF.mMulti;
             lCS.params = pValues;
             lCS.nParams = pF.mDescr.size();
             lStmt->addVariable(&lCS, 1);
@@ -282,7 +282,7 @@ void TestMultiColumnIndex::proposeValues(DescrFamily & pF, bool fcollection)
     char * lOrderedStrings[] = {"A", "AAA", "Alphabet", "Cabbage", "Gorilla", "Xylophone", "abracadabra", "polygon", "zzz"};
     double lOrderedDoubles[] = {-1000000.25, -100000.25, -1000.25, 0.0, 0.5, 1.0, 3.141592654, 1000.25, 100000.25};
     float lOrderedFloats[] = {-199.2F, -10.1F, 0.1F, 2.1F, 100.7F};
-    ValueType lProposedVT[] = {AfyDB::VT_INT, VT_STRING, VT_FLOAT, VT_DOUBLE}; // TODO: more...
+    ValueType lProposedVT[] = {Afy::VT_INT, VT_STRING, VT_FLOAT, VT_DOUBLE}; // TODO: more...
     int i, iValI, cValue = 0;
     DescrIndex::const_iterator iD;
     // caculate the min number of values we need to create
@@ -364,7 +364,7 @@ void TestMultiColumnIndex::createPins()
         // TODO: better control of distribution, to hit a better proportion of the 'scenarios'
         // TODO: have a flavor that will commit pins by smaller batches, just in case it impacts indexing differently...
         // Note: the values here are crucial for good coverage.
-        Value * lV = (Value *)mSession->alloc(10 * sizeof(Value));
+        Value * lV = (Value *)mSession->malloc(10 * sizeof(Value));
         for (j = 0; j < 10; j++)
         {
             if (MVTRand::getBool())
@@ -372,13 +372,13 @@ void TestMultiColumnIndex::createPins()
             else
             {
                 std::string const lS = MVTRand::getString2(5, -1, false);
-                char * const lStr = (char *)mSession->alloc(1 + lS.length());
+                char * const lStr = (char *)mSession->malloc(1 + lS.length());
                 memcpy(lStr, lS.c_str(), lS.length());
                 lStr[lS.length()] = 0;
                 SETVALUE_C(lV[j], mProps[j % 3], lStr, OP_ADD, STORE_LAST_ELEMENT);
             }
         }
-        lPins.push_back(mSession->createUncommittedPIN(lV, 10));
+        lPins.push_back(mSession->createPIN(lV, 10));
     }
 
     mLogger.out() << std::endl << "Committing pins..." << std::endl;
@@ -407,7 +407,7 @@ void TestMultiColumnIndex::createPins2()
         // create pin with random number of properties, with random value 
         // TODO:  more randomly
         nProps = MVTRand::getRange(2, num_mapVT);
-        Value * values = (Value *)mSession->alloc(nProps * sizeof(Value));
+        Value * values = (Value *)mSession->malloc(nProps * sizeof(Value));
         for (j = 0; j < nProps; j++)
         {
             ValueType type = mapVT[j];
@@ -421,7 +421,7 @@ void TestMultiColumnIndex::createPins2()
                     break;
                 case VT_STRING:
                     lS = MVTRand::getString2(5, -1, false);
-                    lStr = (char *)mSession->alloc(1 + lS.length());
+                    lStr = (char *)mSession->malloc(1 + lS.length());
                     memcpy(lStr, lS.c_str(), lS.length());
                     lStr[lS.length()] = 0;
                     SETVALUE(values[j], mProps[SPLIT+j], lStr, OP_SET);
@@ -434,7 +434,7 @@ void TestMultiColumnIndex::createPins2()
                     break;
             }
         }
-        IPIN * pin = mSession->createUncommittedPIN(values, nProps);
+        IPIN * pin = mSession->createPIN(values, nProps);
         if(pin != NULL)
             lPins.push_back(pin);
     }

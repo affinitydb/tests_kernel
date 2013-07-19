@@ -55,11 +55,11 @@ start1:
 	{
 		//first time run this test...
 		
-		AfyDB::PropertyID prop;
-		AfyDB::URIMap pmap;
+		Afy::PropertyID prop;
+		Afy::URIMap pmap;
 	  
 		pmap.URI = "TestClassification1.PROP1";
-		pmap.uid = STORE_INVALID_PROPID;
+		pmap.uid = STORE_INVALID_URIID;
 		mSession->mapURIs(1, &pmap);
 		prop = pmap.uid;
 
@@ -82,7 +82,7 @@ start1:
 			va.set((int)i);
 			va.setOp(OP_SET);
 			va.setPropID(prop); 
-			arr[i] = mSession->createUncommittedPIN(&va,1,MODE_COPY_VALUES); // Note (maxw): If MODE_COPY_VALUES is not specified, mvstore assumes that va is allocated via ISession::alloc.
+			arr[i] = mSession->createPIN(&va,1,MODE_COPY_VALUES); // Note (maxw): If MODE_COPY_VALUES is not specified, mvstore assumes that va is allocated via ISession::alloc.
 		}
 		mSession->commitPINs(arr,10);
 		for (int i = 0; i < 10; i++)
@@ -93,8 +93,8 @@ start1:
 
 		qry->destroy();
 		qry = mSession->createStmt();
-		ClassSpec spec;
-		spec.classID = clsid; spec.params=NULL; spec.nParams = 0;
+		SourceSpec spec;
+		spec.objectID = clsid; spec.params=NULL; spec.nParams = 0;
 		qry->addVariable(&spec,1);
 		qry->count(cnt);
 		printf("first pass: 10 pins commited in CLASS1, and %llu pins retrieved\n", cnt);
@@ -104,7 +104,7 @@ start1:
 		qry = mSession->createStmt();
 		qry->addVariable(&spec,1);
 		Value va; va.set((int)99); va.setOp(OP_SET);va.setPropID(pmap.uid); 
-		IPIN *pin1 = mSession->createUncommittedPIN(&va,1,MODE_COPY_VALUES);
+		IPIN *pin1 = mSession->createPIN(&va,1,MODE_COPY_VALUES);
 		mSession->commitPINs(&pin1,1);
 		pin1->destroy();
 
@@ -116,8 +116,8 @@ start1:
 	else if (pass == 2)
 	{
 		IStmt *qry = mSession->createStmt();
-		ClassSpec spec;
-		spec.classID = clsid; spec.params=NULL; spec.nParams = 0;
+		SourceSpec spec;
+		spec.objectID = clsid; spec.params=NULL; spec.nParams = 0;
 		qry->addVariable(&spec,1);
 		uint64_t cnt;
 		qry->count(cnt);
@@ -132,10 +132,10 @@ start1:
 		URIMap pmap;
 
 		pmap.URI ="TestClassification1.PROP1";
-		pmap.uid = STORE_INVALID_PROPID;
+		pmap.uid = STORE_INVALID_URIID;
 		mSession->mapURIs(1,&pmap);
 		va.set((int)99); va.setOp(OP_SET);va.setPropID(pmap.uid); 
-		pin1 = mSession->createUncommittedPIN(&va,1,MODE_COPY_VALUES);
+		pin1 = mSession->createPIN(&va,1,MODE_COPY_VALUES);
 		mSession->commitPINs(&pin1,1);
 		pin1->destroy();
 
@@ -154,13 +154,13 @@ start1:
 
 		qry = mSession->createStmt();
 		pmap.URI = "TestClassification1.PROP2";
-		pmap.uid = STORE_INVALID_PROPID;
+		pmap.uid = STORE_INVALID_URIID;
 		mSession->mapURIs(1,&pmap);
 		prop = pmap.uid;
 		qry->setPropCondition(qry->addVariable(),&prop,1);
 		defineClass(mSession,"TestClassification1.CLASS2",qry,&clsid);
 		va.set((double) 77); va.setOp(OP_SET); va.setPropID(prop);
-		pin1 = mSession->createUncommittedPIN(&va,1,MODE_COPY_VALUES);
+		pin1 = mSession->createPIN(&va,1,MODE_COPY_VALUES);
 		mSession->commitPINs(&pin1,1);
 		pin1->destroy();
 		uint64_t cnt2;
@@ -168,7 +168,7 @@ start1:
 		qry->destroy();
 
 		qry = mSession->createStmt();
-		spec.classID = clsid;
+		spec.objectID = clsid;
 		qry->addVariable(&spec,1);
 		qry->count(cnt);
 		qry->destroy();
@@ -179,8 +179,8 @@ start1:
 	else
 	{
 		IStmt *qry = mSession->createStmt();
-		ClassSpec spec;
-		spec.classID = clsid; spec.params=NULL; spec.nParams = 0;
+		SourceSpec spec;
+		spec.objectID = clsid; spec.params=NULL; spec.nParams = 0;
 	
 		uint64_t cnt;
 		IPIN *pin1;
@@ -191,17 +191,17 @@ start1:
 
 		qry = mSession->createStmt();
 		pmap.URI = "TestClassification1.PROP2";
-		pmap.uid = STORE_INVALID_PROPID;
+		pmap.uid = STORE_INVALID_URIID;
 		mSession->mapURIs(1,&pmap);
 		prop = pmap.uid;
 
 		mSession->getClassID("TestClassification1.CLASS2",clsid);
-		spec.classID = clsid;
+		spec.objectID = clsid;
 
 		qry->setPropCondition(qry->addVariable(),&prop,1);
 
 		va.set((double) 97); va.setOp(OP_SET); va.setPropID(prop);
-		pin1 = mSession->createUncommittedPIN(&va,1,MODE_COPY_VALUES);
+		pin1 = mSession->createPIN(&va,1,MODE_COPY_VALUES);
 		mSession->commitPINs(&pin1,1);
 		pin1->destroy();
 		uint64_t cnt2;
@@ -209,7 +209,7 @@ start1:
 		qry->destroy();
 
 		qry = mSession->createStmt();
-		spec.classID = clsid;
+		spec.objectID = clsid;
 		qry->addVariable(&spec,1);
 		qry->count(cnt);
 		qry->destroy();

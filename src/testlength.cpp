@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -109,7 +109,7 @@ void TestLength::testoplength(ISession *session,URIMap *pm, int npm,int op,ExpRe
 	SETVALUE(pvs[1], pm[1].uid, "city ZX V7", OP_SET);
 	SETVALUE(pvs[2], pm[2].uid, "Galactico Street", OP_SET);
 
-	session->createPIN(pid,pvs,3);
+	session->createPINAndCommit(pid,pvs,3);
 	IPIN *pin = session->getPIN(pid);
 	MVTApp::registerTestPINs(mTestPINs,&pid);
 

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -9,8 +9,6 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 
 #include "tests.h"
 #include <map>
-
-class IStoreIO;
 
 namespace utf {
 /*
@@ -123,10 +121,10 @@ public:
 	// can be split into separate classes.  E.g. MVTRand
 	static int executeProcess(char const * pExe, char const * pArgs, clock_t * outTimeTaken = NULL, TIMESTAMP * outTS = NULL, bool bLowPriority = false, bool bVerbose=false, bool bIgnoreSignal = false) ;
 
-	static void mapURIs(ISession *pSession, const char * pPropName, int pNumProps, PropertyID *pPropIDs);
-	static void mapURIs(ISession *pSession, const char * pPropName, int pNumProps, URIMap *pPropMaps);
-	static void mapStaticProperty(ISession *pSession, const char * pPropName, URIMap &pPropMap);
-	static void mapStaticProperty(ISession *pSession, const char * pPropName, PropertyID &pPropID);
+	static void mapURIs(ISession *pSession, const char * pPropName, int pNumProps, PropertyID *pPropIDs, const char *base=NULL);
+	static void mapURIs(ISession *pSession, const char * pPropName, int pNumProps, URIMap *pPropMaps, const char *base=NULL);
+	static void mapStaticProperty(ISession *pSession, const char * pPropName, URIMap &pPropMap, const char *base=NULL);
+	static void mapStaticProperty(ISession *pSession, const char * pPropName, PropertyID &pPropID, const char *base=NULL);
 	static int countPinsFullScan(ISession * pSession) ;
 
 	// Query Helpers
@@ -197,11 +195,8 @@ public:
 
 	static bool removeReplicationFiles(const char * inPathWithSlash);
 
-	// Instantiate i/o drivers from config string
-	static IStoreIO *storeIOFromString(const char * instr);
-
 	// Generate i/o config string with any multi-store placeholders substituted
 	static string completeMultiStoreIOInitString(const string & strConfig, int storeIndex);
-} ;
-
+	static RC getHostname(char* hostname);
+};
 #endif

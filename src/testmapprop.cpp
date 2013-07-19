@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -33,16 +33,12 @@ int Testmapprop::execute()
 	
 	ISession * mSession1 ;
 	mSession1 = MVTApp::startSession();
-	mSession1->setURIBase(""); //setting namespace to null initially
 	MVTApp::mapURIs(mSession1, "Testnamespace", sNumProps, myProp2);
-	mSession1->setURIBase("http://vmware.com/core/");
-	MVTApp::mapURIs(mSession1, "Testnamespace", sNumProps, myProp3);
+	MVTApp::mapURIs(mSession1, "Testnamespace", sNumProps, myProp3, "http://vmware.com/core/");
 	mSession1->terminate();
 
 	mSession = MVTApp::startSession();
-	mSession->setURIBase("http://vmware.com/core/");
-	MVTApp::mapURIs(mSession, "Testnamespace", sNumProps, myProp);
-	mSession->setURIBase(""); //setting namespace to null after setting to something else
+	MVTApp::mapURIs(mSession, "Testnamespace", sNumProps, myProp, "http://vmware.com/core/");
 	MVTApp::mapURIs(mSession, "Testnamespace", sNumProps, myProp1); //Exception thrown
 	mSession->terminate();
 	

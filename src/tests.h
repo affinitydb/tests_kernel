@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -53,7 +53,7 @@ typedef std::basic_ifstream<char> Tifstream;
 #define MAX_PARAMETER_SIZE MAX_LINE_SIZE - 0x200
 #define MAX_PROPERTIES_PER_PIN 50
 
-#define CREATEPIN(session, PID, prop, nprop) if (RC_OK != (session)->createPIN((PID), (prop), (nprop))) assert(false)
+#define CREATEPIN(session, PID, prop, nprop) if (RC_OK != (session)->createPINAndCommit((PID), (prop), (nprop))) assert(false)
 PID const gInvalidPID = {STORE_INVALID_PID, STORE_INVALID_IDENTITY};
 typedef IExprTree * TExprTreePtr;
 #define EXPRTREEGEN(sessionptr) (sessionptr)->expr
@@ -252,18 +252,17 @@ class ITest
 
 	public:
 		// mvStore helpers (implement common services that used to be in ISession)
-		static RC defineClass(ISession *ses, const char *className, IStmt *qry, ClassID *pClsid=NULL, bool fSDelete=false)
+		static RC defineClass(ISession *ses, const char *className, IStmt *qry, ClassID *pClsid=NULL)
 		{
-			Value vals[4]; unsigned cnt=0; RC rc=RC_OK;
-			vals[0].set(className); vals[0].setPropID(PROP_SPEC_URI); cnt++;
-			vals[1].set(qry); vals[1].setPropID(PROP_SPEC_PREDICATE); cnt++;
-			if (fSDelete) {vals[cnt].set(unsigned(fSDelete?CLASS_SDELETE:0)); vals[cnt].setPropID(PROP_SPEC_CLASS_INFO); cnt++;}
-			IPIN *pin=ses->createUncommittedPIN(vals,cnt,MODE_COPY_VALUES);
+			Value vals[2]; RC rc=RC_OK;
+			vals[0].set(className); vals[0].setPropID(PROP_SPEC_OBJID);
+			vals[1].set(qry); vals[1].setPropID(PROP_SPEC_PREDICATE); vals[1].setMeta(META_PROP_INDEXED);
+			IPIN *pin=ses->createPIN(vals,2,MODE_COPY_VALUES);
 			if (pin==NULL) rc=RC_NORESOURCES;
 			else {
 				rc=ses->commitPINs(&pin,1);
 				if (pClsid!=NULL && (rc==RC_OK || rc==RC_ALREADYEXISTS)) {
-					const Value *clsid=pin->getValue(PROP_SPEC_CLASSID);
+					const Value *clsid=pin->getValue(PROP_SPEC_OBJID);
 					if (clsid!=NULL && clsid->type==VT_URIID) *pClsid=clsid->uid; else rc=RC_OTHER;
 				}
 				pin->destroy();
@@ -278,7 +277,7 @@ class ITest
 			if (rc==RC_OK) {
 				if (qry==NULL) rc=ses->rebuildIndices(&cid,1);
 				else if ((rc=ses->getClassInfo(cid,pin))==RC_OK) {
-					Value v; v.set(qry); v.setPropID(PROP_SPEC_PREDICATE);
+					Value v; v.set(qry); v.setPropID(PROP_SPEC_PREDICATE); v.setMeta(META_PROP_INDEXED);
 					rc=pin->modify(&v,1);
 				}
 			}

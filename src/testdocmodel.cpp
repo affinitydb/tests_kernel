@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -43,7 +43,7 @@ class TestDocModel : public ITest
 		TEST_DECLARE(TestDocModel);
 		virtual char const * getName() const { return "testdocmodel"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "Basic AfyDB Test"; }
+		virtual char const * getDescription() const { return "Basic Afy Test"; }
 		
 		virtual int execute();
 		virtual void destroy() { delete this; }
@@ -123,7 +123,7 @@ void TestDocModel::doTest()
 	CreateDocFamily() ;
 #endif
 
-	mSession->createPIN( mUnrelatedPID, NULL, 0 ) ; 
+	mSession->createPINAndCommit( mUnrelatedPID, NULL, 0 ) ; 
 
 	PID rootPID = populateStore() ;
 	PrintFileSystem( rootPID ) ;
@@ -188,7 +188,7 @@ PID TestDocModel::AddDirectory( const PID& inVolume, const PID& inParentDir, con
 
 	vals[3].setIdentity( STORE_OWNER ) ; vals[3].property = PROP_SPEC_CREATEDBY ; 
 
-	TVERIFYRC( mSession->createPIN( dirPID,vals,4) ) ;
+	TVERIFYRC( mSession->createPINAndCommit( dirPID,vals,4) ) ;
 
 #if TEST_IPIN_MAKEPART
 	// PIN::makePart seems incomplete, currently returns RC_INTERNAL
@@ -199,7 +199,7 @@ PID TestDocModel::AddDirectory( const PID& inVolume, const PID& inParentDir, con
 
 	// Add the new directory to the parent's collection
 	Value subDirRef ;
-	subDirRef.setPart( dirPID ) ; subDirRef.property = mProps[idxDirs] ; subDirRef.op = OP_ADD ;
+	subDirRef.set( dirPID ); subDirRef.meta|=META_PROP_PART; subDirRef.property = mProps[idxDirs] ; subDirRef.op = OP_ADD ;
 	TVERIFY( 0 != ( subDirRef.meta & META_PROP_PART ) ) ; // This flag, set because we use Value::setPart, 
 														  // should ensure that PINs are deleted when volume 
 														  // is deleted
@@ -237,13 +237,13 @@ PID TestDocModel::AddFile(
 	vals[0].set( inFileName ) ;	vals[0].property = mProps[idxFileName] ;
 	vals[1].set( valVolume.id ) ;	vals[1].property = PROP_SPEC_DOCUMENT ;
 	vals[2].set( inParentDir ) ; vals[2].property = PROP_SPEC_PARENT ;  // See comments elsewhere about this prop
-	vals[3].set( inFileText ) ; vals[3].property = mProps[idxFileSummary] ;  vals[3].meta = META_PROP_STOPWORDS ;
+	vals[3].set( inFileText ) ; vals[3].property = mProps[idxFileSummary] ;  //vals[3].meta = META_PROP_STOPWORDS ;
 	vals[4].setU64(inFileSize ) ; vals[4].property = mProps[idxFileSize] ; 
-	TVERIFYRC( mSession->createPIN( filePID,vals,5) ) ;
+	TVERIFYRC( mSession->createPINAndCommit( filePID,vals,5) ) ;
 
 	// Add the new file to the parent's collection
 	Value fileRef ;
-	fileRef.setPart( filePID ) ; fileRef.property = mProps[idxFiles] ; fileRef.op = OP_ADD ;
+	fileRef.set( filePID ) ; fileRef.meta|=META_PROP_PART; fileRef.property = mProps[idxFiles] ; fileRef.op = OP_ADD ;
 	TVERIFYRC( mSession->modifyPIN( inParentDir, &fileRef, 1 ) );
 
 	return filePID ;
@@ -257,7 +257,7 @@ PID TestDocModel::populateStore()
 	Value vals[2] ;
 	vals[0].set( "HD1" ) ; vals[0].property = mProps[idxVolumnLabel] ;
 	vals[1].set( "" ) ; vals[1].property = mProps[idxDirName] ;  // Volume acts as the root directory also
-	TVERIFYRC( mSession->createPIN( rootPID,vals,2) );
+	TVERIFYRC( mSession->createPINAndCommit( rootPID,vals,2) );
 
 	// Top level directories have the volume as their parent
 	PID tempDir = AddDirectory( rootPID, rootPID, "temp" ) ;
@@ -476,8 +476,8 @@ void TestDocModel::GetFileSystemPids2( const PID & inRoot, bool /*inbFiles*/, bo
 	Value refRoot ;
 	refRoot.set( inRoot ) ;
 
-	ClassSpec spec ;
-	spec.classID = cls ;
+	SourceSpec spec ;
+	spec.objectID = cls ;
 	spec.nParams = 1 ;
 	spec.params = &refRoot ; // Specify the specific document we want to search for
 

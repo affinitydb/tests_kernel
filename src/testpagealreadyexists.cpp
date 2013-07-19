@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -13,7 +13,7 @@ class TestPageAlreadyExists : public ITest
 	static const int sNumProps = 20;
 	PropertyID lPropIDs[sNumProps];
 	std::vector<PID> pids;
-	AfyKernel::StoreCtx *mStoreCtx;
+	Afy::IAffinity *mStoreCtx;
 	public:
 		TEST_DECLARE(TestPageAlreadyExists);
 		virtual char const * getName() const { return "testpagealreadyexists"; }
@@ -58,7 +58,7 @@ THREAD_SIGNATURE TestPageAlreadyExists::threadAddBinary(void * inTest)
 	unsigned char *buf = (unsigned char *)malloc(size);
 	for (int i=0; i < 1000; i ++)
 	{
-		IPIN *pin = session->createUncommittedPIN();
+		IPIN *pin = session->createPIN();
 		val[0].set(buf,size);val[0].setPropID(test->lPropIDs[0]);
 		TVRC_R(pin->modify(val,1),test);
 		TVRC_R(session->commitPINs(&pin,1),test);

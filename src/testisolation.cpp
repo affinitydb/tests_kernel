@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -12,7 +12,7 @@ typedef std::bitset<MAX_PROPERTIES> Tbitset;
 // Publish this test.
 class TestIsolation : public ITest
 {
-        AfyKernel::StoreCtx *mStoreCtx;
+        Afy::IAffinity *mStoreCtx;
     public:
         TEST_DECLARE(TestIsolation);
         virtual char const * getName() const { return "testisolation"; }
@@ -36,12 +36,12 @@ class PITTestIsolation
         Tofstream mLog;
         MVTestsPortability::Mutex mLogLock;
         MVTestsPortability::Event mSynchro;
-        AfyKernel::StoreCtx *mStoreCtx;
+        Afy::IAffinity *mStoreCtx;
         volatile long mSynchroVal, mSynchroTarget, mFailure;
         volatile long mClock;
     public:
         PITTestIsolation() : mLog("testisolationlog.txt", std::ios::ate), mStoreCtx(NULL), mSynchroVal(0), mSynchroTarget(0), mFailure(0), mClock(0) {}
-        void setStoreCtx(AfyKernel::StoreCtx *pCtx) { mStoreCtx = pCtx; }
+        void setStoreCtx(Afy::IAffinity *pCtx) { mStoreCtx = pCtx; }
         long nextClock() { return INTERLOCKEDI(&mClock); }
         bool beginLog() { mLogLock.lock(); return true; }
         Tofstream & log() { return mLog; }

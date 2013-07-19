@@ -85,10 +85,10 @@ void TestIndexWithNull::doTest()
 		qry->addCondition(qid,expr);
 		expr->destroy();
 
-		va[0].set("TestIndexWithNull.class1"); va[0].property = PROP_SPEC_URI;
-		va[1].set(qry); va[1].property = PROP_SPEC_PREDICATE;
+		va[0].set("TestIndexWithNull.class1"); va[0].property = PROP_SPEC_OBJID;
+		va[1].set(qry); va[1].property = PROP_SPEC_PREDICATE; va[1].meta = META_PROP_INDEXED;
 		PID pid;
-		mSession->createPIN(pid,va,2);
+		mSession->createPINAndCommit(pid,va,2);
 
 		std::cout << qry->toString() << std::endl;
 		
@@ -96,26 +96,26 @@ void TestIndexWithNull::doTest()
 	
 		va[0].set(20); va[1].set(30);
 		va[0].property = ids[0]; va[1].property = ids[1];
-		mSession->createPIN(pid,va,1);
+		mSession->createPINAndCommit(pid,va,1);
 
 		va[0].set(30); va[1].set(30);
 		va[0].property = ids[0]; va[1].property = ids[1];
-		mSession->createPIN(pid,va,2);
+		mSession->createPINAndCommit(pid,va,2);
 
 		qry = mSession->createStmt("select where $0 in :0 ( INT, NULLS FIRST )",&ids[1],1);
 
-		va[0].set("TestIndexWithNull.class2"); va[0].property = PROP_SPEC_URI;
-		va[1].set(qry); va[1].property = PROP_SPEC_PREDICATE;
+		va[0].set("TestIndexWithNull.class2"); va[0].property = PROP_SPEC_OBJID;
+		va[1].set(qry); va[1].property = PROP_SPEC_PREDICATE; va[1].meta = META_PROP_INDEXED;
 
-		mSession->createPIN(pid,va,2);
+		mSession->createPINAndCommit(pid,va,2);
 
 		std::cout << qry->toString() << std::endl;
 		
 		qry->destroy();
 
 		qry = mSession->createStmt();
-		ClassSpec spec;
-		mSession->getClassID("TestIndexWithNull.class1",spec.classID);
+		SourceSpec spec;
+		mSession->getClassID("TestIndexWithNull.class1",spec.objectID);
 		spec.nParams = 0; spec.params = NULL;
 		qry->addVariable(&spec,1);
 		uint64_t cnt;
@@ -123,7 +123,7 @@ void TestIndexWithNull::doTest()
 		qry->destroy();
 		TVERIFY(cnt == 2);
 		qry = mSession->createStmt();
-		mSession->getClassID("TestIndexWithNull.class2",spec.classID);
+		mSession->getClassID("TestIndexWithNull.class2",spec.objectID);
 		va[1].set(30); va[2].set(30); va[0].setRange(&va[1]);
 		spec.nParams = 1; spec.params = va;
 		qry->addVariable(&spec,1);

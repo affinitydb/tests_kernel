@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -33,14 +33,13 @@ int TestOverflowAddProp::execute()
 		MVTApp::mapURIs(session, "TestOverflowAddProp.prop.", sNumProps, mPropIds);
 		for (int x=0; x < 1000; x ++)
 		{
-			IPIN *pin = session->createUncommittedPIN();
+			IPIN *pin = session->createPIN();
 			Value val[30];int i=0;
 			for (i=0; i < 10; i ++)
 			{
 				Tstring str;
 				MVTApp::randomString(str,7,10);
 				val[i].set(str.c_str());val[i].setPropID(mPropIds[i]);
-				val[i].setMeta(META_PROP_NOFTINDEX);
 			}
 			for (i =10; i < 20; i ++)
 			{
@@ -64,7 +63,6 @@ int TestOverflowAddProp::execute()
 			for (i=0; i < 20; i ++,j++)
 			{
 				val[i].set(str.c_str());val[i].setPropID(mPropIds[i]);eids[i] = baseEID;
-				val[i].setMeta(META_PROP_NOFTINDEX);
 			}
 			TVERIFYRC(pin->modify(val,i,MODE_FORCE_EIDS,eids));
 			pin->destroy();
@@ -76,11 +74,10 @@ int TestOverflowAddProp::execute()
 			ElementID baseEID = BUILDEID(storeID_A,0);
 			Tstring buf; MVTApp::randomString(buf,40,60);
 			val[0].set(buf.c_str()); val[0].setPropID(mPropIds[60]);eids[0] = baseEID;
-			val[0].setMeta(META_PROP_NOFTINDEX);
 			val[1].setU64(1000); val[1].setPropID(mPropIds[61]);eids[1] = baseEID;
 			val[2].setU64(2000); val[2].setPropID(mPropIds[62]);eids[2] = baseEID;
 			val[3].setNow(); val[3].setPropID(mPropIds[63]);eids[3] = baseEID;
-			val[4].setDelete(mPropIds[1]);val[4].setPropID(mPropIds[1]);val[4].setMeta(META_PROP_IFEXIST);
+			val[4].setDelete(mPropIds[1]);val[4].setPropID(mPropIds[1]);	//val[4].setMeta(META_PROP_IFEXIST);
 			TVERIFYRC(pin->modify(val,5,MODE_FORCE_EIDS,eids));
 			pin->destroy();
 			

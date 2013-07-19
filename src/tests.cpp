@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -72,7 +72,7 @@ int ITest::performTest(int argc, char * argv[], long * outTime, TIMESTAMP * outT
 
 	if (isStoreErrorFatal() &&  MVTApp::sReporter.wasErrorLogged())
 	{
-		out << "AfyDB logged errors" << endl;
+		out << "Afy logged errors" << endl;
 		lResult = RC_FALSE;
 	}
 	out << "Test status: ";

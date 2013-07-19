@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -12,7 +12,7 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include <stdio.h>
 #include <string>
 #include <vector>
-using namespace AfyDB;
+using namespace Afy;
 using namespace std;
 
 typedef std::vector<std::string> TStrings;
@@ -122,8 +122,7 @@ void loadPeople(ISession & pSession, int pPass)
                 SETVALUE(lV[5], sPropIDs[P_COUNTRY], lAttributes[4].c_str(), OP_SET);
                 SETVALUE(lV[6], sPropIDs[P_POSTALCODE], lAttributes[5].c_str(), OP_SET);
                 size_t iV;
-                for (iV = 0; iV < sizeof(lV) / sizeof(lV[0]); iV++) { lV[iV].meta = META_PROP_NOFTINDEX; }
-                lPINs.push_back(pSession.createUncommittedPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES));
+                lPINs.push_back(pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES));
                 break;
             }
             case 2:
@@ -327,10 +326,9 @@ void loadProjects(ISession & pSession)
         SETVALUE(lV[0], sPropIDs[P_FID], lFID, OP_SET);
         SETVALUE(lV[1], sPropIDs[P_FNAME], lAttributes[0].c_str(), OP_SET);
         SETVALUE(lV[2], sPropIDs[P_ACCESS], lAccessOrgID, OP_SET); // Review: maybe by reference instead...
-        lV[1].meta = META_PROP_NOFTINDEX;
-        lProjects.push_back(pSession.createUncommittedPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES));
+        lProjects.push_back(pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES));
         if (!lProjects.back())
-            printf("ERROR(%d): Failed to createUncommittedPIN.\n", __LINE__);
+            printf("ERROR(%d): Failed to createPIN.\n", __LINE__);
         lParentFIDs.push_back(lParentFID);
         if (0 == lLineNum % sTxSize)
         {
@@ -394,10 +392,9 @@ void loadPhotos(ISession & pSession)
         Value lV[2];
         SETVALUE(lV[0], sPropIDs[P_FID], lFID, OP_SET);
         SETVALUE(lV[1], sPropIDs[P_PNAME], lAttributes[0].c_str(), OP_SET);
-        lV[1].meta = META_PROP_NOFTINDEX;
-        lPhotos.push_back(pSession.createUncommittedPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES));
+        lPhotos.push_back(pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES));
         if (!lPhotos.back())
-            printf("ERROR(%d): Failed to createUncommittedPIN.\n", __LINE__);
+            printf("ERROR(%d): Failed to createPIN.\n", __LINE__);
         lParentFIDs.push_back(lParentFID);
         if (0 == lLineNum % sTxSize)
         {
@@ -672,15 +669,15 @@ void runQueries(ISession & pSession)
 ClassID createClass(ISession * pSession, char const * pName, IStmt * pPredicate)
 {
     ClassID lClsid = STORE_INVALID_CLASSID;
-    Value vals[2];
-    vals[0].set(pName); vals[0].setPropID(PROP_SPEC_URI);
-    vals[1].set(pPredicate); vals[1].setPropID(PROP_SPEC_PREDICATE);
-    IPIN * lP = pSession->createUncommittedPIN(vals, 2, MODE_COPY_VALUES);
+	Value vals[2]; URIMap pmap={pName,STORE_INVALID_URIID}; pSession->mapURIs(1,&pmap);
+	vals[0].setURIID(pmap.uid); vals[0].setPropID(PROP_SPEC_OBJID);
+    vals[1].set(pPredicate); vals[1].setPropID(PROP_SPEC_PREDICATE); vals[1].setMeta(META_PROP_INDEXED);
+    IPIN * lP = pSession->createPIN(vals, 2, MODE_COPY_VALUES);
     if (lP)
     {
         RC lRC = pSession->commitPINs(&lP, 1);
         if (RC_OK == lRC || RC_ALREADYEXISTS == lRC)
-            lClsid = lP->getValue(PROP_SPEC_CLASSID)->uid;
+            lClsid = lP->getValue(PROP_SPEC_OBJID)->uid;
         lP->destroy();
     }
     pPredicate->destroy();
@@ -715,7 +712,7 @@ int TestGraph1::execute()
         size_t iP;
         for (iP = 0; iP < sizeof(sProps) / sizeof(sProps[0]); iP++)
         {
-            URIMap lUM; lUM.URI = sProps[iP]; lUM.uid = STORE_INVALID_PROPID;
+            URIMap lUM; lUM.URI = sProps[iP]; lUM.uid = STORE_INVALID_URIID;
             if (RC_OK != lSession->mapURIs(1, &lUM)) printf("ERROR(%d): Couldn't map property %s\n", __LINE__, sProps[iP]);
                 sPropIDs[iP] = lUM.uid;
         }

@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -69,7 +69,7 @@ void MvStoreMessageReporter::report(void *ns,int level,const char *str,const cha
 		return ;
 
 	if (mIgnoreMissingStoreWarning && 
-		0 == strncasecmp("AfyDB not found in directory",str,30) )
+		0 == strncasecmp("Afy not found in directory",str,30) )
 	{
 		// This distracting warning is logged often by tests which 
 		// delete the store file to start from scratch

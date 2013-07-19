@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -156,12 +156,12 @@ void TestRollforward::insertDataPhase1()
 	// But normal recovery testing should touch on some 
 	// of the same ground
 	mLogger.out() << "** Insert phase 1" << std::endl;
-	TVERIFYRC(mSession->createPIN(mPid1,NULL,0));
+	TVERIFYRC(mSession->createPINAndCommit(mPid1,NULL,0));
 }
 void TestRollforward::insertDataPhase2()
 {
 	mLogger.out() << "** Insert phase 2" << std::endl;
-	TVERIFYRC(mSession->createPIN(mPid2,NULL,0));
+	TVERIFYRC(mSession->createPINAndCommit(mPid2,NULL,0));
 	TVERIFY(mPid1.pid != mPid2.pid);
 }
 void TestRollforward::testExpectedData()

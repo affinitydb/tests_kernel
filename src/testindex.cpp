@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -14,9 +14,9 @@ class CStoreClass
 {
 	public:	
 		// Represent a single class in the store	
-		AfyDB::ISession * mSession;
-		AfyDB::IStmt* mClassQuery;
-		AfyDB::ClassID mClassID;
+		Afy::ISession * mSession;
+		Afy::IStmt* mClassQuery;
+		Afy::ClassID mClassID;
 		std::string mClassName;
 		int mPinCnt; // To cache result if calculated
 		bool mFamily;
@@ -24,14 +24,14 @@ class CStoreClass
 		PropertyID mIndexedProp;
 		bool mbIsRange;
 
-		CStoreClass(AfyDB::ISession* inSession)
+		CStoreClass(Afy::ISession* inSession)
 			: mSession(inSession)
 			, mClassQuery(NULL)
 			, mClassID(STORE_INVALID_CLASSID)
 			, mPinCnt(-1)
 			, mFamily(false)
 			, mCntKeys(-1)
-			, mIndexedProp(STORE_INVALID_PROPID)
+			, mIndexedProp(STORE_INVALID_URIID)
 			, mbIsRange(false)
 		{
 		}
@@ -41,12 +41,12 @@ class CStoreClass
 			if ( mClassQuery ) { mClassQuery->destroy() ; } 
 			mSession = NULL ; // Not belonging to this object
 		}
-		AfyDB::IStmt* getQueryUsingClass() const 
+		Afy::IStmt* getQueryUsingClass() const 
 		{
 			return ClassHelper::getQueryUsingClass(mSession, mClassID);
 		}
 
-		void init( const char * inClassName, AfyDB::ClassID inClsid, AfyDB::IStmt * inQuery ) 
+		void init( const char * inClassName, Afy::ClassID inClsid, Afy::IStmt * inQuery ) 
 		{
 			mClassName = inClassName ;
 			mClassID = inClsid ;
@@ -100,14 +100,14 @@ class CStoreClass
 class CStoreInfo
 {
 	private:
-		AfyDB::ISession * mSession;
+		Afy::ISession * mSession;
 		#if 0
 			IStoreInspector * mStoreInspector;
 		#endif
 	
 	public:
 		std::vector<CStoreClass*> mClasses ;
-		CStoreInfo(AfyDB::ISession * inSession)
+		CStoreInfo(Afy::ISession * inSession)
 			:mSession(inSession)
 			#if 0
 				,mStoreInspector(NULL)

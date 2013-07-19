@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -40,7 +40,7 @@ int TestCompareValues::execute()
 
 void TestCompareValues::doTest()
 {
-	AfyDB::Value v1, v2;
+	Afy::Value v1, v2;
 
 	v1.set(1); v2.set(1);
 	TVERIFY(0==mSession->compareValues(v1,v2,true));
@@ -58,8 +58,8 @@ void TestCompareValues::doTest()
 	TVERIFY(0!=mSession->compareValues(v1,v2,true));
 	TVERIFY(0!=mSession->compareValues(v2,v1,true));
 
-	AfyDB::PID pid;
-	TVERIFYRC(mSession->createPIN(pid,NULL,0));
+	Afy::PID pid;
+	TVERIFYRC(mSession->createPINAndCommit(pid,NULL,0));
 	v1.set(pid); v2.set(pid);
 	TVERIFY(0==mSession->compareValues(v1,v2,true));
 

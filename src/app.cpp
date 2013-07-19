@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -11,10 +11,6 @@ Copyright © 2004-2011 VMware, Inc. All rights reserved.
 #include "mvauto.h"
 #include <map>
 #include <algorithm>
-
-#include "iotracer.h"
-#include "ioprofiler.h"
-#include "s3io.h"
 
 #if defined(WIN32)
 	#include <shellapi.h> // ShellExecute
@@ -33,13 +29,13 @@ long gMainThreadID = 0;
 ITest::TTests * ITest::sTests = NULL;
 long MVTApp::sCommandCrashWithinMsAfterStartup = 0;
 long MVTApp::sCommandCrashWithinMsBeforeStartup = 0;
-AfyKernel::StoreCtx * MVTApp::sReplicaStoreCtx = NULL;
+Afy::IAffinity * MVTApp::sReplicaStoreCtx = NULL;
 //mvcore::DynamicLinkMvstore * MVTApp::sDynamicLinkMvstore = NULL;
 MVTestsPortability::Tls MVTApp::sThread2Session;
 MvStoreMessageReporter MVTApp::sReporter ;
 Tstring MVTApp::mAppName;
 int MVTApp::sNumStores = 1;
-AfyKernel::StoreCtx * MVTApp::mStoreCtx = NULL;
+Afy::IAffinity * MVTApp::mStoreCtx = NULL;
 StoreCreationParameters MVTApp::mSCP; 
 
 bool MVTApp::bNoUI = false;
@@ -233,7 +229,6 @@ MVTApp::TestSuiteCtx::TestSuiteCtx()
 	mDelay=1000;
 	mSeed=0;
 	mbSeedSet = false;
-	mIO=NULL;
 	mLock = new MVTestsPortability::Mutex ;
 }
 MVTApp::TestSuiteCtx::TestSuiteCtx(const TestSuiteCtx& rhs )
@@ -497,7 +492,7 @@ int MVTApp::start(MVTArgs *args)
 int MVTApp::help() const
 {
 	// Output help.
-	std::cout << "  AfyDB Kernel Test Suite ";
+	std::cout << "  Afy Kernel Test Suite ";
 	#ifdef _DEBUG
 		std::cout << "[Debug]" << std::endl;
 	#else
@@ -1465,7 +1460,7 @@ void MVTApp::makeMultiStoreReport(bool bPopResults)
 		<< dTotal
 		<< " seconds)</li></font>";
 
-	lHTML << "<html><head><title>AfyDB Test Results</title></head><body>"
+	lHTML << "<html><head><title>Afy Test Results</title></head><body>"
 		<< lSummary.str() 
 		<< lTable.str() 
 		<< lResults.str()
@@ -1519,7 +1514,7 @@ void MVTApp::makeHTMLResultFile(TestSuiteCtx &suite, bool inbPopResults /*whethe
 	std::stringstream lHTML, lSummary,lTable ;
 	std::vector<Tstring> lFailedTests;
 
-	lTable << "\n<table border=""3"" cellpadding=""5"" font=""Times New Roman""><caption><b><u>AfyDB Test Results</u></b></caption>";
+	lTable << "\n<table border=""3"" cellpadding=""5"" font=""Times New Roman""><caption><b><u>Afy Test Results</u></b></caption>";
 	lTable << "<tr bgcolor=""SILVER""><th>No.</th><th align=""center"">Name</th><th align=""center"">Description</th><th align=""center"">Status</th><th align=""center"">Time in ms ";
 	lTable << "</th><th align=""center"">Time</th></tr>\n";
 	for(i = 0; i < lTResult.size(); i++)
@@ -1617,7 +1612,7 @@ void MVTApp::makeHTMLResultFile(TestSuiteCtx &suite, bool inbPopResults /*whethe
 	}
 	lSummary << "</ul></font>";
 
-	lHTML << "<html><head><title>AfyDB Test Results</title></head><body>"
+	lHTML << "<html><head><title>Afy Test Results</title></head><body>"
 		<< lSummary.str() 
 		<< lTable.str() 
 		<< "</body></html>";
@@ -1672,7 +1667,7 @@ class ReplicationEventProcessor
 		static void * sTheDstToken;
 	protected:
 		IReplicationController * mOrg, * mDst;
-		AfyKernel::StoreCtx * mStoreCtxReplica;
+		Afy::IAffinity * mStoreCtxReplica;
 	protected:
 		HTHREAD mThread;
 		long volatile mFinishing;
@@ -1696,7 +1691,7 @@ class ReplicationEventProcessor
 		}
 		void setOrg(IReplicationController * pOrg) { mOrg = pOrg; }
 		void setDst(IReplicationController * pDst) { mDst = pDst; }
-		void setStoreCtxReplica(AfyKernel::StoreCtx * pStoreCtxReplica) { mStoreCtxReplica = pStoreCtxReplica; }
+		void setStoreCtxReplica(Afy::IAffinity * pStoreCtxReplica) { mStoreCtxReplica = pStoreCtxReplica; }
 		virtual bool sendEvents(ReplicationID const *pRIDs,size_t pNumRIDs)
 		{
 			if (!mOrg || !mDst)
@@ -1795,7 +1790,7 @@ class ReplicationEventProcessor
 			return lCompleted;
 		}
 		virtual RET_CODE getSource(const char *, std::string &) {return 0l;}
-		virtual RET_CODE getSerializedRemoteValue(ISession *, const char *, AfyDB::PID const &, const char *, AfyDB::ElementID, AfyDB::IStream **) {return 0;}
+		virtual RET_CODE getSerializedRemoteValue(ISession *, const char *, Afy::PID const &, const char *, Afy::ElementID, Afy::IStream **) {return 0;}
 	protected:
 		static THREAD_SIGNATURE threadDeliverCIDs(void * pThis) { ((ReplicationEventProcessor *)pThis)->threadDeliverCIDsImpl(); return 0; }
 		void threadDeliverCIDsImpl()
@@ -1908,7 +1903,7 @@ void MVTApp::printStoreCreationParam()
 	}
 }
 bool MVTApp::startStore(
-	IStoreNet * pNetCallback, 
+	IService * pNetCallback, 
 	IStoreNotification * pNotifier, 
 	// Following args are almost never needed, 
 	// because they can be set from the cmd line args, e.g. Suite() struct
@@ -1994,14 +1989,14 @@ bool MVTApp::startStore(
 
 
 	StartupParameters const lSP(mode, lDirectory, DEFAULT_MAX_FILES, lNumBuffers, 
-		DEFAULT_ASYNC_TIMEOUT, pNetCallback, pNotifier,lPassword,lLogDirectory,NULL);
+		DEFAULT_ASYNC_TIMEOUT, pNetCallback, pNotifier,lPassword,lLogDirectory);
 
 	const unsigned short lStoreID = pIdentity?pStoreID:suite.mStoreID ;
 	const unsigned int lPageSize = suite.mPageSize ;
 	StoreCreationParameters lSCP(NCTLFILES, lPageSize, PAGESPEREXTENT, lIdentity, lStoreID, lPassword, false); 
 	lSCP.fEncrypted = ((lPassword != NULL) && (strlen(lPassword)>0));
 
-	AfyKernel::StoreCtx *& lStoreCtx = suite.mStoreCtx;
+	Afy::IAffinity *& lStoreCtx = suite.mStoreCtx;
 	mSCP = lSCP; mStoreCtx = lStoreCtx;
 	RC rc = RC_NOACCESS;
 	while (rc==RC_NOACCESS)
@@ -2041,7 +2036,7 @@ bool MVTApp::startStore(
 				{
 					// Temporary session to establish to password for new store
 					//ISession * setPwdSession=sDynamicLinkMvstore->startSession(suite.mStoreCtx,suite.mIdentity.c_str(),NULL);
-					ISession * setPwdSession=AfyDB::ISession::startSession(suite.mStoreCtx,suite.mIdentity.c_str(),NULL);
+					ISession * setPwdSession=suite.mStoreCtx->startSession(suite.mIdentity.c_str(),NULL);
 					if ( setPwdSession ) {
 						rc = setPwdSession->changePassword(STORE_OWNER,NULL/*no previous pwd*/,suite.mIdentPwd.c_str());
 						setPwdSession->terminate();
@@ -2125,7 +2120,7 @@ bool MVTApp::startStore(
 	return true;
 }
 
-RC MVTApp::createStoreWithDumpSession(ISession *& outSession, IStoreNet * pNetCallback, IStoreNotification * pNotifier)
+RC MVTApp::createStoreWithDumpSession(ISession *& outSession, IService * pNetCallback, IStoreNotification * pNotifier)
 {
 	// Special variation of MVTApp::startStore for tests that run with a simulate a store dumpload
 	// Warning: some code duplication with startStore - should it just be a special mode?
@@ -2161,14 +2156,14 @@ RC MVTApp::createStoreWithDumpSession(ISession *& outSession, IStoreNet * pNetCa
 
 
 	StartupParameters const lSP(mode, lDirectory, DEFAULT_MAX_FILES, lNumBuffers, 
-		DEFAULT_ASYNC_TIMEOUT, pNetCallback, pNotifier,lPassword,lLogDirectory,NULL);
+		DEFAULT_ASYNC_TIMEOUT, pNetCallback, pNotifier,lPassword,lLogDirectory);
 
 	const unsigned short lStoreID = suite.mStoreID ;
 	const unsigned int lPageSize = suite.mPageSize ;
 	StoreCreationParameters lSCP(NCTLFILES, lPageSize, PAGESPEREXTENT, lIdentity, lStoreID, lPassword, false); 
 	lSCP.fEncrypted = ((lPassword != NULL) && (strlen(lPassword)>0));
 
-	AfyKernel::StoreCtx *& lStoreCtx = suite.mStoreCtx;
+	Afy::IAffinity *& lStoreCtx = suite.mStoreCtx;
 
 	RC rc ;
 	//if (RC_OK != ( rc = (RC)sDynamicLinkMvstore->createStore(lSCP, lSP, lStoreCtx,&outSession, lAdditionalParams )))
@@ -2249,7 +2244,7 @@ void MVTApp::stopStore()
 	if (suite.mbTestDurability)
 	{
 		printf("\n\n{\nProducing durability snapshot before shutdown...\n\n");
-		AfyKernel::StoreCtx * const lStoreCtx = Suite().mStoreCtx;
+		Afy::IAffinity * const lStoreCtx = Suite().mStoreCtx;
 		ISession * const lSession = lStoreCtx ? startSession(lStoreCtx) : NULL;
 		ICursor * lCursor;
 		if (lSession && RC_OK == CmvautoPtr<IStmt>(lSession->createStmt("SELECT *;"))->execute(&lCursor))
@@ -2282,7 +2277,7 @@ void MVTApp::stopStore()
 	{
 		if (suite.mbForceClose)	
 			//if(RC_OK == sDynamicLinkMvstore->shutdown(suite.mStoreCtx,true))
-			if(RC_OK == shutdownStore(suite.mStoreCtx))
+			if(RC_OK == suite.mStoreCtx->shutdown())
 				suite.mStarted--;
 
 		suite.mLock->unlock() ;
@@ -2303,15 +2298,9 @@ void MVTApp::stopStore()
 		suite.mStarted--;
 #endif 
 
-	if(RC_OK == shutdownStore(suite.mStoreCtx))
+	if(RC_OK == suite.mStoreCtx->shutdown())
 		suite.mStarted--;
 	
-	if ( suite.mIO != NULL ) 
-	{
-		suite.mIO->destroy();
-		suite.mIO=NULL;
-	}
-
 	suite.mStoreCtx=NULL;
 	assert(suite.mStarted==0);
 
@@ -2320,8 +2309,8 @@ void MVTApp::stopStore()
 	{
 		printf("\nTesting durability snapshot after shutdown...\n\n");
 		bool lDurabilityOk = true;
-		StartupParameters const lSP(0, suite.mDir.c_str(), DEFAULT_MAX_FILES, suite.mNBuffer, DEFAULT_ASYNC_TIMEOUT, NULL, NULL, suite.mPwd.c_str(), suite.mLogDir.c_str(), NULL);
-		AfyKernel::StoreCtx * lStoreCtx = NULL;
+		StartupParameters const lSP(0, suite.mDir.c_str(), DEFAULT_MAX_FILES, suite.mNBuffer, DEFAULT_ASYNC_TIMEOUT, NULL, NULL, suite.mPwd.c_str(), suite.mLogDir.c_str());
+		Afy::IAffinity * lStoreCtx = NULL;
 		size_t const lNumChecked = lMD5s.size();
 		if (RC_OK == openStore(lSP, lStoreCtx))
 		{
@@ -2363,7 +2352,7 @@ void MVTApp::stopStore()
 				{ printf("***\n*** ERROR: could not obtain session/cursor for durability check!\n***\n"); lDurabilityOk = false; }
 			if (lSession)
 				lSession->terminate();
-			shutdownStore(lStoreCtx);
+			lStoreCtx->shutdown();
 		}
 		else
 			{ printf("***\n*** ERROR: could not reopen store for durability check!\n***\n"); lDurabilityOk = false; }
@@ -2379,7 +2368,7 @@ void MVTApp::stopStore()
 	suite.mLock->unlock() ;
 }
 
-ISession * MVTApp::startSession(AfyKernel::StoreCtx * pStoreCtx, char const * pIdentity, char const * pPassword, long pFlags)
+ISession * MVTApp::startSession(Afy::IAffinity * pStoreCtx, char const * pIdentity, char const * pPassword, long pFlags)
 {
 	if (  pStoreCtx == NULL )
 	{
@@ -2409,13 +2398,13 @@ ISession * MVTApp::startSession(AfyKernel::StoreCtx * pStoreCtx, char const * pI
 		}		
 	}
 	//ISession * const lSession = sDynamicLinkMvstore->startSession(pStoreCtx, pIdentity, pPassword);
-	ISession * const lSession = AfyDB::ISession::startSession(pStoreCtx, pIdentity, pPassword);
+	ISession * const lSession = pStoreCtx->startSession(pIdentity, pPassword);
 	/* assert(lSession); disabled because TestIdentity Expects failure */
 
 	//For Replication smoke tests which runs select kernel tests in IPC mode on a normal mv node installation (i.e. local node to hosting node replication)
 	if(bReplicSmoke)
 	{
-		lSession->setURIBase("http://vmware.com/core/");
+		//lSession->setURIBase("http://vmware.com/core/");
 		lSession->setInterfaceMode(lSession->getInterfaceMode() | ITF_DEFAULT_REPLICATION);
 	}
 
@@ -2430,14 +2419,14 @@ ISession * MVTApp::startSession(AfyKernel::StoreCtx * pStoreCtx, char const * pI
 	return lSession;
 }
 
-AfyDB::IStream * MVTApp::wrapClientStream(ISession * pSession, AfyDB::IStream * pClientStream)
+Afy::IStream * MVTApp::wrapClientStream(ISession * pSession, Afy::IStream * pClientStream)
 {
 	// Note: We don't use nkadaptor.h's definition in mvstore/tests, because we don't want to
 	//		 impose the link dependency on mvstoreclient.dll in the inproc case...
 #if 0 // remove IPC	
 	if (sDynamicLinkMvstore->isInProc())
 		return pClientStream;
-	typedef AfyDB::IStream * (*TWrapStream)(AfyDB::ISession *, AfyDB::IStream *);
+	typedef Afy::IStream * (*TWrapStream)(Afy::ISession *, Afy::IStream *);
 	static TWrapStream sWrapStream = NULL;
 	#ifdef WIN32
 		if (!sWrapStream)
@@ -2475,7 +2464,7 @@ bool MVTApp::deleteStore()
 			Suite().mbArchiveLogs) ;
 }
 
-AfyKernel::StoreCtx * MVTApp::getStoreCtx(const char * pIdentity)
+Afy::IAffinity * MVTApp::getStoreCtx(const char * pIdentity)
 {
 	if(pIdentity == NULL)
 	{
@@ -2499,7 +2488,7 @@ bool MVTApp::compareReplicaStore(TestLogger & pLogger)
 #if 0
 	pLogger.out() << "Performing store comparison after replication..." << std::endl << std::flush;
 
-	AfyKernel::StoreCtx * lStoreCtx = Suite().mStoreCtx ;
+	Afy::IAffinity * lStoreCtx = Suite().mStoreCtx ;
 
 	if (!lStoreCtx || !sReplicaStoreCtx)
 		{ assert(false); return false; }
@@ -2588,8 +2577,8 @@ void MVTApp::outputComparisonFailure(PID const & pPID, IPIN const & p1, IPIN con
 void MVTApp::enumClasses(ISession & pSession, std::vector<Tstring> * pNames, std::vector<uint32_t> * pIDs, std::vector<IStmt*> * pPredicates)
 {
 	CmvautoPtr<IStmt> lQ(pSession.createStmt());
-	ClassSpec lCS;
-	lCS.classID = STORE_CLASS_OF_CLASSES;
+	SourceSpec lCS;
+	lCS.objectID = CLASS_OF_CLASSES;
 	lCS.nParams = 0; lCS.params = NULL;
 	lQ->addVariable(&lCS, 1);
 	ICursor* lC = NULL;
@@ -2600,10 +2589,13 @@ void MVTApp::enumClasses(ISession & pSession, std::vector<Tstring> * pNames, std
 	IPIN * lP;
 	for (lP = lR->next(); NULL != lP; lP = lR->next())
 	{
-		if (pNames)
-			pNames->push_back(lP->getValue(PROP_SPEC_URI)->str);
+		if (pNames) {
+			const Value *uri=lP->getValue(PROP_SPEC_OBJID); char buf[200]; size_t lbuf=sizeof(buf);
+			if (uri!=NULL && uri->type==VT_URIID && pSession.getURI(uri->uid,buf,lbuf)==RC_OK && lbuf!=0)
+				pNames->push_back(buf);
+		}
 		if (pIDs)
-			pIDs->push_back(lP->getValue(PROP_SPEC_CLASSID)->ui);
+			pIDs->push_back(lP->getValue(PROP_SPEC_OBJID)->ui);
 		if (pPredicates)
 			pPredicates->push_back(lP->getValue(PROP_SPEC_PREDICATE)->stmt);
 		lP->destroy();

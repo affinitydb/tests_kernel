@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -100,7 +100,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 	IStmt *lQ = mSession->createStmt();
 	Value paramVals;
 	unsigned char lVar;
-	ClassSpec cs ;
+	SourceSpec cs ;
 	ICursor *lR;
 	OrderSeg os={NULL,mPropIDs[0],0,0,0};
 	
@@ -112,7 +112,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 		mLogger.out()<<"Query all the entries of the family"<<endl;	
 		mLogger.out()<<"-----------------------------------------\n";
 
-		cs.classID = cid;
+		cs.objectID = cid;
 		cs.nParams = 0 ;
 		cs.params = NULL;
 
@@ -123,7 +123,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 		mLogger.out()<<"Query all the entries of the family ordered by the 1st propery in ASCENDING"<<endl;
 		mLogger.out()<<"--------------------------------------------------------------------------------\n";
 
-		cs.classID = cid;
+		cs.objectID = cid;
 		cs.nParams = 0 ;
 		cs.params = NULL;
 
@@ -137,7 +137,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 		mLogger.out()<<"Query all the entries of the family ordered by the 1st property,in ASCENDING|NCASE order "<<endl;
 		mLogger.out()<<"-----------------------------------------------------------------------------------------\n";
 
-		cs.classID = cid;
+		cs.objectID = cid;
 		cs.nParams = 0 ;
 		cs.params = NULL;
 	
@@ -152,7 +152,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 		mLogger.out()<<"Query all the entries of the family based on the parameter and ordered by prop1, in ASCENDING|NCASE order"<<endl;
 		mLogger.out()<<"----------------------------------------------------------------------------------------------------------------\n";
 
-		cs.classID = cid;
+		cs.objectID = cid;
 		cs.nParams = 1 ;
 		paramVals.set(valuestr[0].c_str());
 		cs.params = &paramVals ;
@@ -167,7 +167,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 		mLogger.out()<<"Query all the entries of the family ordered by the 2nd propery in ASCENDING"<<endl;
 		mLogger.out()<<"--------------------------------------------------------------------------------\n";
 
-		cs.classID = cid;
+		cs.objectID = cid;
 		cs.nParams = 0 ;
 		cs.params = NULL;
 
@@ -181,7 +181,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 		mLogger.out()<<"Query all the entries of the family ordered by the 2nd property,in ASCENDING|NCASE order "<<endl;
 		mLogger.out()<<"-----------------------------------------------------------------------------------------\n";
 
-		cs.classID = cid;
+		cs.objectID = cid;
 		cs.nParams = 0 ;
 		cs.params = NULL;
 		lVar = lQ->addVariable( &cs, 1 ) ;
@@ -194,7 +194,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 		mLogger.out()<<"Query all the entries of the family based on the parameter n ordered by prop2, in ASCENDING|NCASE order"<<endl;
 		mLogger.out()<<"----------------------------------------------------------------------------------------------------------------\n";
 
-		cs.classID = cid;
+		cs.objectID = cid;
 		cs.nParams = 1 ;
 		paramVals.set(valuestr[0].c_str());
 		cs.params = &paramVals ;
@@ -209,7 +209,7 @@ void TestFamilyOrder::queryFamily(ClassID cid,int opt)
 		mLogger.out()<<"Query all the entries of the family based on the parameter n ordered by prop2, in DESCENDING|NCASE order"<<endl;
 		mLogger.out()<<"--------------------------------------------------------------------------------------------------------\n";
 
-		cs.classID = cid;
+		cs.objectID = cid;
 		cs.nParams = 1 ;
 		paramVals.set(valuestr[0].c_str());
 		cs.params = &paramVals ;

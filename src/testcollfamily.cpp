@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -158,7 +158,7 @@ PID TestCollFamily::testPIN( ISession *session, PropertyID collPropID, int i /*p
 	Tstring str,qstr;
 	Value val[5];
 
-	IPIN *pin = session->createUncommittedPIN();
+	IPIN *pin = session->createPIN();
 
 	// Add collection elements of random strings for prop1 or prop2
 	int cntElements = mBigCollection ? NOELTS_BIG : NOELTS ;
@@ -247,7 +247,7 @@ PID TestCollFamily::testPIN( ISession *session, PropertyID collPropID, int i /*p
 	// test adding collection elements one by one
 
 	val[0].set("image/jpg");val[0].setPropID(mPropIDs[0]);
-	pin = session->createUncommittedPIN(val,1,MODE_COPY_VALUES);
+	pin = session->createPIN(val,1,MODE_COPY_VALUES);
 	TVERIFYRC(session->commitPINs(&pin,1));
 
 	for (int j=0; j < cntElements; j++){
@@ -273,7 +273,7 @@ PID TestCollFamily::testPIN( ISession *session, PropertyID collPropID, int i /*p
 void TestCollFamily::testGenDataAndRun(ISession *session,int op)
 {
 	int i;
-	PropertyID propid = STORE_INVALID_PROPID;
+	PropertyID propid = STORE_INVALID_URIID;
 	//removing duplicate strings before hand.
 	vector<Tstring>::iterator it1,it2;
 	for (it1=strmap.begin();strmap.end() != it1; it1++){
@@ -342,7 +342,7 @@ void TestCollFamily::testOperators(ISession *session, int op,Tstring &deletedstr
 	// Go through all the strings that have been added as collection items
 	for (it=strmap.begin();strmap.end() != it; it++){
 		ClassID cls = STORE_INVALID_CLASSID;
-		ClassSpec csp[1];
+		SourceSpec csp[1];
 		IStmt *query;
 		unsigned char var;
 		uint64_t cnt =0;
@@ -367,7 +367,7 @@ void TestCollFamily::testOperators(ISession *session, int op,Tstring &deletedstr
 		cnt =0;
 		query = session->createStmt();
 
-		csp[0].classID = cls;
+		csp[0].objectID = cls;
 		csp[0].nParams=1;
 		csp[0].params =args;
 		var = query->addVariable(csp,1);
@@ -393,7 +393,7 @@ void TestCollFamily::testCollDups(ISession *pSession)
 {
 	Tstring lStr; MVTRand::getString(lStr, 10, 0, false, false);
 	Value lV[1];
-	IPIN *lPIN = pSession->createUncommittedPIN();
+	IPIN *lPIN = pSession->createPIN();
 	int j = 0;
 	for (j = 0; j < 10; j++ )
 	{		
@@ -408,12 +408,12 @@ void TestCollFamily::testCollDups(ISession *pSession)
 	if(lPIN) lPIN->destroy();
 
 	ClassID lCLSID = STORE_INVALID_CLASSID;
-	ClassSpec lCS;
+	SourceSpec lCS;
 	TVERIFYRC(pSession->getClassID(mFamilyNames[1].c_str(), lCLSID));
 	
 	Value lParam;
 	lParam.set(lStr.c_str());
-	lCS.classID = lCLSID;
+	lCS.objectID = lCLSID;
 	lCS.nParams = 1;
 	lCS.params = &lParam;
 	

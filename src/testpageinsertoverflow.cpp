@@ -1,6 +1,6 @@
 /**************************************************************************************
 
-Copyright © 2004-2011 VMware, Inc. All rights reserved.
+Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
@@ -33,7 +33,7 @@ int TestPageInsertOverflow::execute()
 		ISession * session =	MVTApp::startSession();
 		Value val[sNumProps];PID pid1;
         MVTApp::mapURIs(session, "TestPageInsertOverflow.prop.", sNumProps, lPropIDs);
-		TVERIFYRC(session->createPIN(pid1,NULL,0));
+		TVERIFYRC(session->createPINAndCommit(pid1,NULL,0));
 		for (int i=0; i < 10; i++)
 		{
 			PID pid; Tstring str;int k=0;int x=0;
@@ -41,9 +41,8 @@ int TestPageInsertOverflow::execute()
 			{
 				MVTApp::randomString(str,1,30);
 				val[k].set(str.c_str());val[k].setPropID(lPropIDs[k]);
-				val[k].setMeta(META_PROP_NOFTINDEX);
 			}
-			TVERIFYRC(session->createPIN(pid,val,k-1));
+			TVERIFYRC(session->createPINAndCommit(pid,val,k-1));
 			for (x =0; x < 10;x++,k++)
 			{
 				val[x].set(pid1);val[x].setPropID(lPropIDs[k]);
