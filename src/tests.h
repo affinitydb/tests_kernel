@@ -42,7 +42,7 @@ Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 #include <vector>
 #include "MVTArgs.h"
 
-using namespace AfyDB;
+using namespace Afy;
 
 typedef std::basic_string<char> Tstring;
 typedef std::basic_string<wchar_t> Wstring;
