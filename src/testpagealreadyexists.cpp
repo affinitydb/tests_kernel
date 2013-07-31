@@ -55,15 +55,13 @@ THREAD_SIGNATURE TestPageAlreadyExists::threadAddBinary(void * inTest)
 	ISession *session = MVTApp::startSession(test->mStoreCtx);
 	Value val[10];
 	const int size = 12*1024;
-	unsigned char *buf = (unsigned char *)malloc(size);
+	unsigned char *buf = (unsigned char *)session->malloc(size);
 	for (int i=0; i < 1000; i ++)
 	{
-		IPIN *pin = session->createPIN();
+		IPIN *pin;
 		val[0].set(buf,size);val[0].setPropID(test->lPropIDs[0]);
-		TVRC_R(pin->modify(val,1),test);
-		TVRC_R(session->commitPINs(&pin,1),test);
+		TVRC_R(session->createPIN(val,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES),test);
 		test->pids.push_back(pin->getPID());
-		pin->destroy();
 	}
 	session->terminate();
 	vector<PID>::iterator it;

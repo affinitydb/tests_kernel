@@ -409,7 +409,7 @@ void TestAclsBasic::testPINCreatePermissions( const char * inIdentity, bool bExp
 		const Value * pPropVal = pin->getValue( readMeIfYouDare.property ) ;
 		TVERIFY( pPropVal == NULL ) ;
 		
-		CmvautoPtr<IPIN> pinClone( pin->clone(NULL,0,MODE_NEW_COMMIT) ) ;
+		CmvautoPtr<IPIN> pinClone( pin->clone(NULL,0,MODE_PERSISTENT) ) ;
 		TVERIFY( pinClone.IsValid() ) ;
 		*/
 	}

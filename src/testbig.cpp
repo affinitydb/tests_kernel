@@ -192,7 +192,7 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 	PID pid;
 	RC rc;
 
-	pin = session->createPIN();
+	session->createPIN(NULL,0,&pin);
 	reportRunningCase("uncommited pin collection.");
 	for (i=0; i<cntElements; i++){
 		// two properties so double the size
@@ -266,8 +266,7 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 		val[i].set(strCollItems[i].c_str());val[i].setPropID((unsigned)propid);
 		val[i].op = OP_ADD_BEFORE; val[i].eid = STORE_LAST_ELEMENT;
 	}
-	pin = session->createPIN(val,cntElements,MODE_COPY_VALUES);TVERIFY(pin!=NULL) ;
-	TVERIFYRC(session->commitPINs(&pin,1));	
+	TVERIFYRC(session->createPIN(val,cntElements,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));TVERIFY(pin!=NULL) ;
 	verifyExpectedCollection(session,pin,propid,strCollItems,"case3") ;
 
 	//case 3a: modify this pin and elements.
@@ -373,13 +372,14 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 
 	//case 8: delete a multiple elements at random places.
 	reportRunningCase("delete random pin elements");
-	pin = session->createPIN();
+	Value *vals = (Value *)session->malloc(sizeof(Value) * cntElements);
+	TVERIFY(vals!=NULL);
 	for (i=0;i<cntElements; i++){
-		val[0].set(strCollItems[i].c_str());val[0].setPropID(propid);
-		val[0].op = OP_ADD; val[0].eid=STORE_COLLECTION_ID;
-		TVERIFYRC(pin->modify(val,1));
+		vals[i].set(strCollItems[i].c_str());vals[i].setPropID(propid);
+		vals[i].op = OP_ADD; vals[i].eid=STORE_COLLECTION_ID;
 	}
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(vals,cntElements,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
+	session->free(vals);
 	//pin->refresh();//to force VT_COLLECTION
 			
 	const Value *tmpVal = pin->getValue(propid);	
@@ -446,14 +446,15 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 	//case 10: ssv big collections
 	//(See linux bug #3823)
 	reportRunningCase("SSV");
-	pin = session->createPIN();
+	vals = (Value *)session->malloc(sizeof(Value) * cntElements);
+	TVERIFY(vals!=NULL);
 	for (i =0; i < cntElements; i++){
 		unsigned long len = 1 + rand() % 15000;
-		val[0].set(MVTApp::wrapClientStream(session, new MyStream(len)));val[0].setPropID(propid);
-		val[0].op=OP_ADD;val[0].eid = STORE_LAST_ELEMENT;
-		TVERIFYRC(pin->modify(val,1));
+		vals[i].set(MVTApp::wrapClientStream(session, new MyStream(len)));vals[i].setPropID(propid);
+		vals[i].op=OP_ADD;val[i].eid = STORE_LAST_ELEMENT;
 	}
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(vals,cntElements,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
+	session->free(vals);
 	if(MVTApp::getCollectionLength(*pin->getValue(propid)) != (cntElements))
 		TVERIFY(!"Case 10: SSV BIG PIN ");
 	pin->destroy();
@@ -468,7 +469,7 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 	reportRunningCase("Replication BIG PIN");
 	const int oldmode = session->getInterfaceMode();
 	session->setInterfaceMode(ITF_REPLICATION | ITF_DEFAULT_REPLICATION);
-	pin = session->createPIN();
+	session->createPIN(NULL,0,&pin);
 	for (i=0; i<cntElements; i++){
 		val[0].set(strCollItems[i].c_str());val[0].setPropID(propid);
 		val[0].op = OP_ADD; /*val[0].eid = STORE_LAST_ELEMENT;*/
@@ -493,7 +494,7 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 	LOCALPID(rpid) = (uint64_t(storeid) << STOREID_SHIFT) + 5;
 	IPIN *rpin;
 
-	rpin = session->createPIN(NULL, 0, PIN_REPLICATED, &rpid);
+	TVERIFYRC(session->createPIN(NULL, 0, &rpin, PIN_REPLICATED|MODE_PERSISTENT, &rpid));
 
 	for (i =0; i < cntElements; i ++){
 		val[0].set(strCollItems[i].c_str());val[0].setPropID((unsigned)propid);
@@ -501,7 +502,6 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 		TVERIFYRC(rpin->modify(val,1,MODE_COPY_VALUES));
 	}
 
-	TVERIFYRC(session->commitPINs(&rpin,1));
 	verifyExpectedCollection(session,rpin,propid,strCollItems,"case13") ;
 
 	//case 14: remote pin refresh
@@ -546,14 +546,12 @@ void TestBig::test9824(ISession *session, unsigned int cntElements, unsigned int
 	//case 10: ssv big collections
 	//(See linux bug #3823)
 	reportRunningCase("SSV");
-	pin = session->createPIN();
 	for (i =0; i < cntElements; i++){
 		unsigned long len = 1 + rand() % 15000;
 		val[0].set(MVTApp::wrapClientStream(session, new MyStream(len)));val[0].setPropID(propid);
 		val[0].op=OP_ADD;val[0].eid = STORE_LAST_ELEMENT;
-		TVERIFYRC(pin->modify(val,1));
 	}
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,cntElements,&pin,MODE_PERSISTENT));
 	if(MVTApp::getCollectionLength(*pin->getValue(propid)) != (cntElements))
 		TVERIFY(!"Case 10: SSV BIG PIN ");
 	pin->destroy();
@@ -610,7 +608,7 @@ void TestBig::testTransaction( ISession * session, PropertyID propid, vector<str
 	val[0].set(strCollItems[0].c_str());val[0].setPropID(propid);
 	val[0].op=OP_ADD; val[0].eid=STORE_LAST_ELEMENT;
 
-    TVERIFYRC(session->createPINAndCommit(pid,val,1));
+    	TVERIFYRC(session->createPINAndCommit(pid,val,1));
 	pin = session->getPIN(pid);
 
 	//remaining elements
@@ -863,10 +861,7 @@ void TestBig::rcNoResources(ISession *session, int cntVals)
 
 	//Case 2
 	for (i=0;i<cntVals;i++) { vals[i].eid=STORE_COLLECTION_ID; }
-	IPIN* pin2 = session->createPIN(vals, cntVals, MODE_COPY_VALUES ) ;
-	TVERIFY(pin2!=NULL);
-	TVERIFYRC(session->commitPINs(&pin2,1));
-	pin2->destroy() ;
+	TVERIFYRC(session->createPIN(vals, cntVals, NULL, MODE_COPY_VALUES|MODE_PERSISTENT));
 
 	//Case 3
 	PID pid3 ;
@@ -897,22 +892,16 @@ void TestBig::rcNoResources(ISession *session, int cntVals)
 
 	// Case 5
 	for (i=0;i<cntVals;i++) { vals[i].eid=STORE_COLLECTION_ID; }
-	IPIN* pin5 = session->createPIN(NULL, 0, MODE_COPY_VALUES ) ;
-	TVERIFY(pin5!=NULL);
-	TVERIFYRC(pin5->modify( vals, cntVals, MODE_COPY_VALUES ) ) ;
-	TVERIFYRC(session->commitPINs(&pin5,1));
-	pin5->destroy() ;
+	TVERIFYRC(session->createPIN(vals,cntVals,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 	
 	// Case 6
-	IPIN* pin6 = session->createPIN(NULL, 0, MODE_COPY_VALUES ) ;
-	TVERIFY(pin6!=NULL);
-	TVERIFYRC(pin6->modify( vals, cntVals, MODE_NO_EID ) ) ;
+	IPIN* pin6;
+	TVERIFYRC(session->createPIN( vals, cntVals, &pin6, MODE_NO_EID|MODE_COPY_VALUES|MODE_PERSISTENT) ) ;
 	for (i=0;i<cntVals;i++) 
 	{ 
 		vals[i].eid=STORE_COLLECTION_ID; 
 		TVERIFYRC(pin6->modify(&(vals[i]), 1, MODE_NO_EID)) ;
 	}
-	TVERIFYRC(session->commitPINs(&pin6,1));
 	pin6->destroy() ;
 
 	// Case 7: based on PinHelper.cpp with uncommitted pins

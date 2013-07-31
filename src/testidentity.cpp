@@ -175,19 +175,12 @@ void TestIdentity::testPinCreation( IdentityInfo & info, bool inExpectPinCreatio
 		TVERIFY( pin == NULL ) ;
 
 		// This way works also 
-		IPIN * newPin = lSession->createPIN() ;
-		TVERIFYRC( lSession->commitPINs( &newPin, 1, 0 ) );
-		newPin->destroy() ;
+		TVERIFYRC( lSession->createPIN(NULL,0,NULL,MODE_PERSISTENT) );
 	}
 	else
 	{
 		// Pin Creation blocked
-		PID newPIN ;
-		TVERIFY( RC_NOACCESS == lSession->createPINAndCommit( newPIN, NULL, 0, 0 ) ) ;
-		
-		IPIN * newPin = lSession->createPIN() ;
-		TVERIFY( RC_NOACCESS == lSession->commitPINs( &newPin, 1, 0 ) );
-		newPin->destroy() ;
+		TVERIFY( RC_NOACCESS == lSession->createPIN(NULL, 0, NULL,MODE_PERSISTENT)) ;
 	}
 
 	lSession->terminate() ;

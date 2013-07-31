@@ -344,7 +344,7 @@ Afy::IAffinity * TestMultiStore::createStoreInDir(ThreadInfo * inCtx,const char 
 
 	//const char * lAdditionalParams=inCtx->mbIOStr.empty()?NULL:inCtx->mbIOStr.c_str();
 	StartupParameters const lSP(0, inDir, MAXFILES, NBUFFERS, DEFAULT_ASYNC_TIMEOUT, NULL, NULL, NULL /*password*/);  
-	StoreCreationParameters const lSCP(NCTLFILES, pageSize, PAGESPEREXTENT, inIdentity, inStoreID, NULL /*password*/, true);
+	StoreCreationParameters const lSCP(NCTLFILES, pageSize, PAGESPEREXTENT, inIdentity, inStoreID, NULL /*password*/, STORE_CREATE_ENCRYPTED);
 
 	// Do a mix of dumpload and regular store creations
 	ISession * lLoadStore = NULL;

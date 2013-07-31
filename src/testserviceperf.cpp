@@ -163,7 +163,7 @@ void TestServicePerf::populate(){
   */
 void TestServicePerf::selectComm()
 {
-    char sql[200],address[20];CompilationError ce;
+    char sql[200],address[200];CompilationError ce;
     ICursor *res=NULL;
     IStmt *qry=NULL,*stmt=NULL;
     IPIN *pin1=NULL,*pin2=NULL;
@@ -175,15 +175,16 @@ void TestServicePerf::selectComm()
     populate();
     
     // create a listener on localhost
-    sprintf(address, "%s:%d", LOCALHOST, PORT);
+    sprintf(address, "%d", PORT);
     memset(sql, 0, sizeof(sql));
-    sprintf(sql, "CREATE LISTENER testservicesperf_t1_l1 ON \'%s\' AS {.srv:sockets,.srv:pathSQL,.srv:affinity,.srv:protobuf,.srv:sockets}", address);
+    sprintf(sql, "CREATE LISTENER testservicesperf_t1_l1 ON %s AS {.srv:sockets,.srv:pathSQL,.srv:affinity,.srv:protobuf,.srv:sockets}", address);
     TVERIFYRC(execStmt(mSession, sql));
 
     // create a CPIN of sending a SELECT request
     memset(sql, 0, sizeof(sql));
-    sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address=\'%s\',\
-afy:request=${SELECT * FROM testserviceperf_all}, testservicesperf_t1_p2=1", address);
+    sprintf(address, "%s:%d", LOCALHOST, PORT);
+    sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address='%s',\
+afy:request=${SELECT * FROM testserviceperf_all ORDER BY afy:pinID}, testservicesperf_t1_p2=1", address);
     if(NULL == (qry = mSession->createStmt(sql, NULL, 0, &ce))) {
         cerr << "Error!!! testservicesperf::selectComm()::line: " << __LINE__ << " ::" << "CE: " << ce.rc << " line:" << ce.line << " pos:" << ce.pos << " " << ce.msg << " query := \"" << sql << "\n";
         TVERIFY(false);
@@ -207,7 +208,38 @@ afy:request=${SELECT * FROM testserviceperf_all}, testservicesperf_t1_p2=1", add
     }
 
     TVERIFYRC(qry->execute(&res));
-    while((pin2 = res->next()) != NULL) i++;
+
+    // validate results...
+    {
+      CmvautoPtr<IStmt> lLocalStmt(mSession->createStmt("SELECT * FROM testserviceperf_all ORDER BY afy:pinID"));
+      CmvautoPtr<ICursor> lLocalRes;
+      TVERIFYRC(lLocalStmt->execute(lLocalRes));
+      
+      while((pin2 = res->next()) != NULL)
+      {
+        i++;
+        
+        CmvautoPtr<IPIN> lDirect(lLocalRes->next());
+        TVERIFY(pin2->getPID().pid == lDirect->getPID().pid);
+        if (lDirect.IsValid())
+        {
+          if (!MVTApp::equal(*lDirect.Get(), *pin2, *mSession))
+          {
+            MVTApp::outputComparisonFailure(lDirect->getPID(), *lDirect.Get(), *pin2, mLogger.out());
+            TVERIFY(false && "Detected difference between 'remotely' & 'locally' fetched PIN");
+          }
+          else
+            mLogger.out() << "PIN comparison for PID=" << std::hex << lDirect->getPID().pid << std::dec << " passed" << std::endl;
+        }
+        else
+          TVERIFY(false && "Failed to retrieve local PIN");
+        
+        #if 0 // This is causing trouble... why? investigate...
+          pin2->destroy();
+        #endif
+      }
+    }
+
     TVERIFY(i == NUM_PINS);
     cout << i << endl;
     if (res != NULL) res->destroy();

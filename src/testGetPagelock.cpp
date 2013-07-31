@@ -106,16 +106,13 @@ void TestGetPageLock::testGetPage(ISession *session)
 
 	Value val[6];
 	for (int i=0; i < cntPins; i++){
-		IPIN *pin = session->createPIN();
 		val[0].set("photo/xyz");val[0].setPropID(mPropIDs[0]);
 		val[1].set("tag1");val[1].setPropID(mPropIDs[1]);val[1].op = OP_ADD;val[1].eid = STORE_LAST_ELEMENT;
 		val[2].set("tag2");val[2].setPropID(mPropIDs[1]);val[2].op = OP_ADD;val[2].eid = STORE_LAST_ELEMENT;
 		val[3].set("tag3");val[3].setPropID(mPropIDs[1]);val[3].op = OP_ADD;val[3].eid = STORE_LAST_ELEMENT;
 		val[4].set("tag4");val[4].setPropID(mPropIDs[1]);val[4].op = OP_ADD;val[4].eid = STORE_LAST_ELEMENT;
 		val[5].set("tag5");val[5].setPropID(mPropIDs[1]);val[5].op = OP_ADD;val[5].eid = STORE_LAST_ELEMENT;
-		pin->modify(val,6);
-		TVERIFYRC(session->commitPINs(&pin,1));
-		pin->destroy();
+		TVERIFYRC(session->createPIN(val,6,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));;
 	}
 	//query the pin and remove a particular eid
 	IStmt *query = session->createStmt();

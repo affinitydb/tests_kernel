@@ -37,7 +37,7 @@ int TestOverflowUpdProp::execute()
 		//create a normal pin
 		for (i=0; i < 100; i ++)
 		{
-			IPIN *lPIN = lSession->createPIN();
+			IPIN* pin;
 			MVTApp::randomString(lStr,100,0,false);				
 			for (j = 0; j < 40; j++)
 			{
@@ -50,10 +50,8 @@ int TestOverflowUpdProp::execute()
 				lIndex = k+j;
 				SETVALUE(lV[lIndex], mPropIds[lIndex], 0, OP_SET);
 			}
-			TVERIFYRC(lPIN->modify(lV, k+j, MODE_COPY_VALUES));
-			TVERIFYRC(lSession->commitPINs(&lPIN, 1, MODE_COPY_VALUES));
-			mPIDs.push_back(lPIN->getPID());
-			if(lPIN) lPIN->destroy();
+			TVERIFYRC(lSession->createPIN(lV, k+j, &pin, MODE_PERSISTENT|MODE_COPY_VALUES));
+			mPIDs.push_back(pin->getPID());
 		}
 		
 		vector<PID>::iterator lIter = mPIDs.begin();

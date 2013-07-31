@@ -481,10 +481,9 @@ void TestOpEdit::teststream(ISession *session)
 	stream.clear();
 	
 	//case 1 : Short stream VT_STRING type
-	IPIN *pin = session->createPIN();
+	IPIN *pin;
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(100,65,VT_STRING,stream)));val[0].setPropID(propid);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	PID id = pin->getPID();
 	
 	MVTRand::getString(str,5,0,false,false);
@@ -501,10 +500,8 @@ void TestOpEdit::teststream(ISession *session)
 	//case 2: Short Stream of VT_BSTR type
 	str="";
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(10,48,VT_BSTR,stream)));val[0].setPropID(propid);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 
@@ -516,16 +513,14 @@ void TestOpEdit::teststream(ISession *session)
 	val[0].setEdit(bstr,3,startpos,3);val[0].setPropID(propid);
 	TVERIFYRC(pin->modify(val,1));
 	TVERIFYRC2(testCheckEdit(*pin->getValue(propid),str,startpos,session),"case 2: Short Stream of VT_BSTR type");
-    pin->destroy();
+    	pin->destroy();
 
 	//case 3: MULTIPLE edit of a short stream. VT_STRING
 	//Fails: Unimplemented code: RC_INTERNAL ln: 398 modifypin.cpp 
 
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(1024,65,VT_STRING,stream)));val[0].setPropID(propid);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 	for (i=0; i<NOEDITS; i++){
@@ -544,10 +539,8 @@ void TestOpEdit::teststream(ISession *session)
 	//case 4: MULTIPLE edit of a short stream. VT_BSTR
 	//Fails: Unimplemented code: RC_INTERNAL ln: 398 modifypin.cpp
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(4096,65,VT_BSTR,stream)));val[0].setPropID(propid);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 	for (i=0; i<NOEDITS; i++){
@@ -567,10 +560,8 @@ void TestOpEdit::teststream(ISession *session)
 	//case 5: Large streams:: VT_STRING
 	//fails with an assert from Assertion failed: (esht&~0xFFFF)==0 && esht<=pv->length, modifypin.cpp, line 881
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(70000,65,VT_STRING,stream)));val[0].setPropID(propid);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 
@@ -586,10 +577,8 @@ void TestOpEdit::teststream(ISession *session)
 	//case 6: Large streams :: VT_BSTR
 	stream.clear();
 	str="";
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(70000,65,VT_BSTR,stream)));val[0].setPropID(propid);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 	const unsigned char bbstr[] = { 100,101,102,103,104,65,66,67,68,69,70,71,74,80,'\0' };
@@ -606,10 +595,8 @@ void TestOpEdit::teststream(ISession *session)
 
 	//case 7: long stream multiple edits
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(80000,65,VT_STRING,stream)));val[0].setPropID(propid);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 	for (i=0; i<NOEDITS; i++){
@@ -627,10 +614,8 @@ void TestOpEdit::teststream(ISession *session)
 
 	//case 8: FTIndexing and OP_EDIT
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(80000,65,VT_STRING,stream)));val[0].setPropID(propid);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 
@@ -658,12 +643,9 @@ void TestOpEdit::teststream(ISession *session)
 	PropertyID propid1 = lTmpPropID[1];
 	//create pins with streams which will match the query.
 	for (i = 0; i < NOFPINS; i ++){
-		pin = session->createPIN();
 		val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(80000,65,VT_STRING,stream)));val[0].setPropID(propid);
 		val[1].set("testopeditstr");val[1].setPropID(propid1);
-		pin->modify(val,2);
-		TVERIFYRC(session->commitPINs(&pin,1));
-		pin->destroy();
+		TVERIFYRC(session->createPIN(val,2,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	}
 	//create query.
 	query = session->createStmt(STMT_UPDATE);
@@ -689,10 +671,8 @@ void TestOpEdit::teststream(ISession *session)
     
 	//case 10: edit of a stream with SSV flag set.
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(80000,65,VT_STRING,stream)));val[0].setPropID(propid);val[0].meta=META_PROP_SSTORAGE;
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 
@@ -706,10 +686,8 @@ void TestOpEdit::teststream(ISession *session)
 
 	//case 11: edit of a VT_BSTR stream with ssv flag set.
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(70000,65,VT_BSTR,stream)));val[0].setPropID(propid);val[0].meta=META_PROP_SSTORAGE;
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 
@@ -727,8 +705,7 @@ void TestOpEdit::teststream(ISession *session)
 	// case 12: SSV -> LOB
 	stream = "abcdefg";
 	val[0].set(stream.c_str(),(uint32_t)stream.size());val[0].setPropID(propid);val[0].meta=META_PROP_SSTORAGE;
-	pin = session->createPIN(val,1,MODE_COPY_VALUES);
-	TVERIFYRC(session->commitPINs(&pin,1));
+	session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT);
 	id = pin->getPID();
 	pin->destroy();
 
@@ -746,28 +723,24 @@ void TestOpEdit::teststream(ISession *session)
 
 	//case 13: Truncate  short stream
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(2000,65,VT_BSTR,stream)));val[0].setPropID(propid);val[0].meta=META_PROP_SSTORAGE;
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 
-    pin = session->getPIN(id);
+    	pin = session->getPIN(id);
 	val[0].setEdit((unsigned char*) 0, 0, 0, 2000);val[0].setPropID(propid);
 	TVERIFYRC(pin->modify(val,1));
 	pin->destroy();
 	
 	//case 14: Truncate large stream
 	stream.clear();
-	pin = session->createPIN();
 	val[0].set(MVTApp::wrapClientStream(session, new testOpEditStr(70000,65,VT_BSTR,stream)));val[0].setPropID(propid);val[0].meta=META_PROP_SSTORAGE;
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	id = pin->getPID();
 	pin->destroy();
 
-    pin = session->getPIN(id);
+    	pin = session->getPIN(id);
 	val[0].setEdit((unsigned char*) 0, 0, 0, 70000);val[0].setPropID(propid);
 	TVERIFYRC(pin->modify(val,1));
 	pin->destroy();
@@ -775,15 +748,14 @@ void TestOpEdit::teststream(ISession *session)
 	//case 15: increment value size in cycle
 
 	TVERIFYRC(session->createPINAndCommit( id, 0, 0 ));
-    unsigned char buffer[1024];
-    val[0].set(buffer,100); val[0].setPropID(propid);
+	unsigned char buffer[1024];
+	val[0].set(buffer,100); val[0].setPropID(propid);
 
-    TVERIFYRC(session->modifyPIN(id,val,1));
-
-    for (i=1; i < 100; i++) {
-        val[0].setEdit(buffer,100,i*100,0); val[0].setPropID(propid);
-        TVERIFYRC(session->modifyPIN(id,val,1));
-    }
+	TVERIFYRC(session->modifyPIN(id,val,1));
+	for (i=1; i < 100; i++) {
+        	val[0].setEdit(buffer,100,i*100,0); val[0].setPropID(propid);
+        	TVERIFYRC(session->modifyPIN(id,val,1));
+	}
 
 // case 16: 
 // see performance bugzilla issue #8002
@@ -793,7 +765,7 @@ void TestOpEdit::teststream(ISession *session)
 	const int size = 32*1024;
 	unsigned char *buf = (unsigned char *)alloca(size);
 	val[0].set(buf,size); val[0].setPropID(propid);
-    TVERIFYRC(session->modifyPIN(myPID,val,1));
+    	TVERIFYRC(session->modifyPIN(myPID,val,1));
 	uint64_t n;
 	//Modify the pins in a huge loop.
 
@@ -897,5 +869,7 @@ IPIN* TestOpEdit::createPIN(ISession *session,URIMap *pm,int npm){
 	SETVALUE(pvs[0], pm[0].uid, "How about editing this piece of string?", OP_SET);
 	SETVALUE(pvs[1], pm[1].uid, str, OP_SET);
 	pvs[2].set(bstr,6); SETVATTR(pvs[2], pm[2].uid, OP_SET);
-	return session->createPIN(pvs,3);
+	IPIN *pin;
+	session->createPIN(pvs,3,&pin,MODE_COPY_VALUES);
+	return pin;
 }

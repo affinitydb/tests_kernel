@@ -669,8 +669,8 @@ void runQueries(ISession & pSession)
 ClassID createClass(ISession * pSession, char const * pName, IStmt * pPredicate)
 {
     ClassID lClsid = STORE_INVALID_CLASSID;
-	Value vals[2]; URIMap pmap={pName,STORE_INVALID_URIID}; pSession->mapURIs(1,&pmap);
-	vals[0].setURIID(pmap.uid); vals[0].setPropID(PROP_SPEC_OBJID);
+	Value vals[2];
+	vals[0].set(pName); vals[0].setPropID(PROP_SPEC_OBJID);
     vals[1].set(pPredicate); vals[1].setPropID(PROP_SPEC_PREDICATE); vals[1].setMeta(META_PROP_INDEXED);
     IPIN * lP = pSession->createPIN(vals, 2, MODE_COPY_VALUES);
     if (lP)

@@ -32,7 +32,7 @@ int TestServices2::execute()
     mSession = MVTApp::startSession();
 
     doCase1();
-    //doCase2();   // disabled, please see bug#412 comment #2
+    doCase2();
     //case 3 and 4 are expected to be run manually
     //doCase3_receiver();
     //doCase3_sender();
@@ -228,23 +228,25 @@ void TestServices2::doCase2(){
 
     // send many messages by updating afy:request of this CPIN
     i = 0;
-    while (i < 10) {
+    while (i < 1000) {
         memset(sql, 0, sizeof(sql));
         memset(sql2, 0, sizeof(sql2));
         sprintf(sql2, "INSERT OPTIONS(TRANSIENT) testservices2_t2_update='Hello from Store2! UPDATE#%d\n'", i);
         sprintf(sql, "UPDATE RAW @" _LX_FM " SET afy:request=${%s}", (pin->getPID()).pid, sql2);
         TVERIFYRC(execStmt(mSession, sql));
         TVERIFYRC(qry->execute(&res));
-        while(res->next()!=NULL); // this message should display here.
+        IPIN * lNext;
+        while(res && NULL != (lNext = res->next())) lNext->destroy(); // this message should display here.
         if(res!= NULL) res->destroy();  
         i++;
     }
 
-#if 0
     // create a timer to update CPIN
     memset(sql, 0, sizeof(sql));
+    //sprintf(sql, "CREATE TIMER testservices2_t2_t2 INTERVAL \'00:00:01\' AS \
+//UPDATE RAW @" _LX_FM  " SET afy:request=${INSERT OPTIONS(TRANSIENT) testservices2_t2_update=CURRENT_TIMESTAMP}", (pin->getPID()).pid);
     sprintf(sql, "CREATE TIMER testservices2_t2_t2 INTERVAL \'00:00:01\' AS \
-UPDATE RAW @" _LX_FM  " SET afy:request=${INSERT OPTIONS(TRANSIENT) testservices2_t2_update=CURRENT_TIMESTAMP}", (pin->getPID()).pid);
+UPDATE RAW @" _LX_FM  " SET afy:request=${INSERT OPTIONS(TRANSIENT) testservices2_t2_update='Hello from Store2(TIMER UPDATE)!\n'}", (pin->getPID()).pid);
     cout << sql << endl;
     TVERIFYRC(execStmt(mSession,sql)); 
     // sleep 10 seconds
@@ -254,7 +256,6 @@ UPDATE RAW @" _LX_FM  " SET afy:request=${INSERT OPTIONS(TRANSIENT) testservices
     while(res->next()!=NULL);    
     if(res != NULL) res->destroy();
     if(qry!=NULL) qry->destroy();
-#endif
 
     // send many messages by creating many CPINs
     i = 0;

@@ -68,14 +68,11 @@ void TestMiscOperators::testOPContains(ISession *session)
 	Value args[2];
 	uint64_t cnt=0;
 
-	IPIN *pin=session->createPIN();
 	MVTRand::getString(str,15,0,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);
 	MVTRand::getString(str1,10,0,false);
 	val[1].set(str1.c_str());val[1].setPropID(pm[1].uid);
-	pin->modify(val,2);
-	RC rc = session->commitPINs(&pin,1);
-	pin->destroy();
+	TVERIFYRC(session->createPIN(val,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	//case 1: OP_CONTAINS
 	IStmt *query = session->createStmt();
@@ -96,14 +93,11 @@ void TestMiscOperators::testOPContains(ISession *session)
 	query->destroy();
 
 	//case 2: OP_CONTAINS with no case sensitive op
-	pin=session->createPIN();
 	MVTRand::getString(str,45,0,true,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);
 	MVTRand::getString(str1,30,0,false);
 	val[1].set(str1.c_str());val[1].setPropID(pm[1].uid);
-	pin->modify(val,2);
-	rc = session->commitPINs(&pin,1);
-	pin->destroy();
+	TVERIFYRC(session->createPIN(val,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 	
 	query = session->createStmt();
 	var = query->addVariable();
@@ -124,8 +118,6 @@ void TestMiscOperators::testOPContains(ISession *session)
 	query->destroy();
 
 	//case 3: collections
-	pin=session->createPIN();
-
 	MVTRand::getString(str,15,0,true,false);
 	MVTRand::getString(str1,40,0,true);
 	MVTRand::getString(str2,29,0,false,false);
@@ -136,10 +128,7 @@ void TestMiscOperators::testOPContains(ISession *session)
 	val[2].set(str2.c_str());val[2].setPropID(pm[0].uid); val[2].setOp(OP_ADD); val[2].eid=STORE_LAST_ELEMENT;
 	val[3].set(str3.c_str());val[3].setPropID(pm[0].uid); val[3].setOp(OP_ADD); val[3].eid=STORE_LAST_ELEMENT;
 	std::cout<<str<<std::endl;
-
-	pin->modify(val,4);
-	rc = session->commitPINs(&pin,1);
-	pin->destroy();
+	TVERIFYRC(session->createPIN(val,4,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));;
 
 	query = session->createStmt();
 	var = query->addVariable();
@@ -167,8 +156,7 @@ void TestMiscOperators::testOPContains(ISession *session)
 	char lTmpStr[1] = {ch};
 	str.insert(0,lTmpStr);
 	val[0].set(str.c_str());val[0].setPropID(pm[5].uid);
-	pin = session->createPIN(val,1,MODE_COPY_VALUES);
-	session->commitPINs(&pin,1);
+	TVERIFYRC(session->createPIN(val,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	query =  session->createStmt();
 	var = query->addVariable();
@@ -199,13 +187,10 @@ void TestMiscOperators::testOPBegins(ISession *session)
 	Value args[2];
 	uint64_t cnt=0;
 
-	IPIN *pin = session->createPIN();
 	MVTRand::getString(str,30,0,false,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[1].uid);
 	val[1].set("xyzxyz");val[1].setPropID(pm[2].uid);
-	pin->modify(val,2);
-	RC rc = session->commitPINs(&pin,1);
-	pin->destroy();
+	TVERIFYRC(session->createPIN(val,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
     //case 1 : simple OP_BEGINS
 	IStmt *query = session->createStmt();
@@ -226,15 +211,13 @@ void TestMiscOperators::testOPBegins(ISession *session)
 	query->destroy();
 
 	//case 2: with collections.
-	pin = session->createPIN();
 	MVTRand::getString(str,25,0,true,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);val[0].eid=STORE_FIRST_ELEMENT;val[0].op=OP_ADD;
 	MVTRand::getString(str1,25,0,true,false);
 	val[1].set(str1.c_str());val[1].setPropID(pm[0].uid);val[1].eid=STORE_FIRST_ELEMENT;val[1].op=OP_ADD;
 	MVTRand::getString(str2,40,0,true,false);
 	val[2].set(str2.c_str());val[2].setPropID(pm[0].uid);val[2].eid=STORE_FIRST_ELEMENT;val[2].op=OP_ADD;
-	pin->modify(val,3);
-	rc = session->commitPINs(&pin,1);
+	TVERIFYRC(session->createPIN(val,3,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	query = session->createStmt();
 	var = query->addVariable();
@@ -273,15 +256,11 @@ void TestMiscOperators::testOPBegins(ISession *session)
 	clsexpr->destroy();
 
 	//create pins for the above condition.
-	int x;
-
-	for (x=0;x<1000;x++){
-		IPIN *clspin = session->createPIN();
+	for (int x=0;x<1000;x++){
 		val[0].set("euphoriaic");val[0].setPropID(pm[2].uid);
-		clspin->modify(val,1);
-		session->commitPINs(&clspin,1);
-		clspin->destroy();
+		session->createPIN(val,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 	}
+	
 	SourceSpec csp;
 	csp.objectID=cls;
 	csp.nParams=0;
@@ -306,14 +285,11 @@ void TestMiscOperators::testOPEnds(ISession *session)
 	uint64_t cnt;
 
 	//case 1: OP_ENDS
-	IPIN *pin = session->createPIN();
 	MVTRand::getString(str,25,0,true,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[1].uid);
 	MVTRand::getString(str1,30,0,false,true);
 	val[1].set(str1.c_str());val[1].setPropID(pm[2].uid);
-	pin->modify(val,2);
-	session->commitPINs(&pin,1);
-	pin->destroy();
+	TVERIFYRC(session->createPIN(val,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	IStmt *query = session->createStmt();
 	unsigned char var = query->addVariable();
@@ -333,16 +309,13 @@ void TestMiscOperators::testOPEnds(ISession *session)
 	query->destroy();
 
     //case 2: OP_ENDS with collections.
-	pin = session->createPIN();
 	MVTRand::getString(str,40,0,true,false);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);val[0].eid=STORE_LAST_ELEMENT;val[0].op=OP_ADD_BEFORE;
 	MVTRand::getString(str1,50,0,true,false);
 	val[1].set(str1.c_str());val[1].setPropID(pm[0].uid);val[1].eid=STORE_LAST_ELEMENT;val[1].op=OP_ADD_BEFORE;
 	MVTRand::getString(str2,200,0,true,false);
 	val[2].set(str2.c_str());val[2].setPropID(pm[0].uid);val[2].eid=STORE_LAST_ELEMENT;val[2].op=OP_ADD_BEFORE;
-
-	pin->modify(val,3);
-	session->commitPINs(&pin,1);
+	TVERIFYRC(session->createPIN(val,3,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	query = session->createStmt();
 	var = query->addVariable();

@@ -44,7 +44,6 @@ int	TestToString::execute()
 			Value lPVs[lMaxNumProps];
 			for(i = 0; i < lNumPINs; i++)
 			{
-				IPIN * const lPIN = lSession->createPIN();
 				const int lNumProps = (int)(lMaxNumProps * rand()/RAND_MAX); 
 				int j = 0;
 				for(j = 0; j < lNumProps; j++){
@@ -52,9 +51,7 @@ int	TestToString::execute()
 					MVTRand::getString(*lS, 50, 0, true);
 					SETVALUE(lPVs[j],mPropIds[j],lS->c_str(),OP_SET);
 				}
-				TVERIFYRC(lPIN->modify(lPVs,lNumProps));					
-				TVERIFYRC(lSession->commitPINs(&lPIN,1));					
-				lPIN->destroy();
+				TVERIFYRC(lSession->createPIN(lPVs,lNumProps,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 			}
 		}
 		// Case #1 : IExpr::toString()

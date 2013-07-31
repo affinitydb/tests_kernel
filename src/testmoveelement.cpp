@@ -92,7 +92,7 @@ void TestMoveElement::doTest()
 
 	{
 		mLogger.out() << "Case 1" << endl;
-		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_NEW_COMMIT));
+		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_PERSISTENT));
 
 		// Move e[4] BEFORE STORE_FIRST_ELEMENT
 		move(lVal[0],prop,e[4],STORE_FIRST_ELEMENT,OP_MOVE_BEFORE);
@@ -109,7 +109,7 @@ void TestMoveElement::doTest()
 
 	{
 		mLogger.out() << "Case 2" << endl;
-		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_NEW_COMMIT));
+		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_PERSISTENT));
 
 		// Move e[0] AFTER e[1]
 		move(lVal[0],prop,e[0],e[1],OP_MOVE);
@@ -125,7 +125,7 @@ void TestMoveElement::doTest()
 
 	{
 		mLogger.out() << "Case 3" << endl;
-		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_NEW_COMMIT));
+		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_PERSISTENT));
 
 		// Move e[0] AFTER e[1] and back again!
 		move(lVal[0],prop,e[0],e[1],OP_MOVE);		
@@ -143,7 +143,7 @@ void TestMoveElement::doTest()
 
 	{
 		mLogger.out() << "Case 4" << endl;
-		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_NEW_COMMIT));
+		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_PERSISTENT));
 
 		// Move e[0] AFTER e[1] and back again!
 		move(lVal[0],prop,e[0],e[1],OP_MOVE);		
@@ -161,7 +161,7 @@ void TestMoveElement::doTest()
 	//
 	{
 		mLogger.out() << "Case 5" << endl;
-		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_NEW_COMMIT));
+		CmvautoPtr<IPIN> clone(lNewPIN->clone(0,0,MODE_PERSISTENT));
 
 		move(lVal[0],prop,e[4],STORE_FIRST_ELEMENT,OP_MOVE_BEFORE); // 4 before 0
 		move(lVal[1],prop,e[3],e[0]);	// 3 after 0

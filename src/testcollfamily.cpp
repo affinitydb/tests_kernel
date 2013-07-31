@@ -157,8 +157,9 @@ PID TestCollFamily::testPIN( ISession *session, PropertyID collPropID, int i /*p
 {
 	Tstring str,qstr;
 	Value val[5];
+	IPIN *pin;
 
-	IPIN *pin = session->createPIN();
+	TVERIFYRC(session->createPIN(NULL,0,&pin,MODE_PERSISTENT));
 
 	// Add collection elements of random strings for prop1 or prop2
 	int cntElements = mBigCollection ? NOELTS_BIG : NOELTS ;
@@ -181,12 +182,9 @@ PID TestCollFamily::testPIN( ISession *session, PropertyID collPropID, int i /*p
 	//Also string containing image to prop0
 	val[0].set("image/jpg");val[0].setPropID(mPropIDs[0]);
 	TVERIFYRC(pin->modify(val,1,MODE_COPY_VALUES));
-	TVERIFYRC(session->commitPINs(&pin,1));
-
 	PID pid = pin->getPID();
-
+	
 //	mLogger.out() << std::hex << pid.pid << endl ;
-
 	pin->destroy();
 
 	if(0 == i % 5){
@@ -249,7 +247,6 @@ PID TestCollFamily::testPIN( ISession *session, PropertyID collPropID, int i /*p
 	val[0].set("image/jpg");val[0].setPropID(mPropIDs[0]);
 	pin = session->createPIN(val,1,MODE_COPY_VALUES);
 	TVERIFYRC(session->commitPINs(&pin,1));
-
 	for (int j=0; j < cntElements; j++){
 		MVTRand::getString(str,30,0,false,false);// all normalized case
 		
@@ -392,20 +389,17 @@ void TestCollFamily::testOperators(ISession *session, int op,Tstring &deletedstr
 void TestCollFamily::testCollDups(ISession *pSession)
 {
 	Tstring lStr; MVTRand::getString(lStr, 10, 0, false, false);
-	Value lV[1];
-	IPIN *lPIN = pSession->createPIN();
+	Value lV[10];
 	int j = 0;
+	
 	for (j = 0; j < 10; j++ )
 	{		
-		char lBuf[16];
+		char *lBuf = (char*)pSession->malloc(16);
 		sprintf(lBuf, "%s%d", lStr.c_str(), j);
-		lV[0].set(lBuf); lV[0].setPropID(mPropIDs[2]);
-		lV[0].op = OP_ADD; lV[0].eid = STORE_LAST_ELEMENT;
-
-		TVERIFYRC(lPIN->modify(lV,1));
+		lV[j].set(lBuf); lV[j].setPropID(mPropIDs[2]);
+		lV[j].op = OP_ADD; lV[j].eid = STORE_LAST_ELEMENT;
 	}
-	TVERIFYRC(pSession->commitPINs(&lPIN,1));
-	if(lPIN) lPIN->destroy();
+	TVERIFYRC(pSession->createPIN(lV,10,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 
 	ClassID lCLSID = STORE_INVALID_CLASSID;
 	SourceSpec lCS;

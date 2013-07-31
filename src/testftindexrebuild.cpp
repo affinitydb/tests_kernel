@@ -96,29 +96,20 @@ void TestFTIndexRebuild::verifyMiscOps(ISession *session)
 {
 	Value val[4];
 	//case 1: META_PROP_NOFTINDEX should be honored
-	IPIN *pin = session->createPIN();
 	val[0].set("Wollongabba");val[0].setPropID(mPropIds[1]);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
-	pin->destroy();
+	TVERIFYRC(session->createPIN(val,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 	TVERIFYRC(session->rebuildIndexFT());
 	TVERIFY(verify2(session,"Wollongabba",0));
 
     //case 2: META_PROP_STOPWORDS should be honored
-	pin = session->createPIN();
 	val[0].set("brisbane is somewhere");val[0].setPropID(mPropIds[1]);	//val[0].meta = META_PROP_STOPWORDS;	-- always excludes stopwords
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1));
-	pin->destroy();
+	TVERIFYRC(session->createPIN(val,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 	TVERIFYRC(session->rebuildIndexFT());
 	TVERIFY(verify2(session,"somewhere",0));
 
     //case 3: PIN_HIDDEN should be honored
-	pin = session->createPIN();
 	val[0].set("adeleide is somewhere");val[0].setPropID(mPropIds[1]);
-	TVERIFYRC(pin->modify(val,1));
-	TVERIFYRC(session->commitPINs(&pin,1,PIN_HIDDEN));
-	pin->destroy();
+	TVERIFYRC(session->createPIN(val,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES|PIN_HIDDEN));
 	TVERIFYRC(session->rebuildIndexFT());
 	TVERIFY(verify2(session,"adeleide",0));
 	//case 4: Extended char set tests

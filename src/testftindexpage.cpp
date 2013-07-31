@@ -114,7 +114,6 @@ void TestFTIndexPage::populateStore(ISession *session)
 		if (0 == i % 100)
 			mLogger.out() << ".";
 
-		IPIN *pin = session->createPIN();
 		titleStr = "" ;
 		char buff[7];
 		titleStr +=	"goldflake kings";
@@ -124,9 +123,7 @@ void TestFTIndexPage::populateStore(ISession *session)
 		//create the pins here.
 		pvs[0].set(titleStr.c_str());pvs[0].setPropID(pm[0].uid);
 		pvs[0].meta = META_PROP_FTINDEX;
-		pin->modify(pvs,1);
-		session->commitPINs(&pin,1);
-		pin->destroy();
+		session->createPIN(pvs,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 	}
 	mLogger.out() << std::endl;
 }

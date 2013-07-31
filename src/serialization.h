@@ -858,7 +858,7 @@ namespace PSSER_NAMESPACE
 			else
 			{
 				RC lRC = pPIN.modify(&lV, 1, MODE_FORCE_EIDS, &lV.eid);
-				if (RC_INVPARAM == lRC && pPIN.isPersistent())
+				if (RC_INVPARAM == lRC && (pPIN.getFlags()&PIN_PERSISTENT)!=0)
 				{
 					ElementID lEid = lV.eid;
 					lV.eid = STORE_COLLECTION_ID; // Note: Using STORE_LAST_ELEMENT currently forces a collection form, even for 1 element...

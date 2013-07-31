@@ -88,15 +88,15 @@ void TestClone::pinClone(ISession *session)
 		TVERIFYRC(pin->modify(&pv,1));
 	}
 	TVERIFYRC(session->commitPINs(&pin,1));
-	pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
-	TVERIFY(pin1->isPersistent());
+	pin1 = pin->clone(0,0,MODE_PERSISTENT);
+	TVERIFY((pin1->getFlags()&PIN_PERSISTENT)!=0);
 	TVERIFY(pin1->getPID().pid != STORE_INVALID_PID ) ;
 	comparePIN(session,pin1,pvl,nLoops);
 	comparePIN2(pin,pin1,session);
 
-	//clone without the MODE_NEW_COMMIT
+	//clone without the MODE_PERSISTENT
 	pin2 = pin->clone() ;
-	TVERIFY(!pin2->isPersistent() ) ;
+	TVERIFY((pin2->getFlags()&PIN_PERSISTENT)==0) ;
 	TVERIFY(pin2->getPID().pid == STORE_INVALID_PID ) ;
 	comparePIN(session,pin2,pvl,nLoops);
 	TVERIFYRC(session->commitPINs(&pin2,1)) ;
@@ -132,10 +132,10 @@ void TestClone::pinClone(ISession *session)
 		SETVALUE_C(pvs[0], pm[0].uid, buff, OP_ADD, STORE_LAST_ELEMENT);
 		rc =pin->modify(pvs,1);
 	}
-	pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
+	pin1 = pin->clone(0,0,MODE_PERSISTENT);
 	
 	size_t x = MVTApp::getCollectionLength(*pin1->getValue(pm[0].uid));
-	TVERIFY( x == (nLoops+1) && pin1->isPersistent()) ;
+	TVERIFY( x == (nLoops+1) && (pin1->getFlags()&PIN_PERSISTENT)!=0) ;
 
 	comparePIN2(pin, pin1,session ) ;
 
@@ -155,10 +155,10 @@ void TestClone::pinClone(ISession *session)
 		rc =pin->modify(pvs,1);
 	}
 
-	pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
+	pin1 = pin->clone(0,0,MODE_PERSISTENT);
 
 	TVERIFY( nLoops == MVTApp::getCollectionLength(*pin1->getValue(pm[0].uid)));
-	TVERIFY( pin1->isPersistent()) ;
+	TVERIFY( (pin1->getFlags()&PIN_PERSISTENT)!=0) ;
 
 	comparePIN2(pin, pin1,session ) ;
 
@@ -174,12 +174,12 @@ void TestClone::pinClone(ISession *session)
 	
 	SETVALUE(pvs[0], lPropIDs[1], "jeete hain Shaan se", OP_SET);
 	pvl.insert(map<Afy::PropertyID,Afy::Value>::value_type(lPropIDs[1],pvs[0]));
-	pin1= pin->clone(pvs,1,MODE_NEW_COMMIT);
+	pin1= pin->clone(pvs,1,MODE_PERSISTENT);
 	comparePIN(session,pin1,pvl,2);
 	// The clone is committed but the original is not
-	TVERIFY(pin1->isPersistent() ) ;	
+	TVERIFY((pin1->getFlags()&PIN_PERSISTENT)!=0 ) ;	
 	pin->refresh() ;
-	TVERIFY(!pin->isPersistent() ) ;
+	TVERIFY((pin->getFlags()&PIN_PERSISTENT)==0 ) ;
 //	MVTApp::output(*pin1,mLogger.out(),session);	
 	TVERIFYRC(session->commitPINs(&pin,1,0)) ;
 
@@ -199,10 +199,10 @@ void TestClone::pinClone(ISession *session)
 	pin = session->getPIN(pid);
 	//OP_DELETE
 	pvs[0].setDelete(pm[1].uid);
-	pin1 = pin->clone(pvs,1,MODE_NEW_COMMIT);
+	pin1 = pin->clone(pvs,1,MODE_PERSISTENT);
 	MVTApp::output(*pin1,mLogger.out(),session);
 	x=pin1->getNumberOfProperties();
-	TVERIFY(x==2) ; TVERIFY( pin1->isPersistent()) ;
+	TVERIFY(x==2) ; TVERIFY( (pin1->getFlags()&PIN_PERSISTENT)!=0) ;
 	pin->destroy();
 	pin1->destroy();
 
@@ -224,7 +224,7 @@ void TestClone::pinClone(ISession *session)
 	} else
 		TVERIFYRC(RC_TYPE);
 		
-	pin1 = pin->clone(pvs,1,MODE_NEW_COMMIT);
+	pin1 = pin->clone(pvs,1,MODE_PERSISTENT);
 	pin1->refresh();
 	MVTApp::output(*pin1,mLogger.out(),session);
 	//MVTApp::output((*pin1->getValue(pm[0].uid), mLogger.out()); mLogger.out() << std::endl;
@@ -240,7 +240,7 @@ void TestClone::pinClone(ISession *session)
 	}
 	rc = pin->modify(pvs,100);
 
-	pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
+	pin1 = pin->clone(0,0,MODE_PERSISTENT);
 	TVERIFY(pin1->getNumberOfProperties() ==i ) ;
 	TVERIFY(pin1->isPersistent()) ;
 #endif
@@ -404,13 +404,13 @@ void TestClone::ACLPinClone(ISession *session)
 	TVERIFYRC(session->createPINAndCommit(pid,pvs,2));
 
 	IPIN *pin = session->getPIN(pid);
-	IPIN *pin1 = pin->clone(0,0,MODE_NEW_COMMIT);
+	IPIN *pin1 = pin->clone(0,0,MODE_PERSISTENT);
 	
 	//check the rights on the pin
 	pv = pin1->getValue(PROP_SPEC_ACL);
 
 	//REVIEW: Are || meant instead of &&?
-	if(pv->meta != (META_PROP_READ | META_PROP_WRITE) && pv->iid != iid && !pin1->isPersistent())
+	if(pv->meta != (META_PROP_READ | META_PROP_WRITE) && pv->iid != iid && (pin1->getFlags()&PIN_PERSISTENT)==0)
 		TVERIFY2(0,"Invalid rights") ;
 
 	//modify the pin, change rights, clone and check again using overwrite values
@@ -418,7 +418,7 @@ void TestClone::ACLPinClone(ISession *session)
 	SETVATTR_C(pvs[0], PROP_SPEC_ACL, OP_ADD, STORE_LAST_ELEMENT);
 	pvs[0].meta = META_PROP_READ;
 	
-	IPIN *pin2 = pin1->clone(pvs,1,MODE_NEW_COMMIT);
+	IPIN *pin2 = pin1->clone(pvs,1,MODE_PERSISTENT);
 	pv = pin2->getValue(PROP_SPEC_ACL);
 	//VT_ARRAY -- check rights now!!!!!
 	if (pv->type == VT_ARRAY) {

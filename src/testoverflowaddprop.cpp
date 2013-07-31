@@ -33,7 +33,7 @@ int TestOverflowAddProp::execute()
 		MVTApp::mapURIs(session, "TestOverflowAddProp.prop.", sNumProps, mPropIds);
 		for (int x=0; x < 1000; x ++)
 		{
-			IPIN *pin = session->createPIN();
+			IPIN *pin;
 			Value val[30];int i=0;
 			for (i=0; i < 10; i ++)
 			{
@@ -45,8 +45,7 @@ int TestOverflowAddProp::execute()
 			{
 				val[i].setNow();val[i].setPropID(mPropIds[i]);
 			}
-			TVERIFYRC(pin->modify(val,i));
-			TVERIFYRC(session->commitPINs(&pin,1));
+			TVERIFYRC(session->createPIN(val,i,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 			pids.push_back(pin->getPID());
 			pin->destroy();
 		}

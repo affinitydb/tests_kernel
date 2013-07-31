@@ -153,8 +153,8 @@ protected:
 
 		StartupParameters const lSP(0, mDirectory.c_str(), DEFAULT_MAX_FILES, MVTApp::Suite().mNBuffer,  
 										DEFAULT_ASYNC_TIMEOUT, NULL, NULL, mPassword.c_str(), NULL);
-		StoreCreationParameters lSCP(0, MVTApp::Suite().mPageSize, 0x200, mIdentity.c_str(), mStoreID, mPassword.c_str(), false); 
-		lSCP.fEncrypted = !mPassword.empty();
+		StoreCreationParameters lSCP(0, MVTApp::Suite().mPageSize, 0x200, mIdentity.c_str(), mStoreID, mPassword.c_str(), 0); 
+		lSCP.mode |= mPassword.empty()?0:STORE_CREATE_ENCRYPTED;
 
 		Afy::IAffinity *& lStoreCtx = mStoreCtx;
 

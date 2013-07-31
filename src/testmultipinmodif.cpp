@@ -201,15 +201,11 @@ void TestMultiPinModif::createPINS(ISession *session,PropertyID *pm,int npm,cons
 			qmap.insert(map<int,Tstring>::value_type(qCase,str));
 			std::cout<<str<<" while insert"<<std::endl;
 			for(int i=0;i<NOFPINS;i++){
-				IPIN *pin = session->createPIN();
 				val[0].set(str.c_str());val[0].setPropID(pm[0]);
 				val[1].set(str1.c_str());val[1].setPropID(pm[1]);
 				val[2].set(str2.c_str());val[2].setPropID(pm[2]);
 				val[0].meta = val[1].meta = val[2].meta = META_PROP_FTINDEX;
-				pin->modify(val,3);
-				TVERIFYRC(session->commitPINs(&pin,1));
-				pin->destroy();
-				pin = NULL;
+				TVERIFYRC(session->createPIN(val,3,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 			}
 			break;
 		case (2):
@@ -219,16 +215,12 @@ void TestMultiPinModif::createPINS(ISession *session,PropertyID *pm,int npm,cons
 			MVTRand::getString(str2,20,0,false);
 			qmap.insert(map<int,Tstring>::value_type(qCase,str2));
 			for(int i=0;i<NOFPINS;i++){
-				IPIN *pin = session->createPIN();
 				val[0].set(str.c_str());val[0].setPropID(pm[0]);
 				val[1].set(str1.c_str());val[1].setPropID(pm[1]);
 				val[2].set(str2.c_str());val[2].setPropID(pm[2]);
 				val[3].set((unsigned)123456);val[3].setPropID(pm[4]);
 				val[0].meta = val[1].meta = val[2].meta =META_PROP_FTINDEX;
-				TVERIFYRC(pin->modify(val,4));
-				TVERIFYRC(session->commitPINs(&pin,1));
-				pin->destroy();
-				pin = NULL;
+				TVERIFYRC(session->createPIN(val,4,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 			}
 			break;
 		case (3):
@@ -237,16 +229,12 @@ void TestMultiPinModif::createPINS(ISession *session,PropertyID *pm,int npm,cons
 			MVTRand::getString(str2,20,0,false);
 			qmap.insert(map<int,Tstring>::value_type(qCase,str1));
 			for(int i=0;i<NOFPINS;i++){
-				IPIN *pin = session->createPIN();
 				val[0].set(str.c_str());val[0].setPropID(pm[0]);
 				val[1].set(str1.c_str());val[1].setPropID(pm[1]);
 				val[2].set("multimodftstr");val[2].setPropID(pm[2]);
 				val[3].setURL("http://www.vmware.com");val[3].setPropID(pm[5]);
 				val[0].meta = val[1].meta = val[2].meta = val[3].meta = META_PROP_FTINDEX;
-				TVERIFYRC(pin->modify(val,4));
-				TVERIFYRC(session->commitPINs(&pin,1));
-				pin->destroy();
-				pin = NULL;
+				TVERIFYRC(session->createPIN(val,4,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 			}
 			break;
 		default:

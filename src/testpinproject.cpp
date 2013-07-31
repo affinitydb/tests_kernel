@@ -79,7 +79,7 @@ void TestPinProject::doTest()
 	srcProps[1] = propY; destProps[1] = propY;
 	srcProps[2] = propZ; destProps[2] = propZ;
 	
-	CmvautoPtr<IPIN> p1(pOrig->project(srcProps,3,destProps,MODE_NEW_COMMIT));
+	CmvautoPtr<IPIN> p1(pOrig->project(srcProps,3,destProps,MODE_PERSISTENT));
 
 	TVERIFY( p1->getValue(propX)->i == 100 );
 	TVERIFY( p1->getValue(propY)->i == 101 );
@@ -91,7 +91,7 @@ void TestPinProject::doTest()
 	srcProps[1] = propY; destProps[1] = propY;
 	srcProps[2] = propZ; destProps[2] = propX;
 	
-	CmvautoPtr<IPIN> p2(pOrig->project(srcProps,3,destProps,MODE_NEW_COMMIT));
+	CmvautoPtr<IPIN> p2(pOrig->project(srcProps,3,destProps,MODE_PERSISTENT));
 
 	TVERIFY( p2->getValue(propZ)->i == 100 );
 	TVERIFY( p2->getValue(propY)->i == 101 );
@@ -102,7 +102,7 @@ void TestPinProject::doTest()
 	srcProps[0] = propX; destProps[0] = propY;
 	srcProps[1] = propY; destProps[1] = propZ;
 	
-	CmvautoPtr<IPIN> p3(pOrig->project(srcProps,2,destProps,MODE_NEW_COMMIT));
+	CmvautoPtr<IPIN> p3(pOrig->project(srcProps,2,destProps,MODE_PERSISTENT));
 
 	TVERIFY( p3->getValue(propY)->i == 100 );
 	TVERIFY( p3->getValue(propZ)->i == 101 );
@@ -113,7 +113,7 @@ void TestPinProject::doTest()
 	srcProps[0] = propU; destProps[0] = propX;
 	srcProps[1] = propX; destProps[1] = propY;
 	
-	CmvautoPtr<IPIN> p4(pOrig->project(srcProps,2,destProps,MODE_NEW_COMMIT));
+	CmvautoPtr<IPIN> p4(pOrig->project(srcProps,2,destProps,MODE_PERSISTENT));
 
 	TVERIFY( p4->getValue(propX) == NULL );
 	TVERIFY( p4->getValue(propY)->i == 100 );
@@ -124,7 +124,7 @@ void TestPinProject::doTest()
 	srcProps[0] = propU; destProps[0] = propX;
 	srcProps[1] = propV; destProps[1] = propY;
 	
-	CmvautoPtr<IPIN> p5(pOrig->project(srcProps,2,destProps,MODE_NEW_COMMIT));
+	CmvautoPtr<IPIN> p5(pOrig->project(srcProps,2,destProps,MODE_PERSISTENT));
 
 	TVERIFY( p5->getNumberOfProperties() == 0 );
 
@@ -135,7 +135,7 @@ void TestPinProject::doTest()
 	srcProps[0] = propX; destProps[0] = propX;
 	srcProps[1] = propY; destProps[1] = propX;
 	
-	CmvautoPtr<IPIN> p6(pOrig->project(srcProps,2,destProps,MODE_NEW_COMMIT));
+	CmvautoPtr<IPIN> p6(pOrig->project(srcProps,2,destProps,MODE_PERSISTENT));
 
 	TVERIFY( p6->getNumberOfProperties() == 1 );
 	MVTUtil::output( *(p6.Get()),mLogger.out(),mSession );
@@ -146,7 +146,7 @@ void TestPinProject::doTest()
 
 	srcProps[0] = propW; 
 	
-	CmvautoPtr<IPIN> p7(pOrig->project(srcProps,1,NULL,MODE_NEW_COMMIT));
+	CmvautoPtr<IPIN> p7(pOrig->project(srcProps,1,NULL,MODE_PERSISTENT));
 
 	TVERIFY( p7->getNumberOfProperties() == 1 );
 	TVERIFY( p7->getValue(propW)->type == VT_ARRAY ); // REVIEW: if you retrieve it from

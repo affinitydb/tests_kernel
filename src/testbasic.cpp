@@ -402,7 +402,6 @@ void TestBasic::CreateSaraPIN()
 
 	IPIN * pSaraPin = mSession->createPIN( pName, 1 ) ;
 	TVERIFY( pSaraPin != NULL ) ;
-	TVERIFY( !pSaraPin->isPersistent() ) ;
 	TVERIFY( pSaraPin->getNumberOfProperties() == 1 ) ;
 	
 	PID saraPID = pSaraPin->getPID() ;
@@ -424,7 +423,7 @@ void TestBasic::CreateSaraPIN()
 	// commitPINs will copy the information into database
 	// so we will own the memory again
 	TVERIFYRC( mSession->commitPINs( &pSaraPin, 1 ) );
-	TVERIFY( pSaraPin->isPersistent() ) ;
+	TVERIFY( (pSaraPin->getFlags()&PIN_PERSISTENT)!=0 ) ;
 
 	// Now PID should be valid
 	saraPID = pSaraPin->getPID() ;
@@ -473,7 +472,7 @@ void TestBasic::CreateFredPIN()
 	TVERIFYRC( pFredPin->modify( moreInfo, 2 ) );
 
 	TVERIFYRC( mSession->commitPINs( &pFredPin, 1 ) );
-	TVERIFY( pFredPin->isPersistent() ) ;
+	TVERIFY( (pFredPin->getFlags()&PIN_PERSISTENT)!=0 ) ;
 
 	PID fredPID = pFredPin->getPID() ;
 	TVERIFY( fredPID.pid != STORE_INVALID_URIID ) ;

@@ -102,8 +102,7 @@ void TestIndexRollback::doTest()
 		Value va[2];
 		va[0].set(query); va[0].property = PROP_SPEC_PREDICATE; va[0].meta = META_PROP_INDEXED;
 		MVTRand::getString(st,10,0,true);
-		URIMap pmap={st.c_str(),STORE_INVALID_URIID}; mSession->mapURIs(1,&pmap);
-		va[1].setURIID(pmap.uid); va[1].property = PROP_SPEC_OBJID;
+		va[1].set(st.c_str()); va[1].property = PROP_SPEC_OBJID;
 		PID pid;
 		mSession->createPINAndCommit(pid,va,2);
 		std::cout << char('$'+i) << flush;

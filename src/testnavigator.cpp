@@ -35,19 +35,17 @@ void testnavigator::createPINs()
 	mLogger.out()<<"Creating "<<nPINs<<"PINs(with collection)"<<std::endl;
 	for(int i=0;i<nPINs;i++)
 	{
-		IPIN *pin = mSession->createPIN();
-		Value val;
+		Value vals[10];
 		Tstring str;
-		for(int k=lPropIDs[0];k<nProps;k++)
+		for(int k=0;k<nProps;k++)
 		{
 			for(int j=0;j<nColls;j++)
 			{
-				val.set(MVTRand::getRange(0,100)); val.setPropID(lPropIDs[k]); 
-				val.op = OP_ADD;val.eid = STORE_LAST_ELEMENT; 
-				TVERIFYRC(pin->modify(&val,1,MODE_COPY_VALUES));
+				vals[k*5+j].set(MVTRand::getRange(0,100)); vals[k*5+j].setPropID(lPropIDs[k]); 
+				vals[k*5+j].op = OP_ADD;vals[k*5+j].eid = STORE_LAST_ELEMENT; 
 			}
 		}
-		TVERIFYRC(mSession->commitPINs(&pin,1,MODE_COPY_VALUES));
+		TVERIFYRC(mSession->createPIN(vals,10,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 		if(i % 10 == 0) mLogger.out()<<".";
 	}
 	mLogger.out()<<"\nDone.\n";

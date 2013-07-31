@@ -54,7 +54,6 @@ void TestCount::testcount(ISession *session)
 {
 	Value val[3];
 	int i;
-	IPIN *pin;
 	Tstring str, strcl, strcl1;
 	MVTRand::getString(str,15,0,false);
 	MVTRand::getString(strcl,10,0,false);
@@ -73,17 +72,13 @@ void TestCount::testcount(ISession *session)
 	{
 		// Create many pins, all with the same string properties
 		if(i%50 == 0) mLogger.out() << ".";
-		pin = session->createPIN();
 		val[0].set(str.c_str());val[0].setPropID(pids[0]);val[0].meta = META_PROP_FTINDEX;
 
 		// Collection with two strings
 		val[1].set(strcl.c_str());val[1].setPropID(pids[1]);val[1].eid=STORE_LAST_ELEMENT;val[1].op=OP_ADD;val[1].meta = META_PROP_FTINDEX;
 		val[2].set(strcl1.c_str());val[2].setPropID(pids[1]);val[2].eid=STORE_LAST_ELEMENT;val[2].op=OP_ADD;val[2].meta = META_PROP_FTINDEX;
 
-		RC rc = pin->modify(val,3);
-		rc = session->commitPINs(&pin,1);
-		pin->destroy();
-		pin = NULL;
+		TVERIFYRC(session->createPIN(val,3,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 	}
 	mLogger.out() << std::endl;
 
