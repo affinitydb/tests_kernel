@@ -1993,8 +1993,8 @@ bool MVTApp::startStore(
 
 	const unsigned short lStoreID = pIdentity?pStoreID:suite.mStoreID ;
 	const unsigned int lPageSize = suite.mPageSize ;
-	StoreCreationParameters lSCP(NCTLFILES, lPageSize, PAGESPEREXTENT, lIdentity, lStoreID, lPassword, false); 
-	lSCP.fEncrypted = ((lPassword != NULL) && (strlen(lPassword)>0));
+	StoreCreationParameters lSCP(NCTLFILES, lPageSize, PAGESPEREXTENT, lIdentity, lStoreID, lPassword, 0); 
+	if ((lPassword != NULL) && (strlen(lPassword)>0)) lSCP.mode |= STORE_CREATE_ENCRYPTED;
 
 	Afy::IAffinity *& lStoreCtx = suite.mStoreCtx;
 	mSCP = lSCP; mStoreCtx = lStoreCtx;
@@ -2160,8 +2160,8 @@ RC MVTApp::createStoreWithDumpSession(ISession *& outSession, IService * pNetCal
 
 	const unsigned short lStoreID = suite.mStoreID ;
 	const unsigned int lPageSize = suite.mPageSize ;
-	StoreCreationParameters lSCP(NCTLFILES, lPageSize, PAGESPEREXTENT, lIdentity, lStoreID, lPassword, false); 
-	lSCP.fEncrypted = ((lPassword != NULL) && (strlen(lPassword)>0));
+	StoreCreationParameters lSCP(NCTLFILES, lPageSize, PAGESPEREXTENT, lIdentity, lStoreID, lPassword, 0); 
+	if ((lPassword != NULL) && (strlen(lPassword)>0)) lSCP.mode |= STORE_CREATE_ENCRYPTED;
 
 	Afy::IAffinity *& lStoreCtx = suite.mStoreCtx;
 
