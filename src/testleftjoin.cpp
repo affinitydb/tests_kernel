@@ -332,7 +332,7 @@ void TestLeftJoin::createData()
 			SETVALUE(lV[3], mRHSPropID, lRHSStr.c_str(), OP_SET);
 		}
 		PID lPID = {STORE_INVALID_PID, STORE_OWNER};
-		CREATEPIN(mSession, lPID, lV, lJoinFamily?4:3);
+		CREATEPIN(mSession, &lPID, lV, lJoinFamily?4:3);
 		IPIN *lPIN = mSession->getPIN(lPID); TVERIFY(lPIN != NULL);
 		if(lPIN) 
 		{
@@ -359,7 +359,7 @@ void TestLeftJoin::createData()
 		SETVALUE(lV[4], mPropIDs[5], lPINs[i], OP_SET); // add VT_REFID property to pins created before
 
 		PID lPID = {STORE_INVALID_PID, STORE_OWNER};
-		CREATEPIN(mSession, lPID, lV, 5);
+		CREATEPIN(mSession, &lPID, lV, 5);
 		IPIN *lPIN = mSession->getPIN(lPID); TVERIFY(lPIN != NULL);
 		mLHSPINs.push_back(lPID);
 		if(lPIN) lPIN->destroy();		

@@ -79,9 +79,7 @@ void testclassfilter::createPins(int numPins)
 	{	
 		tValue[0].set(1);
 		tValue[0].property=mProp[0];
-		mIPIN = mSession->createPIN(tValue,1,MODE_COPY_VALUES);
-		TVERIFYRC(mSession->commitPINs(&mIPIN,1)); 
-		mIPIN->destroy();
+		TVERIFYRC(mSession->createPIN(tValue,1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 	}
 	for(i=0;i<numPins/2;i++)
 	{	
@@ -94,17 +92,14 @@ void testclassfilter::createPins(int numPins)
 			else
 				tValue[1].set(99);
 			tValue[1].property=mProp[2];
-			mIPIN = mSession->createPIN(tValue,2,MODE_COPY_VALUES);
-
+			TVERIFYRC(mSession->createPIN(tValue,2,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 		}
 		else
 		{
 			tValue[0].set(1);
 			tValue[0].property=mProp[1];
-			mIPIN = mSession->createPIN(tValue,1,MODE_COPY_VALUES);
+			TVERIFYRC(mSession->createPIN(tValue,1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 		}
-		TVERIFYRC(mSession->commitPINs(&mIPIN,1)); 
-		mIPIN->destroy();
 	}
 }
 

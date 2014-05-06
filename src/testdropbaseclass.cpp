@@ -132,7 +132,7 @@ void TestDropBaseClass::createPINs(int pNumPINs)
 		SETVALUE(lV[2], mPropIds[2], i, OP_SET);
 		SETVALUE(lV[3], mPropIds[3], lStr.c_str(), OP_SET);
 		SETVALUE(lV[4], mPropIds[4], lStr.c_str(), OP_SET);
-		PID lPID; CREATEPIN(mSession, lPID, lV, 5);		
+		PID lPID; CREATEPIN(mSession, &lPID, lV, 5);		
 	}
 	mLogger.out() << " DONE" << std::endl;	
 }

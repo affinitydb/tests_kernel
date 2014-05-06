@@ -126,10 +126,7 @@ void TestBashPinDelete::createSimple()
 	Value vals[cntVals] ;
 	vals[0].set(0);vals[0].property=mPropForDelete;
 	for ( long i = 0 ; i < mCntPins ; i++ )
-	{
-		PID pid ;
-		TVERIFYRC(mSession->createPINAndCommit(pid, vals, cntVals)) ;
-	}
+		TVERIFYRC(mSession->createPIN(vals, cntVals, NULL, MODE_PERSISTENT|MODE_COPY_VALUES)) ;
 }
 
 void TestBashPinDelete::createFTString()
@@ -148,10 +145,7 @@ void TestBashPinDelete::createFTString()
 	vals[1].set( str.c_str() ) ; vals[1].property=MVTApp::getProp( mSession, "TestBashPinDelete::createFTString" ) ;
 
 	for ( long i = 0 ; i < mCntPins ; i++ )
-	{
-		PID pid ;
-		TVERIFYRC(mSession->createPINAndCommit(pid, vals, cntVals)) ;
-	}
+		TVERIFYRC(mSession->createPIN(vals, cntVals, NULL, MODE_PERSISTENT|MODE_COPY_VALUES)) ;
 }
 
 void TestBashPinDelete::createFTStringBigColl()
@@ -187,15 +181,15 @@ void TestBashPinDelete::createFTStringBigColl()
 
 	for ( i = 0 ; i < mCntPins ; i++ )
 	{
-		PID pid ;
-		TVERIFYRC(mSession->createPINAndCommit(pid, vals, 1, MODE_NO_EID)) ;
+		IPIN *pin;
+		TVERIFYRC(mSession->createPIN(vals, 1, &pin, MODE_PERSISTENT|MODE_COPY_VALUES|MODE_NO_EID)) ;
 
 		// REVIEW: what is best way to build collection?
 		long k ;
 		for ( k = 0 ; k < cntStrings ; k++ )
 		{
 			RC rc ;
-			TVERIFYRC( rc = mSession->modifyPIN( pid, &(stringElements[k]), 1, MODE_NO_EID ) ) ;
+			TVERIFYRC( rc = mSession->modifyPIN(pin->getPID(), &(stringElements[k]), 1, MODE_NO_EID ) ) ;
 			if ( rc != RC_OK )
 			{
 				mLogger.out() << "Adding string " << k << " val " << stringElements[k].str << endl ;
@@ -227,8 +221,7 @@ void TestBashPinDelete::createPifsSSV()
 	for ( long i = 0 ; i < mCntPins ; i++ )
 	{
 		lStream->reset() ;
-		PID pid ;
-		TVERIFYRC(mSession->createPINAndCommit(pid, vals, cntVals)) ;
+		TVERIFYRC(mSession->createPIN(vals, cntVals, NULL, MODE_PERSISTENT|MODE_COPY_VALUES)) ;
 	}
 }
 

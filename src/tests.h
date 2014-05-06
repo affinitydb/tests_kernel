@@ -53,7 +53,15 @@ typedef std::basic_ifstream<char> Tifstream;
 #define MAX_PARAMETER_SIZE MAX_LINE_SIZE - 0x200
 #define MAX_PROPERTIES_PER_PIN 50
 
-#define CREATEPIN(session, PID, prop, nprop) if (RC_OK != (session)->createPINAndCommit((PID), (prop), (nprop))) assert(false)
+inline static void CREATEPIN(ISession *session, PID* pid, Value *prop, unsigned nprop) {
+	IPIN* temp;
+	if (pid) {
+		if (RC_OK != session->createPIN(prop, nprop,&temp,MODE_PERSISTENT|MODE_COPY_VALUES)) assert(false);
+		*pid=temp->getPID();temp->destroy();
+	} else {
+		if (RC_OK != session->createPIN(prop, nprop,NULL,MODE_PERSISTENT|MODE_COPY_VALUES)) assert(false);
+	}
+}
 PID const gInvalidPID = {STORE_INVALID_PID, STORE_INVALID_IDENTITY};
 typedef IExprTree * TExprTreePtr;
 #define EXPRTREEGEN(sessionptr) (sessionptr)->expr
@@ -257,15 +265,16 @@ class ITest
 			Value vals[2]; RC rc=RC_OK;
 			vals[0].set(className); vals[0].setPropID(PROP_SPEC_OBJID);
 			vals[1].set(qry); vals[1].setPropID(PROP_SPEC_PREDICATE); vals[1].setMeta(META_PROP_INDEXED);
-			IPIN *pin=ses->createPIN(vals,2,MODE_COPY_VALUES);
-			if (pin==NULL) rc=RC_NORESOURCES;
-			else {
-				rc=ses->commitPINs(&pin,1);
-				if (pClsid!=NULL && (rc==RC_OK || rc==RC_ALREADYEXISTS)) {
+			IPIN *pin=NULL;
+			if ((rc=ses->createPIN(vals,2,&pin,MODE_COPY_VALUES|MODE_PERSISTENT))==RC_OK) {
+				assert(pin!=NULL);
+				if (pClsid!=NULL) {
 					const Value *clsid=pin->getValue(PROP_SPEC_OBJID);
 					if (clsid!=NULL && clsid->type==VT_URIID) *pClsid=clsid->uid; else rc=RC_OTHER;
 				}
 				pin->destroy();
+			} else if (pClsid!=NULL && rc==RC_ALREADYEXISTS) {
+				URIMap pmap={className,STORE_INVALID_URIID}; if (ses->mapURIs(1,&pmap,NULL,true)==RC_OK) *pClsid=pmap.uid;
 			}
 			return rc;
 		}

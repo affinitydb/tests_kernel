@@ -271,7 +271,7 @@ void TestIndexRebuild::createData()
 		PID lPID;
 		Value lV[2];
 		SETVALUE(lV[0], mPropIDs[0], MVTRand::getRange(0, 100), OP_SET);
-		CREATEPIN(mSession, lPID, lV, 1);
+		CREATEPIN(mSession, &lPID, lV, 1);
 		IPIN *lPIN = mSession->getPIN(lPID);
 
 		if(MVTRand::getBool() && mUseCollection)

@@ -204,7 +204,7 @@ int TestIsolation::execute()
         for (i = 0; i < 10; i++)
         {
             PID lPID;
-            CREATEPIN(lSession, lPID, NULL, 0);
+            CREATEPIN(lSession, &lPID, NULL, 0);
             IPIN * lPIN = lSession->getPIN(lPID);
             int const lNumProps = rand() * 10 / RAND_MAX; // Note: < MAX_PROPERTIES...
             for (j = 0; j < lNumProps; j++)

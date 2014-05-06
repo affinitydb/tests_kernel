@@ -620,7 +620,7 @@ void PITOperation::run(PITScenario & pContext)
 		case kTCreatePIN:
 		{
 			PID lPID;
-			CREATEPIN(lSession, lPID, NULL, 0);
+			CREATEPIN(lSession, &lPID, NULL, 0);
 			if (STORE_INVALID_PID == LOCALPID(lPID))
 				pContext.setFailed("run error", this);
 			else

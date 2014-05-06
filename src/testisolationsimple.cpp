@@ -997,10 +997,11 @@ void TestIsolationSimple::testCreateLotsofPins()
 			MVTApp::randomString(lStr, 200, 300);
 			SETVALUE(lPVs[0], mPropIDs[kBPInt], j, OP_SET);
 			SETVALUE(lPVs[1], mPropIDs[kBPSmallStr], lStr.c_str(), OP_SET);
-			IPIN * const lPIN = lWS->createPIN(lPVs, 2, MODE_COPY_VALUES);
+			IPIN *lPIN;
+			lWS->createPIN(lPVs, 2, &lPIN, MODE_COPY_VALUES|MODE_PERSISTENT);
 			lBucket.push_back(lPIN);
 		}
-		TVERIFYRC(lWS->commitPINs(&lBucket[0], (unsigned)lBucket.size()));
+		//TVERIFYRC(lWS->commitPINs(&lBucket[0], (unsigned)lBucket.size()));
 		for (iPin = lBucket.begin(); iPin != lBucket.end(); iPin++) { lPIDs.push_back((*iPin)->getPID()); }
 		for (iPid = lPIDs.begin(), lOk = true; iPid != lPIDs.end() && lOk; iPid++) { lOk = findPin_session(lWS.p(), *iPid); } TVERIFY(lOk);
 		for (iPid = lPIDs.begin(), lOk = true; iPid != lPIDs.end() && lOk; iPid++) { lOk = findPin_fullscan(lWS.p(), mCLSID, *iPid); } TVERIFY(lOk);
@@ -1158,9 +1159,7 @@ void TestIsolationSimple::createBlankReplicatedPID(ISession & pSession, PID & pR
 	CWithIFM const lwifm(&pSession, ITF_REPLICATION);
 	INITLOCALPID(pResult);
 	LOCALPID(pResult) = (uint64_t(lStoreid1) << STOREID_SHIFT) + lStartIndex;
-	IPIN * const lP = pSession.createPIN(NULL, 0, PIN_REPLICATED, &pResult);
-	TVERIFYRC(pSession.commitPINs(&lP, 1));
-	lP->destroy();
+	TVERIFYRC(pSession.createPIN(NULL, 0, NULL, PIN_REPLICATED|MODE_PERSISTENT, &pResult));
 }
 bool TestIsolationSimple::findPin_session(ISession * pS, PID const & pPID)
 {

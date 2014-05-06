@@ -149,10 +149,12 @@ int TestDeadLock::execute()
 	int i;
 	for (i=0;i<CNT_PINS;i++)
 	{
-		Value v[2]; 
+		Value v[2]; IPIN *pin;
 		v[0].set(0); v[0].property=PROP_SPEC_UPDATED;
 		v[1].set(i); v[1].property=mProp;
-		TVERIFYRC(pSession->createPINAndCommit(mPids[i],v,2));
+		TVERIFYRC(pSession->createPIN(v,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+		mPids[i] = pin->getPID();
+		if(pin!=NULL) pin->destroy();
 	}
 
 	pSession->terminate() ; pSession=NULL;

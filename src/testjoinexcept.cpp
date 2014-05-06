@@ -93,7 +93,7 @@ void TestJoinExcept::createData()
 		PID lPID;
 		Value lV[2]; Tstring lStr; MVTRand::getString(lStr, 5, 10, false, true);
 		SETVALUE(lV[0], mPropIds[1], lStr.c_str(), OP_SET);
-		CREATEPIN(mSession, lPID, lV, 1);
+		CREATEPIN(mSession, &lPID, lV, 1);
 		mPIDs.push_back(lPID);
 	}
 	for(i = 0; i < sNumExceptPINs; i++)
@@ -101,7 +101,7 @@ void TestJoinExcept::createData()
 		Value lV[2]; Tstring lStr; MVTRand::getString(lStr, 5, 10, false, true);
 		PID lExceptPID;
 		SETVALUE(lV[0], mPropIds[3], lStr.c_str(), OP_SET);
-		CREATEPIN(mSession, lExceptPID, lV, 1);
+		CREATEPIN(mSession, &lExceptPID, lV, 1);
 		mExceptPIDs.push_back(lExceptPID);
 	}
 	mLogger.out() << " DONE" << std::endl;
@@ -111,11 +111,11 @@ void TestJoinExcept::createData()
 		Value lV[1];
 		
 		SETVALUE(lV[0], mPropIds[0], "Big Album PIN", OP_SET);
-		CREATEPIN(mSession, mBigAlbumPID, lV, 1);
+		CREATEPIN(mSession, &mBigAlbumPID, lV, 1);
 		mLogger.out() << "Big Album PIN : " << mBigAlbumPID.pid << std::endl;
 		
 		SETVALUE(lV[0], mPropIds[0], "Small Album PIN", OP_SET);
-		CREATEPIN(mSession, mSmallAlbumPID, lV, 1);
+		CREATEPIN(mSession, &mSmallAlbumPID, lV, 1);
 		mLogger.out() << "Small Album PIN : " << mSmallAlbumPID.pid << std::endl;
 	}
 	

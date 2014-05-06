@@ -119,11 +119,10 @@ void TestRename::testrename(ISession *session)
 	MVTRand::getString(str,100,0,true,true);
 	val[0].set(str.c_str());val[0].setPropID(pm[2].uid);
 	val[1].set(12345);val[1].setPropID(pm[0].uid);
-	pin = session->createPIN(val,2,MODE_COPY_VALUES);
+	TVERIFYRC(session->createPIN(val,2,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 
 	val[0].setRename(pm[2].uid,pm[1].uid);
 	rc = pin->modify(val,1);
-	rc = session->commitPINs(&pin,1);
 	if (RC_OK != rc || strcmp(pin->getValue(pm[1].uid)->str,str.c_str())!=0 || NULL != pin->getValue(pm[2].uid))
 		mRCFinal = RC_FALSE;
 

@@ -126,9 +126,7 @@ void TestNoCaseFamily::testNoCasePins(ISession *session)
 		strcpy(tmp,str.c_str());
 		val[3].set(tmp);val[3].setPropID(mPropIDs[3]);
 
-		IPIN *pin = session->createPIN(val,4);
-		TVERIFYRC(session->commitPINs(&pin,1));
-		pin->destroy();
+		TVERIFYRC(session->createPIN(val,4,NULL,MODE_PERSISTENT));;
 	}
 }
 

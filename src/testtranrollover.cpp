@@ -50,7 +50,6 @@ void TestSpillover::tranSpillover(ISession *session)
 	unsigned nLoops = 5000;
 	PropertyID lPropIDs[4]; MVTApp::mapURIs(session,"TestTranRollover.testSpillover",4,lPropIDs);
 	Value pvs[4];
-	PID pid;
 	
 	//create an obscene amount of pins -- hell raiser to the rollover
 	for (unsigned i=0; i<nLoops;i++) {
@@ -61,7 +60,7 @@ void TestSpillover::tranSpillover(ISession *session)
 		SETVALUE(pvs[1], lPropIDs[1], str.c_str(), OP_SET);
 		SETVALUE(pvs[2], lPropIDs[2], str.c_str(), OP_SET);
 		SETVALUE(pvs[3], lPropIDs[3], str.c_str(), OP_SET);
-		TVERIFYRC(session->createPINAndCommit(pid,pvs,4));
+		TVERIFYRC(session->createPIN(pvs,4,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 	}
 	mLogger.out() << std::endl;
 	//loop to spill over across log files.
@@ -94,7 +93,7 @@ void TestSpillover::tranSpillover(ISession *session)
 			SETVALUE(pvs[1], lPropIDs[1], str.c_str(), OP_SET);
 			SETVALUE(pvs[2], lPropIDs[2], str.c_str(), OP_SET);
 			SETVALUE(pvs[3], lPropIDs[3], str.c_str(), OP_SET);
-			session->createPINAndCommit(pid,pvs,4);
+			session->createPIN(pvs,4,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 		}
 		mLogger.out() << std::endl;
 	session->rollback();
@@ -109,7 +108,6 @@ void TestSpillover::tranBIGPins(ISession *session)
 	//Case 3: transaction rollover with nested tx and partial rollback
 	URIMap pm[1000];
 	char *p,buf[1060];
-	PID pid;
 	Value pvs[1000];
 	strcpy(buf,"this will take it beyond the limit");
 	RC rc;
@@ -135,7 +133,7 @@ void TestSpillover::tranBIGPins(ISession *session)
 		pvs[j].set(buf); pvs[j].setPropID(pm[j].uid);
 	}
 	session->startTransaction();
-	rc = session->createPINAndCommit(pid,pvs,1);
+	rc = session->createPIN(pvs,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 	rc = session->rollback();
 	countPINS(session);
 }

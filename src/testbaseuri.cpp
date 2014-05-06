@@ -119,7 +119,7 @@ void TestBaseURI::InitProperties()
 
 	// Initialize data
 
-	URIMap prMap[8]; PID pid;
+	URIMap prMap[8]; PID pid;IPIN *pin;
 
 
 	//The first property is mapped before the setURIBase(...) has been called...
@@ -174,8 +174,10 @@ void TestBaseURI::InitProperties()
 	lV[3].set("a person given to philosophizing"); 
 	lV[3].setPropID(philosopher); lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid, &lV[0], 4)); 
-
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, &pin, MODE_PERSISTENT|MODE_COPY_VALUES));; 
+	pid = pin->getPID();
+	pin->destroy();
+	
 	//Attention! We can use the same Value variable(s) again for creating another PIN ...
 	PID pid1;
 	lV[0].set("Socrates"); lV[0].setPropID(name);         lV[0].op = OP_ADD;
@@ -183,69 +185,72 @@ void TestBaseURI::InitProperties()
 	lV[2].set(399);    lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);    lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, &pin, MODE_PERSISTENT|MODE_COPY_VALUES));
 
-	collection_of_referencedPIDs[0] = pid1;  //pid is remembered for 'search over collection' scenario... 
-
+	collection_of_referencedPIDs[0] = pid1 =  pin->getPID();  //pid is remembered for 'search over collection' scenario... 
+	pin->destroy();
+	
 	lV[0].set("Plato"); lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(428);     lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(348);     lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);     lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, &pin, MODE_PERSISTENT|MODE_COPY_VALUES));
 	
-	collection_of_referencedPIDs[1] = pid1;   //pid is remembered for 'search over collection' scenario... 
-
+	collection_of_referencedPIDs[1] = pid1 =  pin->getPID();   //pid is remembered for 'search over collection' scenario... 
+	pin->destroy();
+	
 	lV[0].set("Aristotle"); lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(384);         lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(392);         lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);         lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, &pin, MODE_PERSISTENT|MODE_COPY_VALUES));
 	
-	collection_of_referencedPIDs[2] = pid1;   //pid is remembered for 'search over collection' scenario... 
+	collection_of_referencedPIDs[2] = pid1 = pin->getPID();   //pid is remembered for 'search over collection' scenario... 
+	pin->destroy();
 
 	lV[0].set("Desiderius ERASMUS"); lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1466);                 lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1536);                 lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);                  lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	lV[0].set("Thomas MORE"); 		lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1478);          		lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1535);          		lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);           		lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	lV[0].set("Nicolaus COPERNICUS"); lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1473);                  lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1543);                  lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);                   lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	lV[0].set("Jean-Paul Sartre"); 	lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1905);               	lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1980);               	lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);                	lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	lV[0].set("Alan Turing"); 		lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1912);    	  		lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1954);          		lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);           		lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	lV[0].set("Sir Karl Popper"); 	lV[0].setPropID(name);             lV[0].op = OP_ADD;
 	lV[1].set(1902);              	lV[1].setPropID(date_of_birth);    lV[1].op = OP_ADD;
 	lV[2].set(1993);              	lV[2].setPropID(date_of_death);    lV[2].op = OP_ADD;
 	lV[3].set(pid);               	lV[3].setPropID(occupation);       lV[3].op = OP_ADD;
 
-	TVERIFYRC( mSession->createPINAndCommit(pid1, &lV[0], 4));
+	TVERIFYRC( mSession->createPIN(&lV[0], 4, NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 }
 
 

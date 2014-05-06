@@ -534,8 +534,7 @@ void TestDocLoad::generateData()
 			{
 				Value msg ; msg.set( lMsgBody.c_str() ) ; msg.property = emailBody ;
 				msg.meta = getMetaFlags() ;
-				PID newpid ;
-				TVERIFYRC(mSession->createPINAndCommit( newpid, &msg, 1 )) ;
+				TVERIFYRC(mSession->createPIN(&msg, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES)) ;
 			}
 			else
 			{

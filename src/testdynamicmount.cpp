@@ -236,7 +236,7 @@ protected:
 			Tstring lStr; MVTRand::getString(lStr, 10, 20);
 			SETVALUE(lV[0], mPropIDs[0], i, OP_SET);
 			SETVALUE(lV[1], mPropIDs[1], lStr.c_str(), OP_SET);
-			PID lPID; CREATEPIN(pSession, lPID, lV, 2);
+			PID lPID; CREATEPIN(pSession, &lPID, lV, 2);
 		}		
 	}
 };

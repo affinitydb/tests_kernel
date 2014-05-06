@@ -51,11 +51,11 @@ int TestBigFile::execute()
 	{
 		mRCFinal=RC_OK;
 		ISession * const session = MVTApp::startSession();
-		HugeStream hs; PID id;		
+		HugeStream hs;	
 		PropertyID lPropIDs[1];	
 		MVTApp::mapURIs(session,"TestBigFile.execute",1,lPropIDs);
 		Value v; v.set((Afy::IStream*)&hs); v.setPropID(lPropIDs[0]);
-		session->createPINAndCommit(id,&v,1,MODE_COPY_VALUES);
+		session->createPIN(&v,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 		session->terminate();
 		MVTApp::stopStore();
 	}

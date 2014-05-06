@@ -460,9 +460,7 @@ void TestMultiStore::simulateDumpload(ISession* session, unsigned short inStoreI
 		MVTApp::randomString(str,5,0,false);
 		val[0].set(str.c_str());val[0].setPropID(propIds[0]);
 		val[1].set(0);val[1].setPropID(propIds[1]);
-		IPIN *pin = session->createPIN(val,2,MODE_COPY_VALUES,&lPID);
-		TVERIFYRC(session->commitPINs(&pin,1));
-		pin->destroy();
+		TVERIFYRC(session->createPIN(val,2,NULL,MODE_COPY_VALUES|MODE_PERSISTENT,&lPID));
 	}	
 
 	IdentityID i = session->loadIdentity( "Guest", NULL, 0, true ) ;

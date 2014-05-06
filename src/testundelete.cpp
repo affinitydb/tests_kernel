@@ -293,11 +293,11 @@ void TestUndelete::quickTest()
 
 	//Create pin, soft delete and then purge.
 	{
-		Value val[1];Tstring str;PID delPid;
+		Value val[1];Tstring str;PID delPid;IPIN *pin;
 		MVTRand::getString(str,10,0);
 		val[0].set(str.c_str());val[0].setPropID(mPropIDs[3]);
-		TVERIFYRC(mSession->createPINAndCommit(delPid,val,1));
-		IPIN *pin = mSession->getPIN(delPid);
+		TVERIFYRC(mSession->createPIN(val,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+		delPid = pin->getPID();
 		//softdelete the pin
 		TVERIFYRC(mSession->deletePINs(&pin,1));
 		pin =  mSession->getPIN(delPid, MODE_DELETED);
@@ -501,16 +501,19 @@ void TestUndelete::createData()
 
 		if(lRepl)
 		{
-			IPIN *lPIN = mSession->createPIN(lV, j, MODE_COPY_VALUES|MODE_FORCE_EIDS, &lPID);
-			if(lPIN) TVERIFYRC(mSession->commitPINs(&lPIN, 1));
+			IPIN *lPIN=NULL;
+			RC rc = mSession->createPIN(lV, j, &lPIN, MODE_COPY_VALUES|MODE_FORCE_EIDS|MODE_PERSISTENT);
+			if(rc == RC_OK) lPID = lPIN->getPID();
 			else lPID.pid = STORE_INVALID_PID;
 			if(lPIN) lPIN->destroy();			
 			if(k != 0 && k % 10 == 0) { lStartIndex++; k = 0; }
 			k++;
 		}	
 		else
-		{		
-			TVERIFYRC(mSession->createPINAndCommit(lPID, lV, j));
+		{	
+			IPIN *pin;
+			TVERIFYRC(mSession->createPIN(lV, j, &pin, MODE_PERSISTENT|MODE_COPY_VALUES));
+			lPID = pin->getPID();
 		}
 		if(lPID.pid != STORE_INVALID_PID) { mPIDs.push_back(lPID); mPIDStr.push_back(lPropStr1);}
 		if((i % 100) == 0) mLogger.out() << ".";

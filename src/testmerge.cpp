@@ -82,7 +82,7 @@ int	TestMerge::execute()
 			int val = rand()%RANGE;
 			lfMember[i] = val < threshold;
 			SETVALUE(lV[0], lPropIdVal, val, OP_ADD);
-			CREATEPIN(lSession, pins[i], lV, 1);
+			CREATEPIN(lSession, &pins[i], lV, 1);
 		}
 
 		// Create a second group of pins, each of which has reference
@@ -94,7 +94,7 @@ int	TestMerge::execute()
 			if (lfMember[idx]) lCount++; // The referenced pin will match the family query
 			SETVALUE(lV[0], lPropIdRef, pins[idx], OP_ADD); 
 			refferedPins[i] = pins[idx];    // to remember reffered pins;
-			CREATEPIN(lSession, id, lV, 1);
+			CREATEPIN(lSession, &id, lV, 1);
 		}
 		
 		mLogger.out() << "DONE" << std::endl;

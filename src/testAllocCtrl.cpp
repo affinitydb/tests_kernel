@@ -129,11 +129,14 @@ int TestAllocCtrl::execute()
 
 	Value extra ; extra.set( 10 ) ; extra.property = MVTApp::getProp(mSession,"extraProp") ;
 
+	IPIN *pin;
 	for ( int iBatch = 0 ; iBatch < mCntBatches ; iBatch++ )
 	{
 		if ( mBatchSize == 1 )
 		{
-			TVERIFYRC(mSession->createPINAndCommit(mPINs[iBatch],&valProp,1,MODE_NO_EID ) );
+			TVERIFYRC(mSession->createPIN(&valProp,1,&pin,MODE_NO_EID|MODE_PERSISTENT|MODE_COPY_VALUES) );
+			mPINs[iBatch] = pin->getPID();
+			pin->destroy();
 #if ADD_EXTRA_PROP			
 			TVERIFYRC(mSession->modifyPIN(mPINs[iBatch],&extra,1,MODE_NO_EID));
 #endif
@@ -145,13 +148,13 @@ int TestAllocCtrl::execute()
 			int iPinInBatch ;
 			for ( iPinInBatch = 0 ; iPinInBatch < mBatchSize ; iPinInBatch++ )
 			{
-				batchPins[iPinInBatch] = mSession->createPIN( &valProp, 1, MODE_NO_EID | MODE_COPY_VALUES ) ;
+				TVERIFYRC(mSession->createPIN(&valProp, 1, &batchPins[iPinInBatch], MODE_NO_EID | MODE_COPY_VALUES|MODE_PERSISTENT)) ;
 			}
 
 			if ( mBatchSize > 10 || (0 == (iBatch % 10)))
 				mLogger.out() << "." ;
 
-			TVERIFYRC(mSession->commitPINs( &(batchPins[0]), mBatchSize, 0, mPinPageAllocCtrl ) );
+			//TVERIFYRC(mSession->commitPINs( &(batchPins[0]), mBatchSize, 0, mPinPageAllocCtrl ) );
 
 			for ( iPinInBatch = 0 ; iPinInBatch < mBatchSize ; iPinInBatch++ )
 			{

@@ -170,7 +170,7 @@ void TestACLsInfer::createPINs()
 	{
 		Value lV[2];
 		SETVALUE(lV[0], mPropIDs[0], "Folder PIN", OP_SET);
-		CREATEPIN(mSession, mFolderPID, lV, 1);
+		CREATEPIN(mSession, &mFolderPID, lV, 1);
 		IPIN *lPIN = mSession->getPIN(mFolderPID);
 		int i = 0;
 		for(i = 0; i < sNumIdentities; i++)
@@ -199,7 +199,7 @@ void TestACLsInfer::createPINs()
 		*lRef = l;
 		SETVALUE(lV[2], PROP_SPEC_ACL, *lRef, OP_SET);
 		SETVALUE(lV[3], mPropIDs[2], i, OP_SET);	
-		CREATEPIN(mSession, lPID, lV, 4);
+		CREATEPIN(mSession, &lPID, lV, 4);
 	}
 	mExpectedCount = sNumPINs;
 	mSession->free(lRef);

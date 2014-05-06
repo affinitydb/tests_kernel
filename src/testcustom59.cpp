@@ -296,9 +296,9 @@ bool TestCustom59::runProgram(ISession & pSession, TestCustom59::TDeadlockProgra
 	getLogger().out() << std::endl << "Program: " << pTitle << std::endl;
 
 	// Create 2 pins for this program.
-	CREATEPIN(&pSession, mPID1, NULL, 0); getLogger().out() << "pin1: " << std::hex << mPID1.pid << std::endl;
-	CREATEPIN(&pSession, mPID2, NULL, 0); getLogger().out() << "pin2: " << std::hex << mPID2.pid << std::endl;
-	CREATEPIN(&pSession, mPID3, NULL, 0); getLogger().out() << "pin3: " << std::hex << mPID3.pid << std::endl;
+	CREATEPIN(&pSession, &mPID1, NULL, 0); getLogger().out() << "pin1: " << std::hex << mPID1.pid << std::endl;
+	CREATEPIN(&pSession, &mPID2, NULL, 0); getLogger().out() << "pin2: " << std::hex << mPID2.pid << std::endl;
+	CREATEPIN(&pSession, &mPID3, NULL, 0); getLogger().out() << "pin3: " << std::hex << mPID3.pid << std::endl;
 	mStep = 0;
 	mStepCnt = mStepCntReset = (long)pProgram.size();
 

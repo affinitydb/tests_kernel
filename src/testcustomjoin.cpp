@@ -74,38 +74,42 @@ void testcustomjoin::createPins(int numPins)
 	unsigned int cntElements = numPins;
 	vector<PID> referencedPins(cntElements);
 	vector<PID> classPins(cntElements);
-	unsigned int i ;
+	unsigned int i ;IPIN *pin;
 	for ( i = 0 ; i < cntElements ; i++ )
 	{
 		Value v[2] ; 
 		v[0].set( i ) ; v[0].property = mProp[1] ;
 		v[1].set( i ) ; v[1].property = mProp[2] ;
-		TVERIFYRC(mSession->createPINAndCommit(referencedPins[i],&v[0],2));
+		TVERIFYRC(mSession->createPIN(&v[0],2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+		referencedPins[i] = pin->getPID();
+		if(pin!=NULL) pin->destroy();
 		
 		Value v1[2] ; 
 		v1[0].set(i) ; v1[0].property = mProp[3] ;
 		v1[1].set(referencedPins[i]) ; v1[1].property = mProp[4] ;
-		TVERIFYRC(mSession->createPINAndCommit(classPins[i],v1,2));
+		TVERIFYRC(mSession->createPIN(v1,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+		classPins[i] = pin->getPID();
+		if(pin!=NULL) pin->destroy();
 	}
 
 	// Create pin that points to all of the referencedPins
-	TVERIFYRC(mSession->createPINAndCommit(pinid[0],NULL,0));
-
+	Value *vals = (Value *)mSession->malloc(cntElements*sizeof(Value));
+	TVERIFY(vals!=NULL);
 	// Create the references 
 	for ( i = 0 ; i < cntElements ; i++ )
 	{
-		Value ref ;	
-		ref.set(referencedPins[i]) ; ref.op = OP_ADD ; ref.property = mProp[0] ; 
-		ref.meta = META_PROP_SSTORAGE ;
-		TVERIFYRC(mSession->modifyPIN( pinid[0], &ref, 1 )) ;
+		vals[i].set(referencedPins[i]) ; vals[i].op = OP_ADD ; vals[i].property = mProp[0] ; 
+		vals[i].meta = META_PROP_SSTORAGE ;
+		//TVERIFYRC(mSession->modifyPIN( pinid[0], &ref, 1 )) ;
 	}
-	
+	TVERIFYRC(mSession->createPIN(vals, cntElements, &pin, MODE_PERSISTENT|MODE_COPY_VALUES)) ;
+	pinid[0] = pin->getPID();
+	if(vals) mSession->free(vals);
 	// Sanity check
-	IPIN * pin = mSession->getPIN(pinid[0]) ;
 	MvStoreEx::CollectionIterator collection(pin,mProp[0]);
 	TVERIFY( collection.getSize() == cntElements ) ;
+	if(pin!=NULL) pin->destroy();
 	pin = NULL ;
-	
 }
 
 void testcustomjoin::customQuery()

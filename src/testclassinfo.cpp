@@ -178,7 +178,7 @@ void TestClassInfo::createPINs(PropertyID *pPropIDs, const int pNumPINs)
 		Tstring lStr; MVTRand::getString(lStr, 5, 10, false, false);
 		SETVALUE(lV[4], pPropIDs[3], lStr.c_str(), OP_SET);
 		
-		CREATEPIN(mSession, lPID, lV, 5);		
+		CREATEPIN(mSession, &lPID, lV, 5);		
 	}
 	mSession->commit(true);
 }

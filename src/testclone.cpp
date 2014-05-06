@@ -121,8 +121,7 @@ void TestClone::pinClone(ISession *session)
 	SETVALUE(pvs[1], pm[1].uid, "Karnataka", OP_SET);
 	SETVALUE(pvs[2], pm[2].uid, 560234, OP_SET);
 
-	session->createPINAndCommit(pid,pvs,2);
-	pin = session->getPIN(pid);
+	TVERIFYRC(session->createPIN(pvs,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	//add nLoops more elements to City property 
 	for (unsigned i = 0; i<nLoops; i++) {
@@ -195,8 +194,7 @@ void TestClone::pinClone(ISession *session)
 	SETVALUE(pvs[1], pm[1].uid, "Karnataka da huli", OP_SET);
 	SETVALUE(pvs[2], pm[2].uid, 7900, OP_SET);
 
-	session->createPINAndCommit(pid,pvs,3);
-	pin = session->getPIN(pid);
+	TVERIFYRC(session->createPIN(pvs,3,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 	//OP_DELETE
 	pvs[0].setDelete(pm[1].uid);
 	pin1 = pin->clone(pvs,1,MODE_PERSISTENT);
@@ -211,7 +209,7 @@ void TestClone::pinClone(ISession *session)
 	SETVALUE_C(pvs[1], pm[0].uid, "Karnataka da huli", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
 	SETVALUE_C(pvs[2], pm[0].uid, "Indiranagar", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
 	SETVALUE_C(pvs[3], pm[0].uid, "St Josephs Collge of commerce", OP_ADD, STORE_LAST_ELEMENT);
-	rc = session->createPINAndCommit(pid,pvs,4);
+	TVERIFYRC(session->createPIN(pvs,4,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 	pin = session->getPIN(pid);
 	MVTApp::output(*pin,mLogger.out(),session);
 
@@ -258,12 +256,10 @@ void TestClone::CNavigClone(ISession *session)
 	RC rc;
 	Value pvs[2];
 	Value const *pv;
-	PID pid;
 
 	SETVALUE_C(pvs[0], propID, "add0", OP_ADD, STORE_LAST_ELEMENT);
 	SETVALUE_C(pvs[1], propID, "add1", OP_ADD, STORE_LAST_ELEMENT);
-	rc =  session->createPINAndCommit(pid,pvs,2);
-	pin = session->getPIN(pid);
+	TVERIFYRC(session->createPIN(pvs,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 	pin->refresh();
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
 	
@@ -273,8 +269,7 @@ void TestClone::CNavigClone(ISession *session)
 	} else if (pv->type==VT_ARRAY) {
 		pvs[0].set((Value*)pv->varray,pv->length); pvs[0].setPropID(propID); pvs[0].op=OP_ADD; pvs[0].eid=STORE_LAST_ELEMENT;
 	} else TVERIFYRC(RC_TYPE);
-	session->createPINAndCommit(pid,pvs,1);	
-	pin= session->getPIN(pid);
+	TVERIFYRC(session->createPIN(pvs,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));	
 	pin->refresh();
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
 
@@ -299,22 +294,20 @@ void TestClone::IQueryClone(ISession *session)
 {
 	IStmt *query, *queryclone;
 	Value pvs[3];
-	PID pid;
 	Value args[2];//,argsfinal[2];
 	IExprTree *expr;//,*exprfinal
 	ICursor *result;
 	PropertyID pids[3];
 	MVTApp::mapURIs(session,"TestClone.IQueryClone",3,pids);	
-	RC rc;
 
 	//create cpl pins to check simple query.
 	pvs[0].set("Lovely Liv Tyler");pvs[0].setPropID(pids[0]);
 	pvs[1].set("Steven Tyler aka Aerosmith ki beti");pvs[1].setPropID(pids[1]);
-	rc = session->createPINAndCommit(pid,pvs,2);
+	TVERIFYRC(session->createPIN(pvs,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	pvs[0].set("Amrageddon");pvs[0].setPropID(pids[0]);
 	pvs[1].set("Lord of the Rings");pvs[1].setPropID(pids[1]);
-	rc = session->createPINAndCommit(pid,pvs,2);
+	TVERIFYRC(session->createPIN(pvs,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	query = session->createStmt();
 	unsigned var = query->addVariable();	
@@ -386,7 +379,7 @@ void TestClone::ACLPinClone(ISession *session)
 	//create a cpl ids.
 	IdentityID iid,iid1;
 	Value pvs[2];
-	PID pid;
+	IPIN *pin;
 	Value const *pv;
 	PropertyID lPropIDs[1];
 	MVTApp::mapURIs(session,"TestClone.ACLPinClone",1,lPropIDs);
@@ -401,9 +394,8 @@ void TestClone::ACLPinClone(ISession *session)
 	pvs[0].meta = META_PROP_READ | META_PROP_WRITE;
 
 	SETVALUE(pvs[1], lPropIDs[0], "This is a test for clone and ACLS", OP_ADD);
-	TVERIFYRC(session->createPINAndCommit(pid,pvs,2));
+	TVERIFYRC(session->createPIN(pvs,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 
-	IPIN *pin = session->getPIN(pid);
 	IPIN *pin1 = pin->clone(0,0,MODE_PERSISTENT);
 	
 	//check the rights on the pin
@@ -435,7 +427,6 @@ void TestClone::ACLPinClone(ISession *session)
 
 void TestClone::PiExprTreeClone(ISession *session){
 	Value pvs[4];
-	PID pid;
 	Value args[2];
 	PropertyID pids[4];// = {5500,5501,5502,5503};
 	MVTApp::mapURIs(session,"TestClone.PiExprTreeClone",4,pids);
@@ -445,13 +436,13 @@ void TestClone::PiExprTreeClone(ISession *session){
 	//Create some pins
 	pvs[0].set("Mumbai still inundated");pvs[0].setPropID(pids[0]);
 	pvs[1].set("Death toll 924");pvs[1].setPropID(pids[1]);
-	rc = session->createPINAndCommit(pid,pvs,2);
+	rc = session->createPIN(pvs,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 	pvs[0].set("Heavy rains in Mumbai");pvs[0].setPropID(pids[0]);
 	pvs[1].set("Stay at home declared");pvs[1].setPropID(pids[1]);
 	pvs[2].set("Stay at home declared (1)");pvs[2].setPropID(pids[2]);
 	pvs[3].set("Stay at home declared (2)");pvs[3].setPropID(pids[3]);
-	rc = session->createPINAndCommit(pid,pvs,4);
+	rc = session->createPIN(pvs,4,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 	
 	{		
 		PropertyID pid[1] = {pids[0]};

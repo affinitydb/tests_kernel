@@ -212,7 +212,8 @@ public:
 		mCntEmails++ ;
 		// Not specifying MODE_COPY_VALUES so memory ownership passes to store
 		long lBeginTime = getTimeInMs() ;	
-		IPIN * pin = mSession->createPIN( ioPinCreator->mVals, ioPinCreator->mValPos ) ;
+		IPIN * pin;
+		TV_R(mSession->createPIN( ioPinCreator->mVals, ioPinCreator->mValPos, &pin,MODE_COPY_VALUES),mTest);
 		long lCommitTime = getTimeInMs() - lBeginTime ;
 
 		mBatchPinCreateTimes += lCommitTime ;

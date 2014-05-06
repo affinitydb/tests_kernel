@@ -162,8 +162,7 @@ visited={{city=\'beijing\', country=\'china\'}, {city=\'hangzhou\', country=\'ch
         }
 
         // create this pin
-        PID pid;
-        TVERIFYRC(mSession->createPINAndCommit(pid, values, len+3));      
+        TVERIFYRC(mSession->createPIN(values, len+3, NULL, MODE_PERSISTENT|MODE_COPY_VALUES));      
         
         visitors.push_back(visitor);
         if (i % 10 == 0) cout << ".";
@@ -200,13 +199,12 @@ void TestVTStruct::insertCollAsScalarsInsideStruct()
         mLogger.out() << "part 1 of insertCollAsScalarsInsideStruct... " << endl;
         lStructElms[3].set(lCollElms, sizeof(lCollElms) / sizeof(lCollElms[0])); lStructElms[3].setPropID(ids[VISITOR_VISITED_CITY]);
         lStruct.setStruct(lStructElms, 4); lStruct.setPropID(ids[VISITOR_RECORD]);
-        lP = mSession->createPIN(&lStruct, 1, MODE_COPY_VALUES);
+        TVERIFYRC(mSession->createPIN(&lStruct, 1, &lP, MODE_COPY_VALUES|MODE_PERSISTENT));
         MVTApp::output(*lP, mLogger.out(), mSession);
         lVRecord = lP->getValue(ids[VISITOR_RECORD]);
         TVERIFY(VT_STRUCT == lVRecord->type);
         TVERIFY(4 == lVRecord->length);
         TVERIFY(lVRecord->varray[lVRecord->length - 1].length == 3);
-        TVERIFYRC(mSession->commitPINs(&lP, 1));
         MVTApp::output(*lP, mLogger.out(), mSession);
         lP->destroy();
         mLogger.out() << endl;
@@ -217,13 +215,12 @@ void TestVTStruct::insertCollAsScalarsInsideStruct()
         lStructElms[4] = lCollElms[1];
         lStructElms[5] = lCollElms[2];
         lStruct.setStruct(lStructElms, 6); lStruct.setPropID(ids[VISITOR_RECORD]);
-        lP = mSession->createPIN(&lStruct, 1, MODE_COPY_VALUES);
+        TVERIFYRC(mSession->createPIN(&lStruct, 1, &lP, MODE_COPY_VALUES|MODE_PERSISTENT));
         MVTApp::output(*lP, mLogger.out(), mSession);
         lVRecord = lP->getValue(ids[VISITOR_RECORD]);
         TVERIFY(VT_STRUCT == lVRecord->type);
         TVERIFY(4 == lVRecord->length);
         TVERIFY(lVRecord->varray[lVRecord->length - 1].length == 3);
-        TVERIFYRC(mSession->commitPINs(&lP, 1));
         MVTApp::output(*lP, mLogger.out(), mSession);
         lP->destroy();
         mLogger.out() << endl;

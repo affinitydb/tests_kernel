@@ -127,15 +127,17 @@ void TestClassPerf::createPINS(ISession *session)
 	std::vector<IPIN *> lUncommitted;
 	static int const sNumPins = 100000;
 	int i;
+	IBatch *lBatch=session->createBatch();
+	TVERIFY(lBatch!=NULL);  	
 	for (i=0;i<sNumPins;i++){
 		if (0 == i % 100)
 			mLogger.out() << ".";
-		IPIN * lPIN = NULL;
+
 		//create pin for class.
 		if (((double)100.0 * rand() / RAND_MAX) <= 1.0)
 		{
 			val[0].set("class pin");val[0].setPropID(pm[0].uid);
-			lPIN = session->createPIN(val,1,MODE_COPY_VALUES);
+			TVERIFYRC(lBatch->createPIN(val,1,MODE_COPY_VALUES));
 		}
 		//create ordinary pin.
 		else
@@ -144,34 +146,12 @@ void TestClassPerf::createPINS(ISession *session)
 			// Note: avoid lengthy ft-indexing...
 			val[0].set((unsigned char *)str.c_str(), (unsigned)str.length());val[0].setPropID(pm[0].uid);
 			val[1].set((unsigned char *)str.c_str(), (unsigned)str.length());val[1].setPropID(pm[1].uid);
-			lPIN = session->createPIN(val,2,MODE_COPY_VALUES);
-		}
-
-		if (lPIN)
-			lUncommitted.push_back(lPIN);
-		else
-			std::cout << "Error: failed creating pin!" << std::endl;
-
-		if (lUncommitted.size() > 100)
-		{
-			if (RC_OK != session->commitPINs(&lUncommitted[0], (unsigned)lUncommitted.size()))
-				std::cout << "Error: failed committing pin!" << std::endl;
-			size_t j;
-			for (j = 0; j < lUncommitted.size(); j++)
-				lUncommitted[j]->destroy();
-			lUncommitted.clear();
+			TVERIFYRC(lBatch->createPIN(val,2,MODE_COPY_VALUES));
 		}
 	}
 	std::cout << std::endl;
-	if (lUncommitted.size()) // Commit any final accumulated pins
-	{
-		if (RC_OK != session->commitPINs(&lUncommitted[0], (unsigned)lUncommitted.size()))
+	if (RC_OK != lBatch->process())
 			std::cout << "Error: failed committing pin!" << std::endl;		
-		size_t j;
-		for (j = 0; j < lUncommitted.size(); j++)
-			lUncommitted[j]->destroy();
-		lUncommitted.clear();
-	}
 }
 bool TestClassPerf::testclassperf(ISession *session, int pWhich)
 {

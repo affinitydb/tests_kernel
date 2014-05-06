@@ -38,7 +38,7 @@ int TestPropSpec::execute()
 		SETVALUE(lPV[2], PROP_SPEC_UPDATED, 0, OP_ADD);
 		SETVALUE(lPV[3], PROP_SPEC_UPDATEDBY, 0, OP_ADD);
 		PID lPIDDoc;
-		CREATEPIN(lSession, lPIDDoc, lPV, sizeof(lPV) / sizeof(lPV[0]));
+		CREATEPIN(lSession, &lPIDDoc, lPV, sizeof(lPV) / sizeof(lPV[0]));
 		IPIN * const lPINDoc = lSession->getPIN(lPIDDoc);
 
 		// Sleep, to observe an interesting elapsed time between "created" and "updated" properties.
@@ -74,11 +74,11 @@ int TestPropSpec::execute()
 		{
 			lFoundChildren[i] = lFoundDocParts[i] = false;
 			SETVALUE(lPV[0], PROP_SPEC_PARENT, lPINDoc, OP_ADD);
-			CREATEPIN(lSession, lPIDChildren[i], lPV, 1);
+			CREATEPIN(lSession, &lPIDChildren[i], lPV, 1);
 			SETVALUE(lPV[0], PROP_SPEC_CREATED, 0, OP_ADD);
 			SETVALUE(lPV[1], PROP_SPEC_UPDATED, 0, OP_ADD);
 			SETVALUE(lPV[1], PROP_SPEC_DOCUMENT, lPINDoc, OP_ADD);
-			CREATEPIN(lSession, lPIDDocParts[i], lPV, 3);
+			CREATEPIN(lSession, &lPIDDocParts[i], lPV, 3);
 		}
 
 		Value lV[2];
@@ -89,7 +89,7 @@ int TestPropSpec::execute()
 		unsigned char const lVar1 = lQ1->addVariable();
 		PropertyID lPropIds1[] = {PROP_SPEC_DOCUMENT};
 		lV[0].setVarRef(lVar1, *lPropIds1);
-		lV[1].set(lPINDoc);
+		lV[1].set(lPINDoc->getPID());
 		TExprTreePtr const lExprTree1 = EXPRTREEGEN(lSession)(OP_EQ, 2, lV, 0);
 		lQ1->addCondition(lVar1,lExprTree1);
 		ICursor * lQR1 = NULL;
@@ -112,7 +112,7 @@ int TestPropSpec::execute()
 		unsigned char const lVar2 = lQ2->addVariable();
 		PropertyID lPropIds2[] = {PROP_SPEC_PARENT};
 		lV[0].setVarRef(lVar2, *lPropIds2);
-		lV[1].set(lPINDoc);
+		lV[1].set(lPINDoc->getPID());
 		TExprTreePtr const lExprTree2 = EXPRTREEGEN(lSession)(OP_EQ, 2, lV, 0);
 		lQ2->addCondition(lVar2,lExprTree2);
 		ICursor * lQR2 = NULL;

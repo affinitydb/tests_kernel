@@ -181,8 +181,9 @@ PID PhotoScenario::addPhotoPin
 	vals[5].set( mHostID.c_str() ) ; vals[5].property=refreshNodeID_id ; 
 	vals[6].set("image/jpeg") ; vals[6].property=mime_id ; 
 
-	PID newpin ;
-	TVERIFYRC( mSession->createPINAndCommit( newpin, vals, 7 ) );
+	IPIN *pin;
+	TVERIFYRC( mSession->createPIN(vals, 7 , &pin, MODE_PERSISTENT|MODE_COPY_VALUES) );
+	PID newpin = pin->getPID();
 
 	if (bCreateMixed && MVTRand::getBool() )
 	{
@@ -1338,7 +1339,7 @@ bool PhotoScenario::createAppPINs()
 
 		SETVALUE(lPVs[23],cache_id,0,OP_SET); // cache
 
-		lPIN = mSession->createPIN(lPVs,24);
+		TVERIFYRC(mSession->createPIN(lPVs,24,&lPIN,MODE_COPY_VALUES));
 		
 		// Add Tags to the Image PIN
 		{			
@@ -1440,10 +1441,12 @@ PID PhotoScenario::createFeedPIN(const char *pFolderName)
 	SETVALUE(lPVs[5],feedflattensubfolder_id,0,OP_SET); // feedflattensubfolder
 	SETVALUE(lPVs[6],autogen_id,1,OP_SET); // autogen
 	
-	if(RC_OK !=  mSession->createPINAndCommit(lFeedPID,lPVs,7))
+	IPIN *pin;
+	if(RC_OK !=  mSession->createPIN(lPVs,7,&pin,MODE_PERSISTENT|MODE_COPY_VALUES))
 	{
 		mLogger.out() << "ERROR (createFeedPIN): Failed to create feed PIN of foldername = " << pFolderName << std::endl;		
 	}
+	lFeedPID = pin->getPID();
 	return lFeedPID;
 }
 
@@ -1480,9 +1483,8 @@ PID PhotoScenario::createFolderPIN(PID pPID, const char *pFolderName)
 	SETVALUE(lPVs[8],album_count_id,0,OP_SET); //album_count
 	SETVALUE(lPVs[9],feedtype_id,1,OP_SET); // feedtype
 
-	IPIN *lPIN = mSession->createPIN(lPVs,10);
-
-	if(RC_OK !=  mSession->commitPINs(&lPIN,1))
+	IPIN *lPIN;
+	if(RC_OK !=  mSession->createPIN(lPVs,10,&lPIN,MODE_PERSISTENT|MODE_COPY_VALUES))
 	{
 		mLogger.out() << "ERROR (createFolderPIN): Failed to create Folder PIN: foldername = " << pFolderName << std::endl;		
 	}
@@ -1496,7 +1498,7 @@ PID PhotoScenario::createFolderPIN(PID pPID, const char *pFolderName)
 
 PID PhotoScenario::createTagPIN(const char *pTagName)
 {
-	PID lTagPID; INITLOCALPID(lTagPID);
+	PID lTagPID; INITLOCALPID(lTagPID);IPIN *pin;
 	Tstring lTagStr;
 	if(pTagName)
 		lTagStr = pTagName;
@@ -1518,10 +1520,12 @@ PID PhotoScenario::createTagPIN(const char *pTagName)
 		SETVALUE(lPVs[1],shortname_id,tmpShortName,OP_SET);
 		SETVALUE(lPVs[2],tagcount_id,0,OP_SET);
 		SETVALUE(lPVs[3],PROP_SPEC_UPDATED,1,OP_SET);
-		if(RC_OK !=  mSession->createPINAndCommit(lTagPID,lPVs,4))
+		if(RC_OK !=  mSession->createPIN(lPVs,4,&pin,MODE_PERSISTENT|MODE_COPY_VALUES))
 			assert(false);
-		else
+		else {
+			lTagPID = pin->getPID();
 			mTagPINs.push_back(lTagPID);
+		}
 		
 		int k = 0;
 		for(k = 0; k < 4; k++)

@@ -320,7 +320,7 @@ void TestOrToIN::createData()
 		SETVALUE(lV[0], mPropIDs[0], lProp0Val, OP_SET);
 		SETVALUE(lV[1], mPropIDs[1], lProp1Val, OP_SET);
 		SETVALUE(lV[2], mPropIDs[2], lProp2Val, OP_SET);
-		CREATEPIN(mSession, lPID, lV, 3);
+		CREATEPIN(mSession, &lPID, lV, 3);
 		if(lPID.pid != STORE_INVALID_PID)
 		{
 			if(lProp0Val == 20 || lProp0Val == 30)

@@ -277,11 +277,10 @@ class TestClassRollBack : public ITest
 				string createPin_scn3()
 				{
 					Value val;
-					PID   pid;
 					Tstring str;
 					MVTRand::getString(str,200,0,false,false);
 					val.set(str.c_str());val.setPropID(pTest->mPropIDs[1]);
-					TVRC_R(pTest->mSession->createPINAndCommit(pid,&val,1),pTest);
+					TVRC_R(pTest->mSession->createPIN(&val,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES),pTest);
 					return str;
 				}
 
@@ -291,9 +290,8 @@ class TestClassRollBack : public ITest
 				const string & createPin_scn3(const string & str)
 				{
 					Value val;
-					PID   pid;
 					val.set(str.c_str());val.setPropID(pTest->mPropIDs[1]);
-					TVRC_R(pTest->mSession->createPINAndCommit(pid,&val,1),pTest);
+					TVRC_R(pTest->mSession->createPIN(&val,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES),pTest);
 					return str;
 				}
 		  
@@ -467,7 +465,6 @@ RC TestClassRollBack::compareClassVersaFSQuery()
 PID TestClassRollBack::createPin()
 {
 	Value val[11];
-	PID pid;
 	Tstring str,str1,str2;
 
 	MVTRand::getString(str,200,0,false,false);
@@ -484,7 +481,7 @@ PID TestClassRollBack::createPin()
 	val[5].set(str.c_str());val[5].setPropID(mPropIDs[5]);
 	str2 = "image/jpg";
 	val[6].set(str2.c_str());val[6].setPropID(mPropIDs[6]);
-    val[7].set(str.c_str());val[7].setPropID(mPropIDs[7]);
+    	val[7].set(str.c_str());val[7].setPropID(mPropIDs[7]);
 	val[8].set(str.c_str());val[8].setPropID(mPropIDs[8]);
 	val[9].set(str.c_str());val[9].setPropID(mPropIDs[9]);
 
@@ -494,9 +491,9 @@ PID TestClassRollBack::createPin()
 	
 	//val[10].set(MVTApp::wrapClientStream(mSession, new MyStream(size))); val[10].setPropID(mPropIDs[10]);
 	val[10].set(MVTApp::wrapClientStream(mSession, &myTstStream)); val[10].setPropID(mPropIDs[10]);
-
-	TVERIFYRC(mSession->createPINAndCommit(pid,val,11));
-	return pid;
+	IPIN *pin;
+	TVERIFYRC(mSession->createPIN(val,11,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	return pin->getPID();
 }
 
 /*

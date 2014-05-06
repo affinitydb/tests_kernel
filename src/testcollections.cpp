@@ -118,6 +118,7 @@ void TestCollections::populateStore(ISession *session,URIMap *pm,int npm, PID *p
 	MVTApp::mapURIs(session,"TestCollections.props",12,pm);
 
 	Value pvs[11];
+	IPIN *pin;
 	SETVALUE(pvs[0], pm[1].uid, "Bangalore", OP_SET);
 	SETVALUE(pvs[1], pm[4].uid, "Mark", OP_SET);
 	SETVALUE(pvs[2], pm[5].uid, "Venguerov", OP_SET);
@@ -128,8 +129,9 @@ void TestCollections::populateStore(ISession *session,URIMap *pm,int npm, PID *p
 	pvs[7].setURL("http://www.dhkkan.org"); SETVATTR(pvs[7], pm[3].uid, OP_SET);
 	SETVALUE(pvs[8], pm[10].uid, 250, OP_SET);
 	SETVALUE(pvs[9], pm[11].uid, 12, OP_SET);
-	session->createPINAndCommit(pid[0],pvs,10);
-
+	session->createPIN(pvs,10,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
+	pid[0] = pin->getPID();
+	
 	SETVALUE(pvs[0], pm[1].uid, "Mumbai", OP_SET);
 	SETVALUE(pvs[1], pm[4].uid, "Yasir", OP_SET);
 	SETVALUE(pvs[2], pm[5].uid, "Mohammad", OP_SET);
@@ -138,7 +140,8 @@ void TestCollections::populateStore(ISession *session,URIMap *pm,int npm, PID *p
 	SETVALUE(pvs[5], pm[8].uid, "this is a string", OP_SET);
 	SETVALUE(pvs[6], pm[9].uid, 75, OP_SET);
 	SETVALUE(pvs[7], pm[3].uid, "Yasir@vmware.com", OP_SET);
-	session->createPINAndCommit(pid[1],pvs,8);
+	session->createPIN(pvs,8,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
+	pid[1] = pin->getPID();
 
 	SETVALUE(pvs[0], pm[1].uid, "Delhi", OP_SET);
 	SETVALUE(pvs[1], pm[4].uid, "Harsh", OP_SET);
@@ -146,7 +149,8 @@ void TestCollections::populateStore(ISession *session,URIMap *pm,int npm, PID *p
 	SETVALUE(pvs[3], pm[6].uid, "100011", OP_SET);
 	SETVALUE(pvs[4], pm[7].uid, 65, OP_SET);
 	SETVALUE(pvs[5], pm[8].uid, "This is a test string", OP_SET);
-	session->createPINAndCommit(pid[2],pvs,6);
+	session->createPIN(pvs,6,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
+	pid[2] = pin->getPID();
 
 	//collection pins
 	pvs[0].set("element 1");pvs[0].setPropID(pm[0].uid);pvs[0].op=OP_ADD;pvs[0].eid=STORE_COLLECTION_ID;
@@ -157,7 +161,8 @@ void TestCollections::populateStore(ISession *session,URIMap *pm,int npm, PID *p
 	pvs[5].set("element 6");pvs[5].setPropID(pm[1].uid);pvs[5].op=OP_ADD_BEFORE;pvs[5].eid=STORE_FIRST_ELEMENT;
 	pvs[6].set("element 7");pvs[6].setPropID(pm[1].uid);pvs[6].op=OP_ADD_BEFORE;pvs[6].eid=STORE_FIRST_ELEMENT;
 
-	TVERIFYRC(session->createPINAndCommit(pid[3],pvs,7));
+	TVERIFYRC(session->createPIN(pvs,7,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[3] = pin->getPID();
 }
 
 void TestCollections::simpleCollection(ISession *session,URIMap *pm,int npm, PID *pid)
@@ -231,7 +236,7 @@ void TestCollections::uncommitedpinCollection(ISession *session,URIMap *pm,int n
 	mLogger.out() << "uncommitedpinCollection" << std::endl;
 
 	IPIN * pin;
-	pin = session->createPIN();
+	session->createPIN(NULL,0,&pin);
 	pin->destroy();
 	RC rc;
 
@@ -240,7 +245,7 @@ void TestCollections::uncommitedpinCollection(ISession *session,URIMap *pm,int n
 
 	SETVALUE(pv, propID, "uncommited pin", OP_ADD);
 	// = pin->modify(&pv,1);
-	pin = session->createPIN(&pv,1,MODE_COPY_VALUES);
+	TVERIFYRC(session->createPIN(&pv,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	//logResult ("****Case6(1) ",rc);
 
 	//modify the same uncommited pin by adding more elements
@@ -266,10 +271,7 @@ void TestCollections::uncommitedpinCollection(ISession *session,URIMap *pm,int n
 	SETVALUE_C(pv, propID, "uncommited pin5", OP_ADD, STORE_LAST_ELEMENT);
 	rc = pin->modify(&pv,1);
 	logResult ("****Case6 ",rc);
-
-	//commit the pin and check the values. Also perform collection ops after commit
-	rc = session->commitPINs(&pin, 1);
-	logResult ("****PIN Commited ",rc);
+	
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
 #endif	
@@ -287,17 +289,12 @@ void TestCollections::uncommitedpinCollection(ISession *session,URIMap *pm,int n
 	SETVALUE(pvs[0], pm[1].uid, "Bangalore", OP_SET);
 	SETVALUE(pvs[1], pm[4].uid, "Mark", OP_SET);
 	SETVALUE(pvs[2], pm[5].uid, "Venguerov", OP_SET);
-	pin = session->createPIN(pvs,3,MODE_COPY_VALUES);
+	TVERIFYRC( session->createPIN(pvs,3,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 
 	SETVALUE_C(pv, pm[5].uid, "uncommited value", OP_ADD, STORE_LAST_ELEMENT);
 	rc = pin->modify(&pv,1);
 	logResult ("****Case8 ",rc);
 
-#ifdef VERBOSE
-	MVTApp::output(*pin->getValue(pm[5].uid), mLogger.out()); mLogger.out() << std::endl;
-#endif
-	rc = session->commitPINs(&pin, 1);
-	logResult ("****Case8 Pin Commit ",rc);
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(pm[5].uid), mLogger.out()); mLogger.out() << std::endl;
 #endif
@@ -310,22 +307,17 @@ void TestCollections::arrayCollection(ISession *session)
 
 	IPIN * pin;
 	RC rc;
-	pin = session->createPIN();
 
 	Value pvc[4];
-	Value pv;
 	PropertyID propID =MVTApp::getProp(session,"TestCollections::arrayCollection");
 
-	SETVALUE_C(pv, propID, "uncommitedprop1", OP_ADD, STORE_LAST_ELEMENT);
-	rc = pin->modify(&pv,1);
+	SETVALUE_C(pvc[0], propID, "uncommitedprop1", OP_ADD, STORE_LAST_ELEMENT);
 
 	//add all after last element
-	SETVALUE_C(pvc[0], propID, "uncommitedprop2", OP_ADD, STORE_LAST_ELEMENT);
-	SETVALUE_C(pvc[1], propID, "uncommitedprop3", OP_ADD, STORE_LAST_ELEMENT);
-	SETVALUE_C(pvc[2], propID, "uncommitedprop4", OP_ADD, STORE_LAST_ELEMENT);
-	rc = pin->modify(pvc,3);
-	logResult ("****Case9 ",rc);
-	rc = session->commitPINs(&pin, 1);
+	SETVALUE_C(pvc[1], propID, "uncommitedprop2", OP_ADD, STORE_LAST_ELEMENT);
+	SETVALUE_C(pvc[2], propID, "uncommitedprop3", OP_ADD, STORE_LAST_ELEMENT);
+	SETVALUE_C(pvc[3], propID, "uncommitedprop4", OP_ADD, STORE_LAST_ELEMENT);
+	rc = session->createPIN(pvc, 4,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 	logResult ("****Case9 Pin Commit ",rc);
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
@@ -333,15 +325,11 @@ void TestCollections::arrayCollection(ISession *session)
 	pin->destroy();
 
 	//case2: Add/Add before elements interchangably in the array.
-	pin = session->createPIN();
 	SETVALUE_C(pvc[0], propID, "el1", OP_ADD, STORE_LAST_ELEMENT);
 	SETVALUE_C(pvc[1], propID, "el2", OP_ADD, STORE_FIRST_ELEMENT);
 	SETVALUE_C(pvc[2], propID, "elbeforefirst", OP_ADD_BEFORE, STORE_FIRST_ELEMENT);
 	SETVALUE_C(pvc[3], propID, "elbeforelast", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
-
-	rc = pin->modify(pvc,4);
-	logResult ("****Case10  ",rc);
-	rc = session->commitPINs(&pin, 1);
+	rc = session->createPIN(pvc, 4,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 	logResult ("****Case10 Pin Commit ",rc);
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
@@ -356,7 +344,7 @@ void TestCollections::editCollection(ISession *session,URIMap *pm,int npm, PID *
 	IPIN *pin;
 	Value pvs[5];
 	Value const *pv;
-	Value pvl;
+	Value pvl[10];
 	RC rc;
 	PropertyID propID =pm[3].uid;
 
@@ -379,12 +367,12 @@ void TestCollections::editCollection(ISession *session,URIMap *pm,int npm, PID *
 	pin->destroy();
 
 	//test the above update with uncommited pins too.
-	pin = session->createPIN();
 	string str = "uncommitedprop";
 	for (int i =0; i < 10; i++) {
-		SETVALUE_C(pvl, propID, "uncommitedprop", OP_ADD, STORE_LAST_ELEMENT);
-		rc = pin->modify(&pvl,1);
+		SETVALUE_C(pvl[i], propID, "uncommitedprop", OP_ADD, STORE_LAST_ELEMENT);
 	} 
+	
+	session->createPIN(pvl, 10,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
 #endif
@@ -396,8 +384,6 @@ void TestCollections::editCollection(ISession *session,URIMap *pm,int npm, PID *
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
 #endif
-	rc = session->commitPINs(&pin, 1);
-	logResult ("****Case12 Pin Commit ",rc);
 
 	//Delete a known el
 	pv = pin->getValue(propID);
@@ -426,7 +412,7 @@ void TestCollections::cloneCollection(ISession *session,URIMap *pm,int npm, PID 
 
 	IPIN *pin, *pin1;
 	RC rc;
-	Value pvs[2];
+	Value pvs[10];
 	PropertyID propID = pm[4].uid;
 
 	pin = session->getPIN(pid[1]);
@@ -455,22 +441,18 @@ void TestCollections::cloneCollection(ISession *session,URIMap *pm,int npm, PID 
 	pin->destroy();
 
 	//check cloning with uncmmited pins
-	pin = session->createPIN();
-	memset(pvs,0,2*sizeof(Value));
-
+	memset(pvs,0,10*sizeof(Value));
 	for (int i =0; i < 10; i++) {
-		SETVALUE_C(pvs[0], propID, "uncommitedprop", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
-		rc = pin->modify(pvs,1);
+		SETVALUE_C(pvs[i], propID, "uncommitedprop", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
 	} 
+	session->createPIN(pvs, 10, &pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 	pin->clone()->destroy();
-	memset(pvs,0,2*sizeof(Value));
-
+	memset(pvs,0,10*sizeof(Value));
 	for (int i =0; i < 10; i++) {
-		SETVALUE_C(pvs[0], propID, "cloneprop", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
+		SETVALUE_C(pvs[i], propID, "cloneprop", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
 		rc = pin->modify(pvs,1);
 	} 
-	rc = session->commitPINs(&pin, 1);
 	logResult("****Case 15(clone2) ",rc);
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
@@ -489,17 +471,15 @@ void TestCollections::refreshCollection(ISession *session)
 	MVTApp::mapURIs(session,"TestCollections.refreshCollection",1,lPropIDs);
 	PropertyID propID = lPropIDs[0];
 	RC rc;
-	Value pvs[1];
+	Value pvs[5];
 
 	//session1->setInterfaceMode(session1->getInterfaceMode() | ITF_COLLECTIONS_AS_ARRAYS);
 	//refresh with multiple session and uncommited pin collection
-	pin = session->createPIN();
 
 	for (int i =0; i < 5; i++) {
-		SETVALUE_C(pvs[0], propID, "refresh", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
-		rc = pin->modify(pvs,1);
+		SETVALUE_C(pvs[i], propID, "refresh", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
 	} 
-	rc = session->commitPINs(&pin, 1);
+	rc = session->createPIN(pvs, 5, &pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 	PID const lPID = pin->getPID();
 	pin->destroy();
 	pin = session->getPIN(lPID);
@@ -536,10 +516,9 @@ void TestCollections::cnavigCollection(ISession *session)
 	PropertyID propID = lPropIDs[0];
 	//PropertyID propID = 2170;
 	RC rc;
-	Value pvs[4];
+	Value pvs[5];
 	Value const *pv;
 
-	pin = session->createPIN();
 	string finStr;
 	for (int i=0; i<5;i++){
 		finStr = "" ;
@@ -549,11 +528,10 @@ void TestCollections::cnavigCollection(ISession *session)
 		finStr += buff;
 		delete[] buff;
 
-		pvs[0].setURL(finStr.c_str());
-		SETVATTR_C(pvs[0], propID, OP_ADD, STORE_LAST_ELEMENT);
-		rc = pin->modify(pvs,1);
+		pvs[i].setURL(finStr.c_str());
+		SETVATTR_C(pvs[i], propID, OP_ADD, STORE_LAST_ELEMENT);
 	} 
-	rc = session->commitPINs(&pin, 1);
+	rc = session->createPIN(pvs, 5,&pin, MODE_PERSISTENT|MODE_COPY_VALUES);
 	pin->refresh();
 
 #ifdef VERBOSE
@@ -605,7 +583,6 @@ void TestCollections::inputarrayCollection (ISession *session,URIMap *pm,int npm
 	IPIN *pin;
 	Value pvs[4];
 	PropertyID propID =pm[4].uid;
-	PID pid1;
 
 	val[0].set("a");
 	val[1].set("ac");
@@ -614,8 +591,7 @@ void TestCollections::inputarrayCollection (ISession *session,URIMap *pm,int npm
 	pvs[0].set(val,3);
 	SETVATTR_C(pvs[0], propID, OP_ADD, STORE_LAST_ELEMENT);
 
-	RC rc =  session->createPINAndCommit(pid1,pvs,1);
-	pin = session->getPIN(pid1);
+	RC rc =  session->createPIN(pvs,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 	delete[] val;
 	memset(pvs,0,1*sizeof(Value));
@@ -691,13 +667,11 @@ void TestCollections::inputcnavigCollection(ISession *session)
 	RC rc;
 	Value pvs[2];
 	Value const *pv;
-	PID pid;
 
 	SETVALUE_C(pvs[0], propID, "add0", OP_ADD, STORE_LAST_ELEMENT);
 	SETVALUE_C(pvs[1], propID, "add1", OP_ADD, STORE_LAST_ELEMENT);
 
-	rc =  session->createPINAndCommit(pid,pvs,2);
-	pin = session->getPIN(pid);
+	rc =  session->createPIN(pvs,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 	pin->refresh();
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
@@ -710,12 +684,9 @@ void TestCollections::inputcnavigCollection(ISession *session)
 		pvs[0].set((Value*)pv->varray,pv->length); SETVATTR_C(pvs[0], propID, OP_ADD, STORE_LAST_ELEMENT);
 	} else TVERIFYRC(RC_TYPE);
 
-	session->createPINAndCommit(pid,pvs,1);
-	
-	pin->destroy();
-
-	pin= session->getPIN(pid);
+	rc = session->createPIN(pvs,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 	pin->refresh();
+	
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(propID), mLogger.out()); mLogger.out() << std::endl;
 #endif
@@ -752,7 +723,7 @@ void TestCollections::testSyncFTIndex(ISession *session,URIMap *pm,int npm)
 	SETVALUE(pvs[0], pm[1].uid, "Honalulu", OP_SET);
 	SETVALUE(pvs[1], pm[4].uid, "Axle", OP_SET);
 	SETVALUE(pvs[2], pm[5].uid, "Slash", OP_SET);
-	pin = session->createPIN(pvs,3,MODE_COPY_VALUES);
+	TVERIFYRC(session->createPIN(pvs,3,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 
 	//Element = 1
 	SETVALUE_C(pv, pm[5].uid, "Rose", OP_ADD, STORE_LAST_ELEMENT);
@@ -770,14 +741,14 @@ void TestCollections::testSyncFTIndex(ISession *session,URIMap *pm,int npm)
 		count++;
 		respin->destroy();
 	}
-	if(count != 0) rc = RC_FALSE; else rc = RC_OK;
+	if(count != 0) rc = RC_OK; else rc = RC_FALSE;
 	logResult ("FT Search Result before COMMIT ",rc);
 	result->destroy();
 	query->destroy();
 
 	// commit the pin and now do a FT Search without the flag
-	rc = session->commitPINs(&pin, 1,0);
-	logResult ("Committed the PIN ",rc);
+	//rc = session->commitPINs(&pin, 1,0);
+	//logResult ("Committed the PIN ",rc);
 	IStmt *query1 = session->createStmt();
 	var = query1->addVariable();
 	rc = query1->setConditionFT(var,"Rose",0);
@@ -875,20 +846,17 @@ void TestCollections::moveOPCollection(ISession *session)
 	// Need to 
 	IPIN *pin;
 	Value val[100];
-	PID pid;
 	PropertyID lPropIDs[1];
 	MVTApp::mapURIs(session,"TestCollections.inputcnavigCollection",1,lPropIDs);
 	PropertyID lPropID = lPropIDs[0];
 	//PropertyID lPropID = 2172;
 
 	//case 1: simple move
-	pin = session->createPIN();
 	unsigned i;
 	for (i=0;i<10;i++){
-		val[0].set("aaaa");val[0].op = OP_ADD;val[0].setPropID(lPropID);val[0].eid = STORE_LAST_ELEMENT;
-		TVERIFYRC(pin->modify(val,1));
+		val[i].set("aaaa");val[0].op = OP_ADD;val[i].setPropID(lPropID);val[i].eid = STORE_LAST_ELEMENT;
 	}
-	session->commitPINs(&pin,1);
+	session->createPIN(val,10,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 	const Value *lVal = pin->getValue(lPropID);
 
 	val[0].set("bbbb");
@@ -902,7 +870,6 @@ void TestCollections::moveOPCollection(ISession *session)
 	val[1].eid = STORE_LAST_ELEMENT;
 
 	RC rc = session->modifyPIN(pin->getPID(),val,2);
-	session->commitPINs(&pin,1); // ???
 	pin->refresh();
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(lPropID),mLogger.out()<<endl,session);
@@ -918,8 +885,7 @@ void TestCollections::moveOPCollection(ISession *session)
 		strcpy(bufnew,str.c_str());
 		val[z].set(bufnew);val[z].setPropID(lPropID);val[z].op = OP_ADD;
 	}
-	session->createPINAndCommit(pid,val,z);
-	pin = session->getPIN(pid);
+	session->createPIN(val,z,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(lPropID),mLogger.out()<<endl,session);
 #endif
@@ -934,8 +900,7 @@ void TestCollections::moveOPCollection(ISession *session)
 	val[2].set("Element 3");val[2].setPropID(lPropID);
 	val[2].eid = STORE_LAST_ELEMENT;val[2].op = OP_ADD;
 
-	session->createPINAndCommit(pid,val,3);
-	pin = session->getPIN(pid);
+	session->createPIN(val,3,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 #ifdef VERBOSE
 	MVTApp::output(*pin,mLogger.out()<<endl,session);
 #endif
@@ -975,8 +940,7 @@ void TestCollections::moveOPCollection(ISession *session)
 		strcpy(bufnew,str.c_str());
 		val[i].set(bufnew);val[i].setPropID(lPropId);val[i].op = OP_ADD;
 	}
-	session->createPINAndCommit(pid,val,i);
-	pin = session->getPIN(pid);
+	session->createPIN(val,i,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(lPropId),mLogger.out()<<endl,session);
 #endif
@@ -1020,8 +984,8 @@ void TestCollections::miscCollection(ISession *session)
 	val[1].set("def");val[1].setPropID(lPropID);val[1].op = OP_ADD;val[1].eid = STORE_LAST_ELEMENT;
 	val[2].set("efg");val[2].setPropID(lPropID);val[2].op = OP_ADD;val[2].eid = STORE_LAST_ELEMENT;
 
-	session->createPINAndCommit(pid,val,3);
-	pin = session->getPIN(pid);
+	session->createPIN(val,3,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
+	pid = pin->getPID();
 #ifdef VERBOSE
 	MVTApp::output(*pin->getValue(lPropID),mLogger.out()<<endl,session);
 #endif

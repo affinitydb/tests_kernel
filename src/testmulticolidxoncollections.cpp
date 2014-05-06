@@ -25,7 +25,6 @@ class TestMultiColIdxonCollections: public ITest
         virtual bool includeInMultiStoreTests() const { return false; }
         virtual int execute();
         virtual void destroy() { delete this; }
-        typedef std::vector<IPIN *> TPins;
 
     protected:
         void createPins();
@@ -92,13 +91,15 @@ void TestMultiColIdxonCollections::createPins()
     // create pins with collections
     mLogger.out() << "Creating pins...";
     size_t i, j;
-    TPins lPins;
+    
+    IBatch *lBatch=mSession->createBatch();
+    TVERIFY(lBatch!=NULL);
     for (i = 0; i < NUM_PINS; i++)
     {
         if ((i % 10) == 0)
             mLogger.out() << "." << std::flush;
         
-        Value * lV = (Value *)mSession->malloc(10 * sizeof(Value));
+        Value * lV = lBatch->createValues(10);
         for (j = 0; j < 10; j++)
         {
             if (MVTRand::getBool())
@@ -106,17 +107,14 @@ void TestMultiColIdxonCollections::createPins()
             else
             {
                 std::string const lS = MVTRand::getString2(5, -1, false);
-                char * const lStr = (char *)mSession->malloc(1 + lS.length());
+                char * const lStr = (char *)lBatch->malloc(1 + lS.length());
                 memcpy(lStr, lS.c_str(), lS.length());
                 lStr[lS.length()] = 0;
                 SETVALUE_C(lV[j], mProps[j % 2], lStr, OP_ADD, STORE_LAST_ELEMENT);
             }
         }
-        lPins.push_back(mSession->createPIN(lV, 10));
-    }
 
-    mLogger.out() << std::endl << "Committing pins..." << std::endl;
-    TVERIFYRC(mSession->commitPINs(&lPins[0], lPins.size()));
-    for (i = 0; i < lPins.size(); i++)
-        lPins[i]->destroy();
+        TVERIFYRC(lBatch->createPIN(lV, 10));
+    }
+    TVERIFYRC(lBatch->process());
 }

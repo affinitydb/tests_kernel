@@ -128,12 +128,15 @@ void TestAclsBasic::doTest()
 
 	// Normal access controlled PIN
 	PID pidRoot, pidChild, pidGrandChild ;
+	IPIN *pin;
 
 	Value val ;
 	val.set( 100 ) ; 
 	val.property = propids[0] ;
 
-	TVERIFYRC( lSession->createPINAndCommit( pidRoot, &val, 1 ) );
+	TVERIFYRC( lSession->createPIN(&val, 1, &pin, MODE_PERSISTENT|MODE_COPY_VALUES) );
+	pidRoot = pin->getPID();
+	pin->destroy();
 
 	// Set up the expected ACL values
 	AddACL( lSession, pidRoot, lReader.id, META_PROP_READ ) ;
@@ -156,17 +159,19 @@ void TestAclsBasic::doTest()
 	vals[0].property = propids[0] ;
 	vals[1].set(pidRoot) ; 
 	vals[1].property = PROP_SPEC_DOCUMENT ;
-	TVERIFYRC( lSession->createPINAndCommit( pidChild, vals, 2 ) );
-
-
+	TVERIFYRC( lSession->createPIN(vals, 2, &pin, MODE_PERSISTENT|MODE_COPY_VALUES) );
+	pidChild = pin->getPID();
+	pin->destroy();
+	
 	// "Nested" document Pin
 	vals[0].set( 600 ) ; 
 	vals[0].property = propids[0] ;
 	vals[1].set(pidChild) ; 
 	vals[1].property = PROP_SPEC_DOCUMENT ;
-	TVERIFYRC( lSession->createPINAndCommit( pidGrandChild, vals, 2 ) );
-
-			
+	TVERIFYRC( lSession->createPIN(vals, 2 ,&pin, MODE_PERSISTENT|MODE_COPY_VALUES) );
+	pidGrandChild = pin->getPID();
+	pin->destroy();
+	
 	lSession->terminate();
 
 	//
@@ -388,14 +393,15 @@ void TestAclsBasic::testPINCreatePermissions( const char * inIdentity, bool bExp
 	ISession * lSession = MVTApp::startSession(mStoreCtx, inIdentity, NULL );
 	TVERIFY( lSession != NULL ) ;
 	
-	PID newpin ;
+	PID newpin ;IPIN *pin;
 	Value readMeIfYouDare ;
 	readMeIfYouDare.set(666) ; readMeIfYouDare.property = MVTApp::getProp( lSession, "TestAclsBasic.testPINCreatePermissions" ) ;
 
-	RC rc = lSession->createPINAndCommit( newpin, &readMeIfYouDare, 1 ) ;
-
+	RC rc = lSession->createPIN(&readMeIfYouDare, 1 , &pin, MODE_PERSISTENT|MODE_COPY_VALUES) ;
 	if ( bExpectedPermission )
 	{
+		newpin = pin->getPID();
+		pin->destroy();
 		TVERIFYRC(rc) ;
 		CmvautoPtr<IPIN> pin( lSession->getPIN( newpin ) ) ;
 

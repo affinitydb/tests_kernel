@@ -121,9 +121,9 @@ void TestDateTime::queryDTPart()
 		URIMap lData;
 		lData.URI = "testdatetime.datetime"; lData.uid = STORE_INVALID_URIID; mSession->mapURIs(1, &lData);
 		lPropId = lData.uid;
-		Value lV[2];PID lPID;
+		Value lV[2];
 		lV[0].setDateTime(lTS);lV[0].setPropID(lPropId);
-		if(RC_OK!= mSession->createPINAndCommit(lPID,lV,1)){
+		if(RC_OK!= mSession->createPIN(lV,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES)){
 			mLogger.out() << "ERROR(queryDTPart) :Failed to create PIN" << std::endl;
 			lSuccess = false;
 		}
@@ -402,9 +402,8 @@ void TestDateTime::testPinTimeStamps()
 	// PROP_SPEC_CREATED is persisted according to UTC time
 	Value vCreateProp; vCreateProp.set(1); vCreateProp.property=PROP_SPEC_CREATED; 
 
-	PID pid ;
-	TVERIFYRC(mSession->createPINAndCommit(pid,&vCreateProp,1));
-	CmvautoPtr<IPIN> pin(mSession->getPIN(pid));
+	IPIN *pin;
+	TVERIFYRC(mSession->createPIN(&vCreateProp,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 	const Value * v=pin->getValue(PROP_SPEC_CREATED);
 	TVERIFY(v!=NULL);
 
@@ -433,4 +432,5 @@ void TestDateTime::testPinTimeStamps()
 	TVERIFY2(dtLocal.hour==systimeLocal.wHour,"bug 12461");
 	TVERIFY(dtLocal.day==systimeLocal.wDay);
 #endif
+	if(pin!=NULL) pin->destroy();
 }

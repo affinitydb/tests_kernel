@@ -72,14 +72,13 @@ void TestIndexRollback::doTest()
 		va[0].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[0].property = ids[0];
 		va[1].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[1].property = ids[1];
 		va[2].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[2].property = ids[2];
-		pins[i] = mSession->createPIN(va,3,MODE_COPY_VALUES); // Note (maxw): If MODE_COPY_VALUES is not specified, mvstore assumes that va is allocated via ISession::alloc.
+		TVERIFYRC(mSession->createPIN(va,3,&pins[i],MODE_COPY_VALUES)); // Note (maxw): If MODE_COPY_VALUES is not specified, mvstore assumes that va is allocated via ISession::alloc.
 	}
 	IPIN *cpins[650];
 	for (int i = 0; i < 60000/6+1; i++)
 	{
 		for (int j = 0; j < 6; j++)
-			cpins[j] = pins[j]->clone();
-		mSession->commitPINs(cpins,6);
+			cpins[j] = pins[j]->clone(NULL,0,MODE_PERSISTENT);
 		for (int j = 0; j < 6; j++)
 			cpins[j]->destroy();
 		std::cout << "." << flush;

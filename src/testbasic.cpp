@@ -335,14 +335,15 @@ void TestBasic::CreateAlbertPIN()
 	// 1. Do it really step by step.  
 	// 1.1 First establish the PIN (no values)
 	PID pid1 ; memset( &pid1, 0, sizeof( pid1 ) ) ;
+	IPIN * pPIN1;
 
 	// If database locked you this can fail, e.g. RC_READTX
-	TVERIFYRC( mSession->createPINAndCommit( pid1, NULL, 0 ) ) ;
+	TVERIFYRC( mSession->createPIN(NULL, 0 ,&pPIN1, MODE_PERSISTENT) ) ;
+	pid1 = pPIN1->getPID();
 	TVERIFY( pid1.pid != STORE_INVALID_PID ) ;
 	TVERIFY( pid1.ident != STORE_INVALID_IDENTITY ) ;	
 
 	// 1.2 look up the newly created PIN	
-	IPIN * pPIN1 = mSession->getPIN( pid1 ) ;
 	TVERIFY( pPIN1 != NULL ) ;
 	TVERIFY( pPIN1->getNumberOfProperties() == 0 ) ;
 
@@ -400,15 +401,12 @@ void TestBasic::CreateSaraPIN()
 	pName->set( pSaraMisspelledNameBuffer ) ;
 	pName->property = mProps[NameIndex].uid ;
 
-	IPIN * pSaraPin = mSession->createPIN( pName, 1 ) ;
+	IPIN * pSaraPin;
+	TVERIFYRC(mSession->createPIN( pName, 1, &pSaraPin, MODE_COPY_VALUES|MODE_PERSISTENT));
 	TVERIFY( pSaraPin != NULL ) ;
 	TVERIFY( pSaraPin->getNumberOfProperties() == 1 ) ;
 	
 	PID saraPID = pSaraPin->getPID() ;
-
-	// PID isn't valid yet, because not committed
-	TVERIFY( saraPID.pid == 0 ) ; // REVIEW: it isn't STORE_INVALID_URIID - is that by design
-	TVERIFY( saraPID.ident == STORE_INVALID_IDENTITY ) ;
 
 	// Add the age as a second call
 	// NOTE: For calls to modify the structure does not need to be allocated
@@ -422,7 +420,7 @@ void TestBasic::CreateSaraPIN()
 
 	// commitPINs will copy the information into database
 	// so we will own the memory again
-	TVERIFYRC( mSession->commitPINs( &pSaraPin, 1 ) );
+	//TVERIFYRC( mSession->commitPINs( &pSaraPin, 1 ) );
 	TVERIFY( (pSaraPin->getFlags()&PIN_PERSISTENT)!=0 ) ;
 
 	// Now PID should be valid
@@ -462,7 +460,8 @@ void TestBasic::CreateFredPIN()
 
 	Value name ; name.set( "Fred" ) ; name.property = mProps[NameIndex].uid ;
 
-	IPIN * pFredPin = mSession->createPIN( &name, 1, MODE_COPY_VALUES ) ;
+	IPIN * pFredPin;
+	TVERIFYRC(mSession->createPIN( &name, 1, &pFredPin, MODE_COPY_VALUES|MODE_PERSISTENT));
 	TVERIFY( pFredPin != NULL ) ;
 	
 	// Add the age as a second call
@@ -471,7 +470,7 @@ void TestBasic::CreateFredPIN()
 	moreInfo[1].set( 18 ) ; moreInfo[1].property = mProps[AgeIndex].uid ;	
 	TVERIFYRC( pFredPin->modify( moreInfo, 2 ) );
 
-	TVERIFYRC( mSession->commitPINs( &pFredPin, 1 ) );
+	//TVERIFYRC( mSession->commitPINs( &pFredPin, 1 ) );
 	TVERIFY( (pFredPin->getFlags()&PIN_PERSISTENT)!=0 ) ;
 
 	PID fredPID = pFredPin->getPID() ;
@@ -498,8 +497,7 @@ void TestBasic::AddPerson( char * inName, int inAge, bool inMale )
 	vals[1].set( inAge ) ; vals[1].property = mProps[AgeIndex].uid ;
 	vals[2].set( inMale ) ; vals[2].property = mProps[GenderIndex].uid ;
 
-	PID pid1 ; memset( &pid1, 0, sizeof( pid1 ) ) ;
-	TVERIFYRC( mSession->createPINAndCommit( pid1, vals, 3 ) ) ;
+	TVERIFYRC( mSession->createPIN(vals, 3, NULL, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
 }
 
 void TestBasic::RecordMarriage( char * inHusband, char * inWife )

@@ -71,7 +71,7 @@ void TestClassCreation::doTest()
 		va[2].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[2].property = ids[2];
 		va[3].set(lS.c_str()); va[3].property = ids[3];
 		va[4].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[4].property = ids[4];
-		pins[i] = mSession->createPIN(va,5,MODE_COPY_VALUES);
+		mSession->createPIN(va,5,&pins[i],MODE_COPY_VALUES);
 	}
 	IPIN *cpins[650];
 	int counter1 = 0;
@@ -104,10 +104,9 @@ void TestClassCreation::doTest()
 		Value va[2]; MVTRand::getString(st,10,0,true);
 		va[0].set(st.c_str()); va[0].property = PROP_SPEC_OBJID;
 		va[1].set(query); va[1].property = PROP_SPEC_PREDICATE; va[1].meta = META_PROP_INDEXED;
-		class_pins[i] = mSession->createPIN(va,2,MODE_COPY_VALUES);
+		TVERIFYRC(mSession->createPIN(va,2,&class_pins[i],MODE_COPY_VALUES|MODE_PERSISTENT));
 		query->destroy();
 	}
-	mSession->commitPINs(class_pins,6);
 	clsid = class_pins[0]->getValue(PROP_SPEC_OBJID)->uid;
 	std::set<PID> *pid_set = new std::set<PID>();
 	std::vector<PID> *vecs = new std::vector<PID>[6];

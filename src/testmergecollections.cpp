@@ -97,7 +97,7 @@ int TestMergeCollections::execute()
 			int val = MVTRand::getRange(0, RANGE);
 			lfMember[i] = val < threshold;
 			SETVALUE(lV[0], lPropIdVal, val, OP_SET);
-			CREATEPIN(lSession, pins[i], lV, 1);
+			CREATEPIN(lSession, &pins[i], lV, 1);
                         
 			IPIN *ppin = lSession->getPIN(pins[i]);
 			int elemincollection = MVTRand::getRange(1, MAX_ELEM_INCOLLECTION);
@@ -136,7 +136,7 @@ int TestMergeCollections::execute()
 			} 
 			SETVALUE(lV[0], lPropIdRef, pins[idx], OP_SET); 
 			refferedPins[i] = pins[idx];    // to remember reffered pins;
-			CREATEPIN(lSession, id, lV, 1);
+			CREATEPIN(lSession, &id, lV, 1);
 
 			IPIN *ppin = lSession->getPIN(id);
 			int elemincollection = MVTRand::getRange(1, MAX_ELEM_INCOLLECTION);

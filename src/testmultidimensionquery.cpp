@@ -41,7 +41,6 @@ class TestMultiDimensionQuery : public ITest
         virtual bool includeInMultiStoreTests() const { return false; }
         virtual int execute();
         virtual void destroy() { delete this; }
-        typedef std::vector<IPIN *> TPins;
         ValueType* mapVT;
         int num_mapVT;
     protected:
@@ -302,10 +301,10 @@ void TestMultiDimensionQuery::createPins()
      */
     mLogger.out() << "Creating pins...";
     int i, j, nProps;
-    TPins lPins;
     std::string lS;
     char * lStr;
-        
+    IBatch *lBatch=mSession->createBatch();
+    TVERIFY(lBatch!=NULL);        
     for (i = 0; i < NUM_PINS; i++)
     {
         if ((i % 10) == 0)
@@ -313,7 +312,7 @@ void TestMultiDimensionQuery::createPins()
 
         // create pin with random number of properties, with random value 
         nProps = MVTRand::getRange(2, num_mapVT);
-        Value * values = (Value *)mSession->malloc(nProps * sizeof(Value));
+        Value * values = lBatch->createValues(nProps);
         for (j = 0; j < nProps; j++)
         {
             ValueType type = mapVT[j];
@@ -327,7 +326,7 @@ void TestMultiDimensionQuery::createPins()
                     break;
                 case VT_STRING:
                     lS = MVTRand::getString2(5, -1, false);
-                    lStr = (char *)mSession->malloc(1 + lS.length());
+                    lStr = (char *)lBatch->malloc(1 + lS.length());
                     memcpy(lStr, lS.c_str(), lS.length());
                     lStr[lS.length()] = 0;
                     SETVALUE(values[j], mProps[j], lStr, OP_SET);
@@ -340,15 +339,10 @@ void TestMultiDimensionQuery::createPins()
                     break;
             }
         }
-        IPIN * pin = mSession->createPIN(values, nProps);
-        if(pin != NULL)
-            lPins.push_back(pin);
+        TVERIFYRC(lBatch->createPIN(values, nProps));
     }
-
+    TVERIFYRC(lBatch->process());
     mLogger.out() << std::endl << "Committing " <<  i  << " pins..." << std::endl;
-    TVERIFYRC(mSession->commitPINs(&lPins[0], lPins.size()));
-    for (size_t k = 0; k < lPins.size(); k++)
-        lPins[k]->destroy();
 }
 
 void TestMultiDimensionQuery::evalResults(/*TODO:optionally specify the scenario etc.*/)

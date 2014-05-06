@@ -125,9 +125,9 @@ int TestLocking::execute()
 
 		Value lV;
 		SETVALUE(lV, gProp101, "Hello", OP_SET);
-		CREATEPIN(lSession, lTL.mPID1, &lV, 1);
+		CREATEPIN(lSession, &lTL.mPID1, &lV, 1);
 		SETVALUE(lV, gProp102, "Bye", OP_SET);
-		CREATEPIN(lSession, lTL.mPID2, &lV, 1);
+		CREATEPIN(lSession, &lTL.mPID2, &lV, 1);
 
 		// Create 2 threads executing the typical deadlocking scenario (for 2PL protocol):
 		// t1: rx      wy

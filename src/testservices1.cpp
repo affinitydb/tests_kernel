@@ -85,10 +85,11 @@ void TestServices1::doCase1()
     values[2].set(1);
     values[2].property = pmaps[0].uid;
     
-    PID pid={0, 0};
-    TVERIFYRC(mSession->createPINAndCommit(pid, values, 3)); 
+    PID pid={0, 0};IPIN *pin;
+    TVERIFYRC(mSession->createPIN(values, 3, &pin, MODE_PERSISTENT|MODE_COPY_VALUES)); 
+    pid = pin->getPID();
     TVERIFY(pid.pid != STORE_INVALID_PID); 
-    
+
     memset(sql, 0, sizeof(sql));
     sprintf(sql, "CREATE TIMER testtservices_c1_t1 INTERVAL %s AS UPDATE @" _LX_FM " SET afy:content='abc\n';", "\'00:00:01\'", pid.pid);
     if(NULL == (qry = mSession->createStmt(sql, NULL, 0, &ce))) {
@@ -215,8 +216,9 @@ void TestServices1::doCase3()
     values[2].set(1);
     values[2].property = pmaps[0].uid;
     
-    PID pid={0, 0};
-    TVERIFYRC(mSession->createPINAndCommit(pid, values, 3)); 
+    PID pid={0, 0};IPIN *pin;
+    TVERIFYRC(mSession->createPIN(values, 3, &pin, MODE_PERSISTENT|MODE_COPY_VALUES)); 
+    pid = pin->getPID();
     TVERIFY(pid.pid != STORE_INVALID_PID); 
     
     memset(sql, 0, sizeof(sql));
@@ -242,7 +244,7 @@ void TestServices1::doCase3()
     cout << buf << endl;
     TVERIFY(strncmp(buf, "def", sizeof(buf)-1) == 0);
 
-    IPIN *pin = mSession->getPIN(pid);
+    pin = mSession->getPIN(pid);
     TVERIFY(pin != NULL);
     // delete this CPIN
     TVERIFYRC(pin->deletePIN());

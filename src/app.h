@@ -111,6 +111,9 @@ class MVTApp
 			int						mDelay;		// Delay before starting (multistore scenario)
 			unsigned int			mSeed;		// Seed for tests to use
 			bool					mbSeedSet;	// Seed value is set in command line
+			size_t					mInMem;		// Run in-memory, i.e. providing a memory buffer (of the specified size) to the kernel, instead of a file.
+			void *					mInMemAddr;
+			unsigned				mTraceMode;	// store-wide trace mode
 			Tstring					mIOInit;    // Configuration of i/o drivers
 			Tstring					mClient;	// client host
 			int						argc ;			// Test specific arguments (only makes sense for Suites running a single test)

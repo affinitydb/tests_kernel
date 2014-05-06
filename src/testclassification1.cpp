@@ -48,7 +48,6 @@ start1:
 	if ( !bStarted ) { TVERIFY2(0,"Could not start store, bailing out completely") ; return ; }
 
 	mSession = MVTApp::startSession();
-	IPIN *arr[10];
 	char *class1 = "TestClassification1.CLASS1";
 	ClassID clsid = STORE_INVALID_CLASSID;
 	if (mSession->getClassID(class1,clsid) != RC_OK)
@@ -76,20 +75,17 @@ start1:
 		qry->setPropCondition(var,&prop,1);
 	
 		defineClass(mSession,class1,qry,&clsid);
+		IBatch *arr = mSession->createBatch();
+		TVERIFY(arr!=NULL);
 		for (int i = 0; i < 10; i++)
 		{
 			Value va;
 			va.set((int)i);
 			va.setOp(OP_SET);
 			va.setPropID(prop); 
-			arr[i] = mSession->createPIN(&va,1,MODE_COPY_VALUES); // Note (maxw): If MODE_COPY_VALUES is not specified, mvstore assumes that va is allocated via ISession::alloc.
+			TVERIFYRC(arr->createPIN(&va,1,MODE_COPY_VALUES)); // Note (maxw): If MODE_COPY_VALUES is not specified, mvstore assumes that va is allocated via IBatch::createValues().
 		}
-		mSession->commitPINs(arr,10);
-		for (int i = 0; i < 10; i++)
-		{
-			arr[i]->destroy();
-			arr[i] = NULL;
-		}
+		TVERIFYRC(arr->process());
 
 		qry->destroy();
 		qry = mSession->createStmt();
@@ -104,9 +100,7 @@ start1:
 		qry = mSession->createStmt();
 		qry->addVariable(&spec,1);
 		Value va; va.set((int)99); va.setOp(OP_SET);va.setPropID(pmap.uid); 
-		IPIN *pin1 = mSession->createPIN(&va,1,MODE_COPY_VALUES);
-		mSession->commitPINs(&pin1,1);
-		pin1->destroy();
+		TVERIFYRC(mSession->createPIN(&va,1, NULL, MODE_COPY_VALUES|MODE_PERSISTENT));
 
 		qry->count(cnt);
 		printf("first pass: 11 pins commited in CLASS1, and %llu pins retrieved\n", cnt);
@@ -125,7 +119,6 @@ start1:
 		TVERIFY(cnt==11);
 		qry->destroy();
 
-		IPIN *pin1;
 		Value va;
 
 		PropertyID prop;
@@ -135,9 +128,7 @@ start1:
 		pmap.uid = STORE_INVALID_URIID;
 		mSession->mapURIs(1,&pmap);
 		va.set((int)99); va.setOp(OP_SET);va.setPropID(pmap.uid); 
-		pin1 = mSession->createPIN(&va,1,MODE_COPY_VALUES);
-		mSession->commitPINs(&pin1,1);
-		pin1->destroy();
+		TVERIFYRC(mSession->createPIN(&va,1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 
 		qry = mSession->createStmt();
 		qry->addVariable(&spec,1);
@@ -160,9 +151,7 @@ start1:
 		qry->setPropCondition(qry->addVariable(),&prop,1);
 		defineClass(mSession,"TestClassification1.CLASS2",qry,&clsid);
 		va.set((double) 77); va.setOp(OP_SET); va.setPropID(prop);
-		pin1 = mSession->createPIN(&va,1,MODE_COPY_VALUES);
-		mSession->commitPINs(&pin1,1);
-		pin1->destroy();
+		TVERIFYRC(mSession->createPIN(&va,1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 		uint64_t cnt2;
 		qry->count(cnt2);
 		qry->destroy();
@@ -183,7 +172,6 @@ start1:
 		spec.objectID = clsid; spec.params=NULL; spec.nParams = 0;
 	
 		uint64_t cnt;
-		IPIN *pin1;
 		Value va;
 
 		PropertyID prop;
@@ -201,9 +189,7 @@ start1:
 		qry->setPropCondition(qry->addVariable(),&prop,1);
 
 		va.set((double) 97); va.setOp(OP_SET); va.setPropID(prop);
-		pin1 = mSession->createPIN(&va,1,MODE_COPY_VALUES);
-		mSession->commitPINs(&pin1,1);
-		pin1->destroy();
+		TVERIFYRC(mSession->createPIN(&va,1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 		uint64_t cnt2;
 		qry->count(cnt2);
 		qry->destroy();

@@ -39,7 +39,7 @@ void TestJunkID::createPINs()
 		SETVALUE(lV[0], mPropIDs[0], i, OP_SET);
 		SETVALUE_C(lV[1], mPropIDs[1], MVTRand::getRange(1, 100), OP_ADD, STORE_LAST_ELEMENT);
 		SETVALUE_C(lV[2], mPropIDs[1], MVTRand::getRange(1, 100), OP_ADD, STORE_LAST_ELEMENT);
-		PID lPID; CREATEPIN(mSession, lPID, lV, 3);
+		PID lPID; CREATEPIN(mSession, &lPID, lV, 3);
 		mPIDs.push_back(lPID);
 	}
 }

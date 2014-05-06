@@ -183,7 +183,6 @@ bool TestFamilies::createPINs(ISession *pSession){
 	{
 		if (0 == i % 100)
 			mLogger.out() << ".";
-		lPIN = pSession->createPIN();
 
 		// Remember time at which 1/3rd of pins were created
 		if(i == mNumPINs/3) {TIMESTAMP dt; getTimestamp(dt); mUI64a = dt;}
@@ -239,11 +238,7 @@ bool TestFamilies::createPINs(ISession *pSession){
 					break;	
 			}
 		}	
-		if(RC_OK != lPIN->modify(lPVs,iV)){
-			mLogger.out() << " Failed to modify uncommitted pin " << std::endl;
-			lSuccess = false;
-		}
-		if(RC_OK != pSession->commitPINs(&lPIN,1)){
+		if(RC_OK != pSession->createPIN(lPVs,iV,&lPIN,MODE_PERSISTENT|MODE_COPY_VALUES)){
 			mLogger.out() << " Failed to commit the pin " << std::endl;
 			lSuccess = false;
 		}else{

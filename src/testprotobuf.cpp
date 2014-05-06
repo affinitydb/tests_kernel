@@ -155,10 +155,7 @@ bool TestProtoBuf::createPINs()
 					break;
 			}
 		}	
-		if(NULL == (lPIN=mSession->createPIN(lPVs,iV,MODE_COPY_VALUES))){
-			mLogger.out() << " Failed to create uncommitted pin " << std::endl;
-			lSuccess = false;
-		} else if (RC_OK != mSession->commitPINs(&lPIN,1)){
+		if(RC_OK != mSession->createPIN(lPVs,iV,&lPIN,MODE_COPY_VALUES|MODE_PERSISTENT)){
 			mLogger.out() << " Failed to commit the pin " << std::endl;
 			lSuccess = false;
 		}else{

@@ -302,9 +302,11 @@ void TestPurgeMode::testPurgeMode_byBatchesOnPages(long pNumPages, long pPinsPer
             MVTApp::randomString(str2, 1, MAX_STR_LEN);
             value[1].set(str2.c_str());
             value[1].property = ids[1];
-            lPINs.push_back(mSession->createPIN(value,2,MODE_COPY_VALUES));
+            IPIN *pin;
+            TVERIFYRC(mSession->createPIN(value,2,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
+            lPINs.push_back(pin);
         }
-        TVERIFYRC(mSession->commitPINs(&lPINs[0], lPINs.size(), MODE_TEMP_ID));
+        //TVERIFYRC(mSession->commitPINs(&lPINs[0], lPINs.size(), MODE_TEMP_ID));
         bool lDoPurge = false;
         for (TPINs::iterator iPin = lPINs.begin(); lPINs.end() != iPin; iPin++)
         {

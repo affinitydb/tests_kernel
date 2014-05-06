@@ -121,7 +121,7 @@ public:
 	PID createPINAndCommit()
 	{
 		PID lPID = {STORE_INVALID_PID, STORE_OWNER};
-		CREATEPIN(mSession, lPID, NULL, 0);
+		CREATEPIN(mSession, &lPID, NULL, 0);
 		return lPID;
 	}	
 

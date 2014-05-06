@@ -25,7 +25,6 @@ public:
 public:
 	ISession * mSession ;
 	PropertyID	mProp[1] ;
-	IPIN *mIPIN;	
 };
 TEST_IMPLEMENT(testlistwords, TestLogger::kDStdOut);
 
@@ -81,9 +80,7 @@ void testlistwords::createWords(const char* strList)
 	vl.set(strList) ; 
 	vl.property = mProp[0] ;
 	vl.meta = META_PROP_FTINDEX;
-	mIPIN = mSession->createPIN(&vl,1,MODE_COPY_VALUES);	
-	TVERIFYRC(mSession->commitPINs(&mIPIN,1)); 
-	mIPIN->destroy();
+	TVERIFYRC(mSession->createPIN(&vl,1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 }
 
 void testlistwords::verifyListWords(const char* q,const char* rstr,bool fExpected)

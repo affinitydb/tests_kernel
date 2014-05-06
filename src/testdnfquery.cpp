@@ -133,7 +133,7 @@ void TestDNFQuery::testDNFSimple()
 		PID lPID;
 		Value lV[1];
 		SETVALUE(lV[0], lPropIDs[1], 1, OP_SET);
-		CREATEPIN(mSession, lPID, lV, 1);
+		CREATEPIN(mSession, &lPID, lV, 1);
 
 		TVERIFY(testQuery(lCLSID, 1));
 	}
@@ -143,7 +143,7 @@ void TestDNFQuery::testDNFSimple()
 		PID lPID;
 		Value lV[2];
 		SETVALUE(lV[0], lPropIDs[2], 1, OP_SET);
-		CREATEPIN(mSession, lPID, lV, 1);
+		CREATEPIN(mSession, &lPID, lV, 1);
 
 		TVERIFY(testQuery(lCLSID, 2));
 	}

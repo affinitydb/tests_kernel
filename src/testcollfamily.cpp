@@ -245,8 +245,7 @@ PID TestCollFamily::testPIN( ISession *session, PropertyID collPropID, int i /*p
 	// test adding collection elements one by one
 
 	val[0].set("image/jpg");val[0].setPropID(mPropIDs[0]);
-	pin = session->createPIN(val,1,MODE_COPY_VALUES);
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	for (int j=0; j < cntElements; j++){
 		MVTRand::getString(str,30,0,false,false);// all normalized case
 		

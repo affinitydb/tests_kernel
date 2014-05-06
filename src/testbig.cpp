@@ -252,8 +252,8 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 		val[i].set(strCollItems[i].c_str());val[i].setPropID((unsigned)propid);
 		val[i].op = OP_ADD; val[i].eid = STORE_LAST_ELEMENT;
 	}
-	TVERIFYRC(session->createPINAndCommit(pid,val,cntElements));
-	pin = session->getPIN(pid);
+	TVERIFYRC(session->createPIN(val,cntElements,&pin,MODE_NO_EID | MODE_COPY_VALUES));
+	pid= pin->getPID();
 	verifyExpectedCollection(session,pin,propid,strCollItems,"case2") ;
 	pin->destroy();
 	pin = NULL;
@@ -305,15 +305,11 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 
 	//case 6: Modify of a big collection
 	reportRunningCase("modify big collection");
-	pid.pid = STORE_INVALID_PID;
-	pid.ident = STORE_OWNER;
 	
 	// First element added at creation time
 	val[0].set(strCollItems[0].c_str());val[0].setPropID(propid);
 	val[0].op = OP_ADD; val[0].eid = STORE_COLLECTION_ID;
-	TVERIFYRC(session->createPINAndCommit(pid,val,1));
-	
-	pin = session->getPIN(pid);
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_PERSISTENT | MODE_COPY_VALUES));
 
 	// Add remaining elements
 	Value * val1 = (Value *)session->malloc(sizeof(Value) * (cntElements-1));
@@ -597,7 +593,6 @@ void TestBig::verifyExpectedCollection(ISession *session,
 void TestBig::testTransaction( ISession * session, PropertyID propid, vector<string>& strCollItems, bool inbRollback /*rollback*/ )
 {
 	// Test big collection added during transaction (commit or rollback)
-	PID pid ;
 	int cntElements = (int) strCollItems.size() ;
 	int i ;
 
@@ -608,8 +603,7 @@ void TestBig::testTransaction( ISession * session, PropertyID propid, vector<str
 	val[0].set(strCollItems[0].c_str());val[0].setPropID(propid);
 	val[0].op=OP_ADD; val[0].eid=STORE_LAST_ELEMENT;
 
-    	TVERIFYRC(session->createPINAndCommit(pid,val,1));
-	pin = session->getPIN(pid);
+    	TVERIFYRC(session->createPIN(val,1,&pin, MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	//remaining elements
 #if USE_VT_ARRAY
@@ -908,17 +902,16 @@ void TestBig::rcNoResources(ISession *session, int cntVals)
 	// it works with batchs
 	assert( cntVals%4==0) ;// test assumption
 	const int pinChunk = cntVals/4;
-	IPIN* pin7 = session->createPIN(vals, pinChunk, MODE_COPY_VALUES ) ;
+	IPIN* pin7;
+	TVERIFYRC(session->createPIN(vals, pinChunk,&pin7, MODE_COPY_VALUES|MODE_PERSISTENT));
 	TVERIFYRC(pin7->modify( &(vals[pinChunk]),pinChunk, MODE_NO_EID )) ;
 	TVERIFYRC(pin7->modify( &(vals[2*pinChunk]),pinChunk, MODE_NO_EID )) ;
 	TVERIFYRC(pin7->modify( &(vals[3*pinChunk]),pinChunk, MODE_NO_EID )) ;
-	TVERIFYRC(session->commitPINs(&pin7,1));	
 	pin7->destroy() ;
 
 	// Case 8: based on PinHelper.cpp with uncommitted pins
-	PID pid8;
-	TVERIFYRC(session->createPINAndCommit(pid8, vals, pinChunk)) ;
-	IPIN* pin8 = session->getPIN(pid8);
+	IPIN* pin8;
+	TVERIFYRC(session->createPIN(vals, pinChunk, &pin8, MODE_COPY_VALUES|MODE_PERSISTENT)) ;
 	TVERIFYRC(pin8->modify( &(vals[pinChunk]),pinChunk, MODE_NO_EID )) ;
 	TVERIFYRC(pin8->modify( &(vals[2*pinChunk]),pinChunk, MODE_NO_EID )) ;
 	TVERIFYRC(pin8->modify( &(vals[3*pinChunk]),pinChunk, MODE_NO_EID )) ;

@@ -39,11 +39,11 @@ void TestCollRecovery::thread1Implementation()
 	
 	// createPIN1
 	PID lPID1;
-	CREATEPIN(lSession, lPID1, NULL, 0);
+	CREATEPIN(lSession, &lPID1, NULL, 0);
 
 	// createPIN2
 	PID lPID2;
-	CREATEPIN(lSession, lPID2, NULL, 0);
+	CREATEPIN(lSession, &lPID2, NULL, 0);
 
 	// beginTransaction
 	lSession->startTransaction();
@@ -73,11 +73,11 @@ void TestCollRecovery::thread2Implementation()
 	
 	// createPIN1
 	PID lPID1;
-	CREATEPIN(lSession, lPID1, NULL, 0);
+	CREATEPIN(lSession, &lPID1, NULL, 0);
 
 	// createPIN2
 	PID lPID2;
-	CREATEPIN(lSession, lPID2, NULL, 0);
+	CREATEPIN(lSession, &lPID2, NULL, 0);
 
 	// beginTransaction
 	lSession->startTransaction();
@@ -157,7 +157,7 @@ int TestCollRecovery::execute()
 		
 		// createPIN1
 		PID lPID1;
-		CREATEPIN(mSession, lPID1, NULL, 0);
+		CREATEPIN(mSession, &lPID1, NULL, 0);
 
 		// addCollection with 137 items for prop0 for PIN1
 		addCollection(mSession, lPID1, 137, mPropIds[0]);
@@ -167,7 +167,7 @@ int TestCollRecovery::execute()
 
 		// createPIN2
 		PID lPID2;
-		CREATEPIN(mSession, lPID2, NULL, 0);
+		CREATEPIN(mSession, &lPID2, NULL, 0);
 
 		// beginTransaction
 		mSession->startTransaction();

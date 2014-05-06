@@ -21,7 +21,6 @@ class TestMultiColumnIndex : public ITest
         virtual bool includeInMultiStoreTests() const { return false; }
         virtual int execute();
         virtual void destroy() { delete this; }
-        typedef std::vector<IPIN *> TPins;
         ValueType* mapVT;
         int num_mapVT;
     protected:
@@ -354,7 +353,8 @@ void TestMultiColumnIndex::createPins()
     // some of the 'scenarios' defined by the test.
     mLogger.out() << "Creating pins...";
     size_t i, j;
-    TPins lPins;
+    IBatch *lBatch=mSession->createBatch();
+    TVERIFY(lBatch!=NULL);
     for (i = 0; i < NUM_PINS; i++)
     {
         if ((i % 10) == 0)
@@ -364,7 +364,7 @@ void TestMultiColumnIndex::createPins()
         // TODO: better control of distribution, to hit a better proportion of the 'scenarios'
         // TODO: have a flavor that will commit pins by smaller batches, just in case it impacts indexing differently...
         // Note: the values here are crucial for good coverage.
-        Value * lV = (Value *)mSession->malloc(10 * sizeof(Value));
+        Value * lV = lBatch->createValues(10);
         for (j = 0; j < 10; j++)
         {
             if (MVTRand::getBool())
@@ -372,19 +372,16 @@ void TestMultiColumnIndex::createPins()
             else
             {
                 std::string const lS = MVTRand::getString2(5, -1, false);
-                char * const lStr = (char *)mSession->malloc(1 + lS.length());
+                char * const lStr = (char *)lBatch->malloc(1 + lS.length());
                 memcpy(lStr, lS.c_str(), lS.length());
                 lStr[lS.length()] = 0;
                 SETVALUE_C(lV[j], mProps[j % 3], lStr, OP_ADD, STORE_LAST_ELEMENT);
             }
         }
-        lPins.push_back(mSession->createPIN(lV, 10));
-    }
 
-    mLogger.out() << std::endl << "Committing pins..." << std::endl;
-    TVERIFYRC(mSession->commitPINs(&lPins[0], lPins.size()));
-    for (i = 0; i < lPins.size(); i++)
-        lPins[i]->destroy();
+        TVERIFYRC(lBatch->createPIN(lV, 10));
+    }
+    TVERIFYRC(lBatch->process());
 }
 
 void TestMultiColumnIndex::createPins2()
@@ -395,10 +392,11 @@ void TestMultiColumnIndex::createPins2()
      */
     mLogger.out() << "Creating pins2...";
     int i, j, nProps;
-    TPins lPins;
     std::string lS;
     char * lStr;
         
+    IBatch *lBatch=mSession->createBatch();
+    TVERIFY(lBatch!=NULL);    
     for (i = 0; i < NUM_PINS; i++)
     {
         if ((i % 10) == 0)
@@ -407,7 +405,7 @@ void TestMultiColumnIndex::createPins2()
         // create pin with random number of properties, with random value 
         // TODO:  more randomly
         nProps = MVTRand::getRange(2, num_mapVT);
-        Value * values = (Value *)mSession->malloc(nProps * sizeof(Value));
+        Value * values = lBatch->createValues(nProps);
         for (j = 0; j < nProps; j++)
         {
             ValueType type = mapVT[j];
@@ -421,7 +419,7 @@ void TestMultiColumnIndex::createPins2()
                     break;
                 case VT_STRING:
                     lS = MVTRand::getString2(5, -1, false);
-                    lStr = (char *)mSession->malloc(1 + lS.length());
+                    lStr = (char *)lBatch->malloc(1 + lS.length());
                     memcpy(lStr, lS.c_str(), lS.length());
                     lStr[lS.length()] = 0;
                     SETVALUE(values[j], mProps[SPLIT+j], lStr, OP_SET);
@@ -434,16 +432,10 @@ void TestMultiColumnIndex::createPins2()
                     break;
             }
         }
-        IPIN * pin = mSession->createPIN(values, nProps);
-        if(pin != NULL)
-            lPins.push_back(pin);
+        TVERIFYRC(lBatch->createPIN(values, nProps));
     }
-
+    TVERIFYRC(lBatch->process());
     mLogger.out() << std::endl << "Committing " <<  i  << " pins..." << std::endl;
-    TVERIFYRC(mSession->commitPINs(&lPins[0], lPins.size()));
-    for (size_t k = 0; k < lPins.size(); k++)
-        lPins[k]->destroy();
-    
 }
 
 void TestMultiColumnIndex::deletePins()

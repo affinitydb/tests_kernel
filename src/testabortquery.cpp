@@ -271,7 +271,7 @@ void TestAbortQuery::createPINs(int pNumPINs)
 		SETVALUE(lV[9], mPropIDs[9], MVTApp::wrapClientStream(mSession, lStream1), OP_SET);
 		SETVALUE(lV[10], PROP_SPEC_CREATED, 1, OP_SET);
 		SETVALUE(lV[11], PROP_SPEC_UPDATED, i, OP_SET);
-		CREATEPIN(mSession, lPID, lV, 12);
+		CREATEPIN(mSession, &lPID, lV, 12);
 	}
 
 	mLogger.out() << " DONE " << std::endl;

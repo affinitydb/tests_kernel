@@ -53,7 +53,6 @@ void TestClassMembership::testClassMembership()
 	Value args[2];
 	ClassID	cls = STORE_INVALID_CLASSID, clsopexist = STORE_INVALID_CLASSID;
 	PropertyID pm[3];
-	PID pid;
 	IPIN *pin;
 	bool isinclass;
 	RC rc;
@@ -82,10 +81,9 @@ void TestClassMembership::testClassMembership()
 	val[0].set("Bipasha");val[0].setPropID(pm[0]);
 	val[1].set("jism");val[1].setPropID(pm[1]);
 
-	TVERIFYRC(mSession->createPINAndCommit(pid,val,2,0));
+	TVERIFYRC(mSession->createPIN(val,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	//test for membership
-	pin = mSession->getPIN(pid);
 	isinclass = pin->testClassMembership(cls);
 	TVERIFY(isinclass);
 
@@ -150,15 +148,16 @@ void TestClassMembership::testClassMembership()
 
 	// Verify that pin having only one of the properties also shows up
 	val[0].set("Somethingelse");val[0].setPropID(pm[0]);
-	TVERIFYRC(mSession->createPINAndCommit(pid,val,1));
-	CmvautoPtr<IPIN> pin2(mSession->getPIN(pid));
+	IPIN* pin2;
+	TVERIFYRC(mSession->createPIN(val,1,&pin2,MODE_PERSISTENT|MODE_COPY_VALUES));
 	TVERIFY(pin2->testClassMembership(clsopexist)) ;
-
+	pin2->destroy();
 	// PIN with other props should not show up
 	val[0].set("uninteresting prop");val[0].setPropID(pm[2]);
-	TVERIFYRC(mSession->createPINAndCommit(pid,val,1));
-	CmvautoPtr<IPIN> pin3(mSession->getPIN(pid));
+	IPIN* pin3;
+	TVERIFYRC(mSession->createPIN(val,1,&pin3,MODE_PERSISTENT|MODE_COPY_VALUES));
 	TVERIFY(!pin3->testClassMembership(clsopexist)) ;
+	pin3->destroy();
 
 	//Case 3: test for app issue after upgrade: get pin with specific pids and test for class membership
 	//REVIEW: This only works with some specific store that had some specific predefined classes,
@@ -250,7 +249,7 @@ void TestClassMembership::testFamilyMembership()
 				PID lPID = {STORE_INVALID_PID, STORE_OWNER};
 				Value lV[2];
 				SETVALUE(lV[0], lPropIDs[0], i, OP_SET);
-				CREATEPIN(mSession, lPID, lV, 1); TVERIFY(lPID.pid != STORE_INVALID_PID);
+				CREATEPIN(mSession, &lPID, lV, 1); TVERIFY(lPID.pid != STORE_INVALID_PID);
 				if(lPID.pid != STORE_INVALID_PID) lPIDs.push_back(lPID);
 			}
 			

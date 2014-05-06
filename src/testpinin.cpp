@@ -162,9 +162,9 @@ void TestPINIn::createBasePINs(ISession *pSession){
 		// kicks them out of the query
 		if(MVTRand::getBool()){
 			lVal[5].setURL("https://wiki.vmware.com");lVal[5].setPropID(mPropIds[5]);
-			CREATEPIN(pSession, mPIDs[i], lVal, 6);
+			CREATEPIN(pSession, &mPIDs[i], lVal, 6);
 		}else{
-			CREATEPIN(pSession, mPIDs[i], lVal, 5);		
+			CREATEPIN(pSession, &mPIDs[i], lVal, 5);		
 		}		
 	}
 	

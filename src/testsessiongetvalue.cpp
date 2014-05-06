@@ -90,7 +90,9 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	ui64 = 12753803254343750LL;
 	pvs[19].setDateTime(ui64); SETVATTR(pvs[19], pm[19].uid, OP_SET);
 	pvs[20].setURIID(pm[14].uid); SETVATTR(pvs[20], PROP_SPEC_VALUE, OP_SET);
-	RC rc = session->createPINAndCommit(pid[0],pvs,21);
+	IPIN *pin;
+	TVERIFYRC(session->createPIN(pvs,21,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[0] = pin->getPID();
 
 	// PIN 2
 	SETVALUE(pvs[0], pm[0].uid, "Nepal", OP_SET);
@@ -105,7 +107,8 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	SETVALUE(pvs[9], pm[10].uid, 5.5, OP_SET);
 	SETVALUE(pvs[10], pm[14].uid, "http://www.nepalfc.com", OP_SET);	
 	SETVALUE(pvs[11], PROP_SPEC_UPDATED, 0, OP_SET);
-	rc = session->createPINAndCommit(pid[1],pvs,12);
+	TVERIFYRC(session->createPIN(pvs,12,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[1] = pin->getPID();
 
 	// PIN 3
 	SETVALUE(pvs[0], pm[0].uid, "Srilanka", OP_SET);
@@ -117,13 +120,14 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	SETVALUE(pvs[6], pm[12].uid, 34443164, OP_SET);
 	SETVALUE(pvs[7], pm[13].uid, 10091999, OP_SET);	
 	pvs[8].setURL("http://www.srilanka4ever.com"); SETVATTR_C(pvs[8], pm[14].uid, OP_ADD, STORE_COLLECTION_ID);
-	rc = session->createPINAndCommit(pid[2],pvs,9);
+	TVERIFYRC(session->createPIN(pvs,9,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[2] = pin->getPID();
 	
 	// Twice modifying the PIN to add 2 coll elements... Some issue if done at once.
 	// Shown to Sumanth
 	IPIN *pin1 = session->getPIN(pid[2]);
 	pvs[0].setURL("http://www.srilankanever.com"); SETVATTR_C(pvs[0], pm[14].uid, OP_ADD, STORE_LAST_ELEMENT);
-	rc = pin1->modify(pvs,1);
+	RC rc = pin1->modify(pvs,1);
 
 	pvs[0].setURL("http://www.srilankaalways.com"); SETVATTR_C(pvs[0], pm[14].uid, OP_ADD, STORE_LAST_ELEMENT);
 	rc = pin1->modify(pvs,1);
@@ -135,7 +139,8 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	rv.vid = 0;
 	
 	SETVALUE(pvs[0], PROP_SPEC_VALUE, rv, OP_SET);
-	rc = session->createPINAndCommit(pid[3],pvs,1);
+	TVERIFYRC(session->createPIN(pvs,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[3] = pin->getPID();
 	
 	// PIN 5
 	RefVID ref;
@@ -145,7 +150,8 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	ref.vid = 0;
 
 	SETVALUE(pvs[0], PROP_SPEC_VALUE, ref, OP_SET);
-	rc = session->createPINAndCommit(pid[4],pvs,1);
+	TVERIFYRC(session->createPIN(pvs,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[4] = pin->getPID();
 
 	// PIN 6
 	RefP rv1; rv1.eid = STORE_COLLECTION_ID; rv1.vid = 0;
@@ -160,7 +166,8 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	rv1.pin = pinx;
 	rv1.pid = pm[14].uid;	
 	SETVALUE(pvs[0], PROP_SPEC_VALUE, rv1, OP_SET);
-	rc = session->createPINAndCommit(pid[5],pvs,1);
+	TVERIFYRC(session->createPIN(pvs,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[5] = pin->getPID();
 
 	// PIN 7
 	RefVID ref1;
@@ -172,13 +179,15 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	ref1.id = pid[2];
 	ref1.pid = pm[14].uid;
 	SETVALUE(pvs[0], PROP_SPEC_VALUE, ref1, OP_SET);
-	rc = session->createPINAndCommit(pid[6],pvs,1);
+	TVERIFYRC(session->createPIN(pvs,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[6] = pin->getPID();
 
 	// PIN 8
 	// Creating a PIN with collection for PROP_SPEC_VALUE property
 	SETVALUE(pvs[0], pm[4].uid, "Collection of PROP_SPEC_VALUE", OP_SET);
 	SETVATTR(pvs[1], PROP_SPEC_VALUE, OP_SET);
-	rc = session->createPINAndCommit(pid[7],pvs,2);
+	TVERIFYRC(session->createPIN(pvs,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[7] = pin->getPID();
 
 	IPIN *pin8 = session->getPIN(pid[7]);
 	SETVALUE_C(pvs[0], PROP_SPEC_VALUE, rv, OP_ADD, STORE_LAST_ELEMENT);
@@ -309,8 +318,10 @@ void TestSessionGetValue::testGetValue(ISession *session,URIMap *pm,int npm, PID
 	
 	// Case 2: point to an index that doesn't exist on the pid page
 	// ERROR:Invalid idx 100 for page 0000000F (8 entries)
+	IPIN *pin;
 	PID newPid; Value valExpected; valExpected.set(1); valExpected.property=pm[1].uid;
-	TVERIFYRC(session->createPINAndCommit(newPid, &valExpected, 1 ));
+	TVERIFYRC(session->createPIN(&valExpected, 1 ,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	newPid = pin->getPID();
 
 	invalidpid = newPid ;
 	invalidpid.pid += 100 ; // slot on the page past the real number of pins
@@ -338,7 +349,8 @@ void TestSessionGetValue::testGetValue(ISession *session,URIMap *pm,int npm, PID
 
 	// Try to fool store by creating a new pid that might replace the purged pid
 	PID replacementPID ; Value valReplacement;valReplacement.set(1);valReplacement.property=pm[1].uid;
-	TVERIFYRC(session->createPINAndCommit(replacementPID,&valReplacement,1));
+	TVERIFYRC(session->createPIN(&valReplacement,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	replacementPID = pin->getPID();
 	
 	// Store is not fooled
 	TVERIFY(replacementPID!=newPid);
@@ -509,8 +521,9 @@ void TestSessionGetValue::testGetMissingValues(bool useSessionMem, bool bSSV)
 	// Case 1 - Success case
 	//
 	mLogger.out() << "Case1" << endl;
-	PID p1 ;
-	TVERIFYRC(mSession->createPINAndCommit(p1,v,2));
+	PID p1; IPIN *pin;
+	TVERIFYRC(mSession->createPIN(v,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	p1 = pin->getPID();
 
 	readVals[0].setError(prop0);
 	readVals[1].setError(prop1);
@@ -525,7 +538,8 @@ void TestSessionGetValue::testGetMissingValues(bool useSessionMem, bool bSSV)
 	//
 	mLogger.out() << "Case2" << endl;
 	PID p2 ;
-	TVERIFYRC(mSession->createPINAndCommit(p2,v,1 /*ONLY 1 property passed*/));
+	TVERIFYRC(mSession->createPIN(v,1 /*ONLY 1 property passed*/,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	p2 = pin->getPID();
 
 	readVals[0].setError(prop0);
 	readVals[1].setError(prop1);

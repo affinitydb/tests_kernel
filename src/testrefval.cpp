@@ -51,7 +51,7 @@ int TestRefVal::execute()
 		PID lPIDs[100];
 		for (i = 0; i < 100; i++)
 		{
-			CREATEPIN(lSession, lPIDs[i], NULL, 0);
+			CREATEPIN(lSession, &lPIDs[i], NULL, 0);
 			IPIN * const lPIN = lSession->getPIN(lPIDs[i]);
 			int const lNumProps = MVTRand::getRange(1, 20);
 			for (j = 0; j < lNumProps; j++)

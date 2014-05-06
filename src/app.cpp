@@ -9,6 +9,7 @@ Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 #include "md5stream.h"
 #include "serialization.h"
 #include "mvauto.h"
+#include "inmem.h"
 #include <map>
 #include <algorithm>
 
@@ -229,6 +230,9 @@ MVTApp::TestSuiteCtx::TestSuiteCtx()
 	mDelay=1000;
 	mSeed=0;
 	mbSeedSet = false;
+	mInMem = 0;
+	mInMemAddr = NULL;
+	mTraceMode = 0;
 	mLock = new MVTestsPortability::Mutex ;
 }
 MVTApp::TestSuiteCtx::TestSuiteCtx(const TestSuiteCtx& rhs )
@@ -327,6 +331,8 @@ int MVTApp::start(MVTArgs *args)
 	pargs->get_param("-noui",MVTApp::bNoUI);
 	pargs->get_param("-list",bList);
 	pargs->get_param("verbose",bVerbose);
+	pargs->get_param("trace",Suite().mTraceMode);
+	pargs->get_param("inmem",Suite().mInMem);
 
 	//MVTApp::sReporter.init(MVTApp::sDynamicLinkMvstore);
 
@@ -335,7 +341,6 @@ int MVTApp::start(MVTArgs *args)
 	pargs->get_param("-forsmoke",Suite().mbSmoke);	
 		
 	pargs->get_param("repeat",Suite().mNRepeat);
-		
 	if ( MVTApp::bNoUI )
 	{
 		setAssertOutput( false ) ;
@@ -556,6 +561,7 @@ int MVTApp::help() const
 	std::cout << "		-srvname=<SERVERNAME> Specify the server name to connect (if not running under default name)" << std::endl;
 	std::cout << "  -dir=STOREDIR Directory to start (default is current directory)" << std::endl;
 	std::cout << "  -logdir=optional alternative directory for the log files" << std::endl;
+	std::cout << "  -inmem=buffer size (in bytes) for pure in-memory execution" << std::endl;
 	std::cout << "  -nbuf=NUMBER [-rand] Number of buffers to start the store with. If '-rand' then nbuf will be randomized for multistore" << std::endl;
 	std::cout << "  -pwd=WORD open or create password protected encrypted store" << std::endl;
 	std::cout << "  -ipwd=WORD provide identity password" << std::endl;
@@ -938,8 +944,26 @@ int MVTApp::executeTests()
 
 	if (mMultiStoreCxt.size()==1)
 	{
-		// No need for another thread
-		return executeSuite(mMultiStoreCxt[0]);
+		// In in-memory mode, the master process makes sure there's a global shared memory area for all tests of the suite;
+		// children processes just pick up the shared memory area.
+		InMem::FileMapping lFM;
+		if (mMultiStoreCxt[0].mInMem)
+		{
+			if (!InMem::openFileMapping(INMEM_DEFAULT_NAME, NULL, mMultiStoreCxt[0].mInMem, lFM) && 
+				!InMem::createFileMapping(INMEM_DEFAULT_NAME, INMEM_DEFAULT_NAME, NULL, mMultiStoreCxt[0].mInMem, lFM))
+			{
+				return 1;
+			}
+			mMultiStoreCxt[0].mInMemAddr = lFM.mAddress;
+		}
+
+		// Simple execution.
+		int const lRet = executeSuite(mMultiStoreCxt[0]);
+
+		// Cleanup.
+		if (mMultiStoreCxt[0].mInMem)
+			InMem::closeFileMapping(lFM);
+		return lRet;
 	}
 	else
 	{
@@ -948,6 +972,7 @@ int MVTApp::executeTests()
 		TestExecutionThreadCtxt * ctxts = (TestExecutionThreadCtxt*)malloc(mMultiStoreCxt.size()*sizeof(TestExecutionThreadCtxt));
 		for (size_t j = 0 ; j < mMultiStoreCxt.size() ; j++)
 		{
+			assert(0 == mMultiStoreCxt[j].mInMem);
 			ctxts[j].pThis = this ; ctxts[j].pSuite = &mMultiStoreCxt[j];
 			createThread(&MVTApp::threadExecuteSuite, &(ctxts[j]), lThreads[j]);
 			MVTestsPortability::threadSleep(mMultiStoreCxt[j].mDelay);
@@ -1199,6 +1224,8 @@ void MVTApp::buildCommandLine(TestSuiteCtx & suite,std::stringstream & cmdstr)
 		cmdstr << " -rollforward" ;
 	if ( suite.mbPrintStats )
 		cmdstr << " -printstats" ;
+	if ( suite.mInMem )
+		cmdstr << " -inmem=" << suite.mInMem ;
 	if ( suite.mbGetStoreCreationParam )
 		cmdstr << " -gscp" ;
 	if (sCommandCrashWithinMsAfterStartup)
@@ -1987,9 +2014,11 @@ bool MVTApp::startStore(
 	if ( suite.mbPrintStats )
 		mode |= STARTUP_PRINT_STATS ;
 
+	if ( suite.mInMem )
+		cout << "Using in-memory store mapped at " << std::hex << suite.mInMemAddr << " (" << std::dec << suite.mInMem << " bytes)" << std::endl;
 
 	StartupParameters const lSP(mode, lDirectory, DEFAULT_MAX_FILES, lNumBuffers, 
-		DEFAULT_ASYNC_TIMEOUT, pNetCallback, pNotifier,lPassword,lLogDirectory);
+		DEFAULT_ASYNC_TIMEOUT, pNetCallback, pNotifier,lPassword,lLogDirectory,DEFAULT_LOGBUF_SIZE,NULL,suite.mInMemAddr,suite.mInMem);
 
 	const unsigned short lStoreID = pIdentity?pStoreID:suite.mStoreID ;
 	const unsigned int lPageSize = suite.mPageSize ;
@@ -2051,6 +2080,8 @@ bool MVTApp::startStore(
 			std::cout << "Opened existing store. Owner: " << lIdentity << " NBUFFERS: " << lNumBuffers << endl ;
 		}
 	}
+
+	if (lStoreCtx!=NULL && suite.mTraceMode!=0) lStoreCtx->changeTraceMode(suite.mTraceMode);
 
 #if 0	
 	if (bReplicate && !sReplicaStoreCtx)
@@ -2154,7 +2185,7 @@ RC MVTApp::createStoreWithDumpSession(ISession *& outSession, IService * pNetCal
 	if ( suite.mbPrintStats )
 		mode |= STARTUP_PRINT_STATS ;
 
-
+	// REVIEW: support inmem?
 	StartupParameters const lSP(mode, lDirectory, DEFAULT_MAX_FILES, lNumBuffers, 
 		DEFAULT_ASYNC_TIMEOUT, pNetCallback, pNotifier,lPassword,lLogDirectory);
 
@@ -2307,6 +2338,7 @@ void MVTApp::stopStore()
 #if 1
 	if (suite.mbTestDurability)
 	{
+		// REVIEW: support inmem?
 		printf("\nTesting durability snapshot after shutdown...\n\n");
 		bool lDurabilityOk = true;
 		StartupParameters const lSP(0, suite.mDir.c_str(), DEFAULT_MAX_FILES, suite.mNBuffer, DEFAULT_ASYNC_TIMEOUT, NULL, NULL, suite.mPwd.c_str(), suite.mLogDir.c_str());

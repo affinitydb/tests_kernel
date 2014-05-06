@@ -35,17 +35,20 @@ class TestServices3_service : public IService
 				TestServices3_service & mService; // Back-reference to the service.
 				HTHREAD mThread;
 				long volatile mStop;
+				const URIID id;
 			public:
-				TestServiceListener(TestServices3_service & pService)
+				TestServiceListener(TestServices3_service & pService,URIID i)
 					: mService(pService)
 					, mThread(NULL)
 					, mStop(0)
+					, id(i)
 				{
 					std::cout << "Created a TestServiceListener " << this << std::endl;
 					createThread(sThreadProc, this, mThread);
 				}
 				virtual ~TestServiceListener() {}
 				virtual	IService *getService() const {return &mService;}
+				virtual	URIID getID() const {return id;}
 				virtual	RC create(IServiceCtx *ctx,uint32_t& dscr,IService::Processor *&ret) {ret=NULL; return RC_INVOP;}
 				virtual RC stop(bool fSuspend=false)
 				{
@@ -81,9 +84,9 @@ class TestServices3_service : public IService
 	public:
 		TestServices3_service(TestServices3 & pTest, IAffinity *pCtx, URIMap *pURIs) : mTest(pTest), mCtx(pCtx), mURIs(pURIs) {}
 		virtual ~TestServices3_service() {}
-		virtual RC listen(ISession *ses,const Value *params,unsigned nParams,const Value *srvParams,unsigned nSrvparams,unsigned mode,IListener *&ret)
+		virtual RC listen(ISession *ses,URIID id,const Value *params,unsigned nParams,const Value *srvParams,unsigned nSrvparams,unsigned mode,IListener *&ret)
 		{
-			ret = new TestServiceListener(*this); // Review: any obligation with respect to allocation model?
+			ret = new TestServiceListener(*this,id); // Review: any obligation with respect to allocation model?
 			return RC_OK;
 		}
 };

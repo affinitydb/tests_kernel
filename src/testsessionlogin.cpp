@@ -287,13 +287,16 @@ void TestSessionLogin::createIdentities(int sNumIdentities,long volatile &lStop)
 			bool lMayInsert = (int)1000.0 * rand()/RAND_MAX > 500;
 			IdentityID const lIID = lSession->storeIdentity(lIdentity, lPwd.c_str(), lMayInsert, (const unsigned char *) lCert.c_str(), lCertLen);
 			{
-				Value lVal[4]; PID lPID;
+				Value lVal[4];IPIN *pin;
 				SETVALUE(lVal[0], lPM[0].uid, lPwd.c_str(), OP_SET);
 				SETVALUE(lVal[1], lPM[1].uid, (unsigned int)lIID, OP_SET);
 				SETVALUE(lVal[2], lPM[2].uid, lCert.c_str(), OP_SET);
 				SETVALUE(lVal[3], lPM[3].uid, lMayInsert, OP_SET);
-				lSession->createPINAndCommit(lPID,lVal,4);
-				mPID.push_back(lPID);
+				RC rc = lSession->createPIN(lVal,4,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
+				if (rc == RC_OK)
+					mPID.push_back(pin->getPID());
+				else
+					TVERIFY(false);
 			}
 			mPwd.push_back(lPwd);
 			mCert.push_back(lCert);
@@ -305,12 +308,12 @@ void TestSessionLogin::createIdentities(int sNumIdentities,long volatile &lStop)
 	}		
 	
 	// Create a pin for runSamplequery()
-	URIMap pmap[2];Value pvs[3];PID pid;
+	URIMap pmap[2];Value pvs[3];
 	pmap[0].URI="testsessionlogin.VT_STRING";
 	lSession->mapURIs(1,pmap);		
 	SETVALUE(pvs[0], pmap[0].uid, "login test", OP_SET);
 	pvs[0].meta = META_PROP_FTINDEX;
-	RC rc = lSession->createPINAndCommit(pid,pvs,1);
+	TVERIFYRC(lSession->createPIN(pvs,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 	
 	SETVALUE(pvs[0], pmap[0].uid, "session login test2", OP_SET);
 	pvs[0].meta = META_PROP_FTINDEX;
@@ -320,7 +323,7 @@ void TestSessionLogin::createIdentities(int sNumIdentities,long volatile &lStop)
 	pvs[2].setIdentity(mIdentities[0]);
 	SETVATTR_C(pvs[2], PROP_SPEC_ACL, OP_ADD, STORE_LAST_ELEMENT);
 	pvs[2].meta = META_PROP_READ | META_PROP_WRITE;
-	rc = lSession->createPINAndCommit(pid,pvs,3);
+	TVERIFYRC(lSession->createPIN(pvs,3,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	lSession->terminate();
 }
@@ -360,7 +363,7 @@ bool TestSessionLogin::changePwdCert()
 bool TestSessionLogin::insertPIN(ISession *pSession, bool pMayInsert)
 {
 	bool lSuccess = true;
-	Value lVal[1]; PID lPID;
+	Value lVal[1];
 	char lBuf[255];
 	IdentityID lIID = pSession->getCurrentIdentityID();
 	pSession->getIdentityName(lIID,lBuf,255);
@@ -368,7 +371,7 @@ bool TestSessionLogin::insertPIN(ISession *pSession, bool pMayInsert)
 	PropertyID prop=MVTApp::getProp(pSession,"TestSessionLogininsertPIN");
 	lVal[0].set(lStr);lVal[0].setPropID(prop);
 	lVal[0].meta = META_PROP_FTINDEX;
-	if(RC_OK!=pSession->createPINAndCommit(lPID,lVal,1)){
+	if(RC_OK!=pSession->createPIN(lVal,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES)){
 		if(pMayInsert) lSuccess = false;
 	}else{
 		if(!pMayInsert) lSuccess = false;

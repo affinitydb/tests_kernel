@@ -62,7 +62,7 @@ void TestFamilyOrder::createPINs(int pNumPINs)
 		if(isVerbose()) mLogger.out()<<"prop2:"<<lStr2.c_str()<<endl;
 		SETVALUE(lV[1], mPropIDs[1], lStr2.c_str(), OP_SET);
 
-		CREATEPIN(mSession, lPID, lV, sNumProps);
+		CREATEPIN(mSession, &lPID, lV, sNumProps);
 		if(isVerbose()) mLogger.out() << "PIN ID: \n" << lPID.pid << std::endl;
 	}
 	mLogger.out()<<"--------------------------"<<endl;

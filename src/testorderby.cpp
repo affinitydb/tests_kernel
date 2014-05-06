@@ -279,13 +279,13 @@ void TestOrderBy::testPinIDOrdering(ISession* session)
 
 	Value val ; val.set(true) ; val.property = groupingProp;
 	PID pid;
-	CREATEPIN(session, pid, &val, 1);
+	CREATEPIN(session, &pid, &val, 1);
 
 	PID specificPid ;
-	CREATEPIN(session, specificPid, &val, 1);
+	CREATEPIN(session, &specificPid, &val, 1);
 
-	CREATEPIN(session, pid, &val, 1);
-	CREATEPIN(session, pid, &val, 1);
+	CREATEPIN(session, &pid, &val, 1);
+	CREATEPIN(session, &pid, &val, 1);
 	
 	IStmt * const lQ = session->createStmt();
 	unsigned char lVar = lQ->addVariable();
@@ -680,7 +680,7 @@ void TestOrderBy::populateStore(ISession *session){
 		val[pos].setDateTime(0) ; val[pos].property = PROP_SPEC_UPDATED ; pos++ ;
 		val[pos].setIdentity(STORE_OWNER) ; val[pos].property = PROP_SPEC_CREATEDBY ; pos++ ;
 		
-		CREATEPIN(session, pid, val, pos);		
+		CREATEPIN(session, &pid, val, pos);		
 			
 		if ( i % ( COUNT_PINS / 10 ) == 0 ) 
 		{

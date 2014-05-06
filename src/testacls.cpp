@@ -290,7 +290,7 @@ int TestAcls::execute()
 			}
 		#endif
 		bool lPINCreated = false;
-		PID lPID;
+		PID lPID;IPIN *pin;
 		#if ASSIGN_ACL_AT_CREATION
 			int j;
 			Value lPV[1 + sNumIdentities];
@@ -301,13 +301,13 @@ int TestAcls::execute()
 				lPV[j].meta = META_PROP_READ | META_PROP_WRITE;
 			}
 			SETVALUE(lPV[j], PropertyID(mPropIDs[0]), "basic property for all pins in this test, for read access check", OP_ADD);
-			lPINCreated = (RC_OK == lSession->createPINAndCommit(lPID, lPV, 1 + j));
+			lPINCreated = (RC_OK == lSession->createPIN(lPV, 1 + j, &pin, MODE_COPY_VALUES|PIN_HIDDEN|MODE_PERSISTENT));
 		#else
 			Value lPV;
 			SETVALUE(lPV[j], PropertyID(1mPropIDs[0]), "basic property for all pins in this test, for read access check", OP_ADD);
-			lPINCreated = (RC_OK == lSession->createPINAndCommit(lPID, &lPV, 1));
+			lPINCreated = (RC_OK == lSession->createPIN(&lPV, 1, &pin, MODE_COPY_VALUES|PIN_HIDDEN|MODE_PERSISTENT));
 		#endif
-
+		lPID = pin->getPID();
 		// Create redundant info, and adjust the pin's acl and parenting.
 		if (lPINCreated)
 		{

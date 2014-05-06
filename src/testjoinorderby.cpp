@@ -18,7 +18,6 @@ public:
 	virtual void destroy() { delete this; }
 	public:
 	PropertyID	mProp[6] ;
-	IPIN *mIPIN;
 };
 TEST_IMPLEMENT(testjoinorderby, TestLogger::kDStdOut);
 
@@ -83,9 +82,7 @@ int testjoinorderby::execute()
 		lV[4].setDateTime(lTS);lV[4].property=mProp[3];
 		lV[5].setDateTime(lTS);lV[5].property=mProp[4];
 		lV[6].setDateTime(lTS);lV[6].property=mProp[5];
-		mIPIN = mSession->createPIN(lV,7,MODE_COPY_VALUES);	
-		TVERIFYRC(mSession->commitPINs(&mIPIN,1)); 
-		mIPIN->destroy();
+		TVERIFYRC(mSession->createPIN(lV,7,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));	
 	}
 	}
 	//Query

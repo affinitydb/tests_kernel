@@ -5,7 +5,7 @@ using namespace std;
 
 
 #define NUM_PROPS 4
-#define NUM_PINS 30
+#define NUM_PINS 50000 // presently 'selectComm' works fine with 30, but freezes with 300 (bug #422-c9).
 #define MAX_STR_LEN 200
 #define MAX_COL_SIZE 100
 #define MAX_MAP_SIZE 10
@@ -77,7 +77,7 @@ void TestServicePerf::populate(){
         if ((i % 10) == 0)
             mLogger.out() << "." << std::flush;
         
-        CREATEPIN(mSession, pid, NULL, 0);
+        CREATEPIN(mSession, &pid, NULL, 0);
         TVERIFY((pin = mSession->getPIN(pid))!=NULL);    
         
         // create pin with random number of properties, with random value 
@@ -156,14 +156,14 @@ void TestServicePerf::populate(){
     TVERIFY(countStmt(mSession,"SELECT * FROM testserviceperf_all") == NUM_PINS);
 }
 
-#define LOCALHOST "127.0.0.1"
+//#define LOCALHOST "127.0.0.1"
 #define PORT 8095
 /*
   * socket communication for random pins(with int, double, string, collection, map properties)
   */
 void TestServicePerf::selectComm()
 {
-    char sql[200],address[200];CompilationError ce;
+    char sql[2048],address[200];CompilationError ce;
     ICursor *res=NULL;
     IStmt *qry=NULL,*stmt=NULL;
     IPIN *pin1=NULL,*pin2=NULL;
@@ -182,8 +182,8 @@ void TestServicePerf::selectComm()
 
     // create a CPIN of sending a SELECT request
     memset(sql, 0, sizeof(sql));
-    sprintf(address, "%s:%d", LOCALHOST, PORT);
-    sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address='%s',\
+    sprintf(address, "%d", PORT);
+    sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address=%s,\
 afy:request=${SELECT * FROM testserviceperf_all ORDER BY afy:pinID}, testservicesperf_t1_p2=1", address);
     if(NULL == (qry = mSession->createStmt(sql, NULL, 0, &ce))) {
         cerr << "Error!!! testservicesperf::selectComm()::line: " << __LINE__ << " ::" << "CE: " << ce.rc << " line:" << ce.line << " pos:" << ce.pos << " " << ce.msg << " query := \"" << sql << "\n";
@@ -215,7 +215,7 @@ afy:request=${SELECT * FROM testserviceperf_all ORDER BY afy:pinID}, testservice
       CmvautoPtr<ICursor> lLocalRes;
       TVERIFYRC(lLocalStmt->execute(lLocalRes));
       
-      while((pin2 = res->next()) != NULL)
+      while (pin2 = res->next())
       {
         i++;
         
@@ -228,15 +228,17 @@ afy:request=${SELECT * FROM testserviceperf_all ORDER BY afy:pinID}, testservice
             MVTApp::outputComparisonFailure(lDirect->getPID(), *lDirect.Get(), *pin2, mLogger.out());
             TVERIFY(false && "Detected difference between 'remotely' & 'locally' fetched PIN");
           }
-          else
-            mLogger.out() << "PIN comparison for PID=" << std::hex << lDirect->getPID().pid << std::dec << " passed" << std::endl;
+          else{
+            if (NUM_PINS<=1000000) mLogger.out() << "PIN comparison for PID=" << std::hex << lDirect->getPID().pid << std::dec << " passed" << std::endl;
+			else if ((i%1000)==0) mLogger.out() << i << " pins passed correctly" << std::endl;
+			//Sleep(100);
+		  }
         }
         else
           TVERIFY(false && "Failed to retrieve local PIN");
         
-        #if 0 // This is causing trouble... why? investigate...
           pin2->destroy();
-        #endif
+        
       }
     }
 
@@ -289,8 +291,8 @@ class MyRandomStream : public Afy::IStream
   * socket communication for pins with long string/stream property.
   * different stream length 1k, 2k, 5k, 10k, 50k, 100k,etc, will be tested.
   */
-#define STREAM_NUM 3
-static int g_stream_size[STREAM_NUM] = {1024, 1024*2, 1024*5};
+#define STREAM_NUM 6
+static int g_stream_size[STREAM_NUM] = {1024, 1024*2, 1024*5, 1024*10, 1024*20, 1024*30};
 void TestServicePerf::longStreamComm(){
     char sql[200],address[20],fname[30], pname[40];
     CompilationError ce; PID pid;
@@ -306,7 +308,7 @@ void TestServicePerf::longStreamComm(){
           * we already have a listener : testservicesperf_t1_l1, created in selectComm().
           * create some pins with long stream 
           */
-        CREATEPIN(mSession, pid, NULL, 0);
+        CREATEPIN(mSession, &pid, NULL, 0);
         pin1 = mSession->getPIN(pid);
         sprintf(pname, "TestServicePerf.LongStream.prop%d",i);
         MVTApp::mapURIs(mSession, pname, 1, pmaps);
@@ -326,9 +328,9 @@ void TestServicePerf::longStreamComm(){
         if(mystream) mystream->destroy();
 
         // create a CPIN of sending a SELECT request
-        sprintf(address, "%s:%d", LOCALHOST, PORT);
+        sprintf(address, "%d", PORT);
         memset(sql, 0, sizeof(sql));
-        sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address=\'%s\',\
+        sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address=%s,\
     afy:request=${SELECT * WHERE EXISTS(%s)}, testservicesperf_longstream_cpin%d=1", address,pname,i);
         if(NULL == (qry = mSession->createStmt(sql, NULL, 0, &ce))) {
             cerr << "Error!!! testservicesperf::longStreamComm()::line: " << __LINE__ << " ::" << "CE: " << ce.rc << " line:" << ce.line << " pos:" << ce.pos << " " << ce.msg << " query := \"" << sql << "\n";
@@ -356,24 +358,29 @@ void TestServicePerf::longStreamComm(){
         }
 
         TVERIFYRC(qry->execute(&res));
-        TVERIFY((pin2 = res->next()) != NULL);
-        cout << (pin2->getValue(ids[0]))->length << endl;
-        TVERIFY(res->next() == NULL);
+		if (res!=NULL) {
+			TVERIFY((pin2 = res->next()) != NULL);
+			if (pin2!=NULL)
+				cout << (pin2->getValue(ids[0]))->length << endl;
+			TVERIFY(res->next() == NULL);
 
-        //verify the result with the output file
-        std::ifstream result;
-        result.open(fname,std::ios::in);
-        uint32_t fLen = (pin2->getValue(ids[0]))->length;
-        char *buf = NULL;
-        TVERIFY((buf = (char *)mSession->malloc(fLen)) != NULL);
-        result.read(buf, fLen);
-        TVERIFY(strncmp(buf, (char *)(pin2->getValue(ids[0]))->bstr, fLen) == 0);
-        memset(buf, 0, fLen);
-        result.read(buf, fLen);
-        TVERIFY(strncmp(buf, "\0", fLen) == 0);
-        TVERIFY(result.eof()== 1);
-        if(buf) mSession->free(buf);
-        result.close();
+	        //verify the result with the output file
+			if (pin2!=NULL) {
+			    std::ifstream result;
+				result.open(fname,std::ios::in);
+			    uint32_t fLen = (pin2->getValue(ids[0]))->length;
+				char *buf = NULL;
+				TVERIFY((buf = (char *)mSession->malloc(fLen)) != NULL);
+		        result.read(buf, fLen);
+			    TVERIFY(strncmp(buf, (char *)(pin2->getValue(ids[0]))->bstr, fLen) == 0);
+				memset(buf, 0, fLen);
+		        result.read(buf, fLen);
+			    TVERIFY(strncmp(buf, "\0", fLen) == 0);
+				TVERIFY(result.eof()== 1);
+				if(buf) mSession->free(buf);
+				result.close();
+			}
+		}
 
         if(pin1) pin1->destroy();
         if(pin2) pin2->destroy();        
@@ -402,6 +409,7 @@ THREAD_SIGNATURE TestServicePerf::threadProc(void * pInfo)
     IStmt *qry=NULL,*stmt=NULL;
     ICursor *res=NULL; 
     IPIN *pin1=NULL,*pin2=NULL;
+	RC rc;
     
     CPINThreadInfo *lInfo = (CPINThreadInfo *)pInfo;
     ISession *mSession = MVTApp::startSession(lInfo->mStoreCtx);
@@ -410,9 +418,9 @@ THREAD_SIGNATURE TestServicePerf::threadProc(void * pInfo)
     URIID id = lInfo->id;
 
     // create a CPIN of sending a SELECT request
-    sprintf(address, "%s:%d", LOCALHOST, port);
+    sprintf(address, "%d", port);
     memset(sql, 0, sizeof(sql));
-    sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address=\'%s\',\
+    sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address=%s,\
 afy:request=${SELECT * FROM testservicesperf_t3_c1 WHERE testservicesperf_t3_p1=%d}, \
 testservicesperf_multilisteners_cpin%d=1", address,val,val);
     if(NULL == (qry = mSession->createStmt(sql))) {
@@ -420,15 +428,17 @@ testservicesperf_multilisteners_cpin%d=1", address,val,val);
         return 0;
     }
 
-    assert(RC_OK == qry->execute());
-    if(qry!=NULL) qry->destroy();
+    rc = qry->execute(); assert(rc==RC_OK);
+    qry->destroy();
 
     memset(sql, 0, sizeof(sql));
     sprintf(sql, "SELECT RAW * WHERE EXISTS(testservicesperf_multilisteners_cpin%d)",val);
-    assert((stmt = mSession->createStmt(sql))!=NULL);
-    assert(RC_OK == stmt->execute(&res));
-    assert((pin1 = res->next()) != NULL) ;
-    if(res != NULL) res->destroy();
+    stmt = mSession->createStmt(sql); assert(stmt!=NULL);
+    rc=stmt->execute(&res); assert(rc==RC_OK);
+	if (res!=NULL) {
+		pin1 = res->next(); assert(pin1 != NULL) ;
+		res->destroy();
+	}
     if(stmt!=NULL) stmt->destroy();
     
     // select from this CPIN and verify the result
@@ -439,10 +449,15 @@ testservicesperf_multilisteners_cpin%d=1", address,val,val);
         return 0;
     }
 
-    assert(RC_OK == qry->execute(&res));
-    assert((pin2 = res->next()) != NULL);
-    assert((pin2->getValue(id))->ui == val);
-    assert(res->next() == NULL);
+    rc=qry->execute(&res); assert(rc==RC_OK);
+	if (res != NULL) {
+		pin2 = res->next(); assert(pin2 != NULL);
+		if (pin2 != NULL) 
+			assert((pin2->getValue(id))->ui == val);
+		assert(res->next() == NULL);
+		res->destroy();
+	}
+	qry->destroy();
     mSession->terminate();
     return 0;
 }
@@ -458,9 +473,9 @@ void TestServicePerf::multipleListenerComm(){
     
     // create multiple listeners on localhost
     for(i = 0; i < NUM_LISTENERS; i++) {
-        sprintf(address, "%s:%d", LOCALHOST, PORT+1+i);
+        sprintf(address, "%d", PORT+1+i);
         memset(sql, 0, sizeof(sql));
-        sprintf(sql, "CREATE LISTENER testservicesperf_t3_l%d ON \'%s\' AS {.srv:sockets,.srv:pathSQL,.srv:affinity,.srv:protobuf,.srv:sockets}", i, address);
+        sprintf(sql, "CREATE LISTENER testservicesperf_t3_l%d ON %s AS {.srv:sockets,.srv:pathSQL,.srv:affinity,.srv:protobuf,.srv:sockets}", i, address);
         TVERIFYRC(execStmt(mSession, sql));
     }
 
@@ -476,7 +491,7 @@ void TestServicePerf::multipleListenerComm(){
     mStoreCtx = MVTApp::getStoreCtx();
     int base = (NUM_LISTENERS>NUM_THREADS)?MVTRand::getRange(0,NUM_LISTENERS-NUM_THREADS-1):0;
     pmap[0].URI = "testservicesperf_t3_p1";
-    assert(RC_OK == mSession->mapURIs(1,&pmap[0]));
+    TVERIFYRC(mSession->mapURIs(1,&pmap[0]));
     for(unsigned int i=0;i<NUM_THREADS;i++){
         lInfo[i].mStoreCtx = mStoreCtx;
         lInfo[i].val = NUM_LISTENERS>NUM_THREADS?(i+base):(i%(NUM_LISTENERS-1)+base); // value to query

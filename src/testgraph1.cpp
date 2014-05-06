@@ -122,7 +122,9 @@ void loadPeople(ISession & pSession, int pPass)
                 SETVALUE(lV[5], sPropIDs[P_COUNTRY], lAttributes[4].c_str(), OP_SET);
                 SETVALUE(lV[6], sPropIDs[P_POSTALCODE], lAttributes[5].c_str(), OP_SET);
                 size_t iV;
-                lPINs.push_back(pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES));
+		IPIN *pin;
+		pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), &pin, MODE_COPY_VALUES);
+                lPINs.push_back(pin);
                 break;
             }
             case 2:
@@ -326,7 +328,9 @@ void loadProjects(ISession & pSession)
         SETVALUE(lV[0], sPropIDs[P_FID], lFID, OP_SET);
         SETVALUE(lV[1], sPropIDs[P_FNAME], lAttributes[0].c_str(), OP_SET);
         SETVALUE(lV[2], sPropIDs[P_ACCESS], lAccessOrgID, OP_SET); // Review: maybe by reference instead...
-        lProjects.push_back(pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES));
+		IPIN *pin;
+		pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), &pin, MODE_COPY_VALUES);
+        lProjects.push_back(pin);
         if (!lProjects.back())
             printf("ERROR(%d): Failed to createPIN.\n", __LINE__);
         lParentFIDs.push_back(lParentFID);
@@ -392,7 +396,9 @@ void loadPhotos(ISession & pSession)
         Value lV[2];
         SETVALUE(lV[0], sPropIDs[P_FID], lFID, OP_SET);
         SETVALUE(lV[1], sPropIDs[P_PNAME], lAttributes[0].c_str(), OP_SET);
-        lPhotos.push_back(pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES));
+		IPIN *pin;
+		pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), &pin, MODE_COPY_VALUES);
+        lPhotos.push_back(pin);
         if (!lPhotos.back())
             printf("ERROR(%d): Failed to createPIN.\n", __LINE__);
         lParentFIDs.push_back(lParentFID);
@@ -672,11 +678,9 @@ ClassID createClass(ISession * pSession, char const * pName, IStmt * pPredicate)
 	Value vals[2];
 	vals[0].set(pName); vals[0].setPropID(PROP_SPEC_OBJID);
     vals[1].set(pPredicate); vals[1].setPropID(PROP_SPEC_PREDICATE); vals[1].setMeta(META_PROP_INDEXED);
-    IPIN * lP = pSession->createPIN(vals, 2, MODE_COPY_VALUES);
-    if (lP)
-    {
-        RC lRC = pSession->commitPINs(&lP, 1);
-        if (RC_OK == lRC || RC_ALREADYEXISTS == lRC)
+    IPIN * lP;
+    RC lRC = pSession->createPIN(vals, 2, &lP, MODE_COPY_VALUES|MODE_PERSISTENT);
+    if (RC_OK == lRC || RC_ALREADYEXISTS == lRC){
             lClsid = lP->getValue(PROP_SPEC_OBJID)->uid;
         lP->destroy();
     }

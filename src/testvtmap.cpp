@@ -153,9 +153,7 @@ void TestVTMap::doCase2()
     values[0].property = ids[0];
 
     // insert a PIN with a VT_MAP value
-    PID pid={0, 0};
-    TVERIFYRC(mSession->createPINAndCommit(pid, values, 1)); 
-    TVERIFY(pid.pid != STORE_INVALID_PID); 
+    TVERIFYRC(mSession->createPIN(values, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES)); 
 
     //verify the result
     IStmt * const stmt = mSession->createStmt("SELECT * WHERE EXISTS ($0)", ids, 1);
@@ -308,9 +306,7 @@ void TestVTMap::doCase4(){
     values[0].property = ids[0];
 
     // insert a PIN with a VT_MAP value
-    PID pid={0, 0};
-    TVERIFYRC(mSession->createPINAndCommit(pid, values, 1)); 
-    TVERIFY(pid.pid != STORE_INVALID_PID);
+    TVERIFYRC(mSession->createPIN(values, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES)); 
 
     //verify the result
     IStmt * const stmt = mSession->createStmt("SELECT * WHERE EXISTS ($0)", ids, 1);
@@ -374,9 +370,7 @@ void TestVTMap::doCase5(){
     values[1].property = pmaps[1].uid;
 
     // insert a PIN with a VT_MAP value
-    PID pid={0, 0};
-    TVERIFYRC(mSession->createPINAndCommit(pid, values, 2)); 
-    TVERIFY(pid.pid != STORE_INVALID_PID);
+    TVERIFYRC(mSession->createPIN(values, 2, NULL, MODE_PERSISTENT|MODE_COPY_VALUES)); 
 
     //verify the result
     IStmt * const stmt = mSession->createStmt("SELECT * WHERE EXISTS ($0)", &pmaps[0].uid, 1);    

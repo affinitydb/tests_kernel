@@ -188,7 +188,7 @@ int TestStreams::execute()
 		// Basic test.
 		#if 1
 		{
-			CREATEPIN(lSession, lPID, NULL, 0);
+			CREATEPIN(lSession, &lPID, NULL, 0);
 			IPIN * const lPIN = lSession->getPIN(lPID);
 			unsigned long lStreamLengths[] = {150, 6194304};
 
@@ -209,7 +209,7 @@ int TestStreams::execute()
 			mLogger.out() << "Creating pin from short stream" << std::endl;
 			{
 				lReplCallback.setCurInputStream(lV.stream.is);
-				CREATEPIN(lSession, lPID2, &lV, 1);
+				CREATEPIN(lSession, &lPID2, &lV, 1);
 				lReplCallback.setCurInputStream(NULL);
 			}
 
@@ -301,7 +301,7 @@ int TestStreams::execute()
 			SETVALUE(lV, lPropIDs[1], MVTApp::wrapClientStream(lSession, mystream1), OP_SET);
 			{
 				lReplCallback.setCurInputStream(lV.stream.is);
-				CREATEPIN(lSession, lPID2, &lV, 1);
+				CREATEPIN(lSession, &lPID2, &lV, 1);
 				lReplCallback.setCurInputStream(NULL);
 			}
                       
@@ -358,7 +358,7 @@ int TestStreams::execute()
 				SETVALUE(lV, lPropIDs[0], MVTApp::wrapClientStream(lSession, mystream1), OP_ADD);
 				{
 					lReplCallback.setCurInputStream(lV.stream.is);
-					CREATEPIN(lSession, lPIDs[i], &lV, 1);
+					CREATEPIN(lSession, &lPIDs[i], &lV, 1);
 					lReplCallback.setCurInputStream(NULL);
 				}
 
