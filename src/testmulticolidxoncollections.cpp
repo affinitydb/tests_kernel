@@ -54,7 +54,7 @@ int TestMultiColIdxonCollections::execute()
 
 void TestMultiColIdxonCollections::defineMultiColIdx()
 {      
-        IExprTree *iExpr1 = NULL, *iExpr2 = NULL;
+        IExprNode *iExpr1 = NULL, *iExpr2 = NULL;
 
         // create two conditions on two properties
         Value lV[2];

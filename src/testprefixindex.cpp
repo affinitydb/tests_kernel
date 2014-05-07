@@ -67,8 +67,7 @@ void TestPrefixIndex::doTest()
         MVTApp::randomString(str, 1, MAX_STR_LEN);
         value[0].set(str.c_str());
         value[0].property = ids[0];
-        PID pid;
-        TVERIFYRC(mSession->createPINAndCommit(pid,value,1));
+        TVERIFYRC(mSession->createPIN(value,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
         if (i % 10 == 0) 
             cout << ".";
         if (i == NUMBER_PINS -1)
@@ -90,7 +89,7 @@ void TestPrefixIndex::doTest()
         MVTApp::randomString(str1, sub_len, sub_len);
         
         Value lV[2];
-        IExprTree *iExpr1 = NULL, *iExpr2 = NULL;
+        IExprNode *iExpr1 = NULL, *iExpr2 = NULL;
         lV[0].setVarRef(0,ids[0]);
         lV[1].set(sub_len);
         iExpr1 = mSession->expr(OP_SUBSTR, 2, lV);
@@ -162,7 +161,7 @@ void TestPrefixIndex::doTest()
         IStmt * const iStmt = mSession->createStmt();
         TVERIFY(iStmt != NULL);
         QVarID lVar = iStmt->addVariable();
-        OrderSeg lSortBy = {NULL, ids[0], flag, 0, (uint16_t)sub_len};
+        OrderSeg lSortBy = {NULL, ids[0], uint8_t(flag), 0, (uint16_t)sub_len};
         iStmt->setOrder(&lSortBy, 1);
         iStmt->setPropCondition(lVar,ids,1);
         // cout << iStmt->toString() <<endl;

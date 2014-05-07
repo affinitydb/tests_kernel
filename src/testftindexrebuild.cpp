@@ -50,14 +50,9 @@ void TestFTIndexRebuild::testFTRebuild(ISession *session)
 	lfilePath = "../textdata/great_expectations.txt";
 	CFileStream *lfilestream = new CFileStream(lfilePath,false);
 	IStream *stream = MVTApp::wrapClientStream(session,lfilestream);
-	PID pid;
-	TVERIFYRC(session->createPINAndCommit(pid,NULL,0));
-
 	Value val[1];
-	IPIN *pin = session->getPIN(pid);
 	val[0].set(stream);val[0].setPropID(mPropIds[0]);
-
-	TVERIFYRC(pin->modify(val,1));
+	TVERIFYRC(session->createPIN(val,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 	mLogger.out() << std::endl << "Verification pre-rebuild..." << std::endl;
 	verifyFTIndex(session);
 	TVERIFYRC(session->rebuildIndexFT());

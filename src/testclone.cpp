@@ -64,30 +64,29 @@ void TestClone::pinClone(ISession *session)
 	PropertyID lPropIDs[nLoops];
 	MVTApp::mapURIs(session,"TestClone.pinClone",nLoops,lPropIDs);
 
-	Value pv;
 	Value pvs[1000];
 	const Value *pval;
 	RC rc;
-	PID pid;
 	char *p,buff[3000];
 
 	map<Afy::PropertyID,Afy::Value> pvl;
 	strcpy(buff,"");
 	//case 1: Uncommited pin clone.
-	pin = session->createPIN();
 	//add number of prop values
 	std::string buf = "http://www.yehhaicricket.com/india/Rahuld/rahul.html";
+	Value *vals = (Value *)session->malloc(sizeof(Value)*nLoops);
+	TVERIFY(vals!=NULL);
+	char **bufnew = (char **)session->malloc(sizeof(char *)*nLoops);
 	for (unsigned i=0;i<nLoops;i++) {
 		buf  += rand()%26+((rand()&1)!=0?'a':'A');
-		char *bufnew = new char[buf.length() + 1]; // REVIEW: Should this use ISession::alloc to properly match
+		bufnew[i] = (char *)session->malloc(buf.length() + 1); // REVIEW: Should this use ISession::alloc to properly match
 												  // the way it will be freed?
-		strcpy(bufnew,buf.c_str());
-		pv.setURL(bufnew); pv.setPropID(lPropIDs[i]);
+		strcpy(bufnew[i],buf.c_str());
+		vals[i].set(bufnew[i]); vals[i].setPropID(lPropIDs[i]);
 		//insert prop value pair into the map
-		pvl.insert(map<Afy::PropertyID,Afy::Value>::value_type(lPropIDs[i],pv));
-		TVERIFYRC(pin->modify(&pv,1));
+		pvl.insert(map<Afy::PropertyID,Afy::Value>::value_type(lPropIDs[i],vals[i]));
 	}
-	TVERIFYRC(session->commitPINs(&pin,1));
+	TVERIFYRC(session->createPIN(vals,nLoops,&pin,MODE_PERSISTENT));
 	pin1 = pin->clone(0,0,MODE_PERSISTENT);
 	TVERIFY((pin1->getFlags()&PIN_PERSISTENT)!=0);
 	TVERIFY(pin1->getPID().pid != STORE_INVALID_PID ) ;
@@ -95,11 +94,7 @@ void TestClone::pinClone(ISession *session)
 	comparePIN2(pin,pin1,session);
 
 	//clone without the MODE_PERSISTENT
-	pin2 = pin->clone() ;
-	TVERIFY((pin2->getFlags()&PIN_PERSISTENT)==0) ;
-	TVERIFY(pin2->getPID().pid == STORE_INVALID_PID ) ;
-	comparePIN(session,pin2,pvl,nLoops);
-	TVERIFYRC(session->commitPINs(&pin2,1)) ;
+	pin2 = pin->clone(NULL,0,PIN_PERSISTENT) ;
 	comparePIN2(pin,pin2,session);
 
 	pin->destroy();
@@ -142,8 +137,7 @@ void TestClone::pinClone(ISession *session)
 	pin1->destroy();
 
 	// case 3: Clone Big collection (only fails with large nLoops)
-	session->createPINAndCommit(pid,NULL,0);
-	pin = session->getPIN(pid);
+	session->createPIN(NULL,0,&pin,MODE_PERSISTENT);
 
 	for (unsigned i = 0; i<nLoops; i++) {
 		p=buff+strlen(buff);
@@ -165,11 +159,10 @@ void TestClone::pinClone(ISession *session)
 	pin->destroy() ;	
 
 	//case 4: for overwrite values(simple)
-	pin =  session->createPIN();
 	SETVALUE(pvs[0], lPropIDs[1], "Jaanu meri jaan", OP_SET);
 	SETVALUE(pvs[1], lPropIDs[2], "Mein tere qurbaan", OP_SET);
 	pvl.insert(map<Afy::PropertyID,Afy::Value>::value_type(lPropIDs[2],pvs[1]));
-	pin->modify(pvs,2);
+	session->createPIN(pvs,2,&pin,MODE_COPY_VALUES|MODE_PERSISTENT);
 	
 	SETVALUE(pvs[0], lPropIDs[1], "jeete hain Shaan se", OP_SET);
 	pvl.insert(map<Afy::PropertyID,Afy::Value>::value_type(lPropIDs[1],pvs[0]));
@@ -178,9 +171,8 @@ void TestClone::pinClone(ISession *session)
 	// The clone is committed but the original is not
 	TVERIFY((pin1->getFlags()&PIN_PERSISTENT)!=0 ) ;	
 	pin->refresh() ;
-	TVERIFY((pin->getFlags()&PIN_PERSISTENT)==0 ) ;
-//	MVTApp::output(*pin1,mLogger.out(),session);	
-	TVERIFYRC(session->commitPINs(&pin,1,0)) ;
+	TVERIFY((pin->getFlags()&PIN_PERSISTENT)!=0 ) ;
+//	MVTApp::output(*pin1,mLogger.out(),session);
 
 	// pins are different because of argument to clone method:
 	TVERIFY(0==strcmp("Jaanu meri jaan", pin->getValue(lPropIDs[1])->str)) ;
@@ -210,15 +202,16 @@ void TestClone::pinClone(ISession *session)
 	SETVALUE_C(pvs[2], pm[0].uid, "Indiranagar", OP_ADD_BEFORE, STORE_LAST_ELEMENT);
 	SETVALUE_C(pvs[3], pm[0].uid, "St Josephs Collge of commerce", OP_ADD, STORE_LAST_ELEMENT);
 	TVERIFYRC(session->createPIN(pvs,4,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
-	pin = session->getPIN(pid);
 	MVTApp::output(*pin,mLogger.out(),session);
 
 	//1)modify a specifc colection el -- cnavig
 	pval = pin->getValue(pm[0].uid);
 	if (pval->type==VT_COLLECTION) {
-		SETVALUE_C(pvs[0], pm[0].uid, "India Vs Pakistan - 2005", OP_SET, pval->nav->navigate(GO_FIRST)->eid);
-	} else if (pval->type==VT_ARRAY) {
-		SETVALUE_C(pvs[0], pm[0].uid, "India Vs Pakistan - 2005", OP_SET, pval->varray[0].eid);
+		if (pval->isNav()) {
+			SETVALUE_C(pvs[0], pm[0].uid, "India Vs Pakistan - 2005", OP_SET, pval->nav->navigate(GO_FIRST)->eid);
+		} else {
+			SETVALUE_C(pvs[0], pm[0].uid, "India Vs Pakistan - 2005", OP_SET, pval->varray[0].eid);
+		}
 	} else
 		TVERIFYRC(RC_TYPE);
 		
@@ -226,7 +219,7 @@ void TestClone::pinClone(ISession *session)
 	pin1->refresh();
 	MVTApp::output(*pin1,mLogger.out(),session);
 	//MVTApp::output((*pin1->getValue(pm[0].uid), mLogger.out()); mLogger.out() << std::endl;
-	//TODO : after clarification impl VT_ARRAY
+	//TODO : after clarification impl VT_COLLECTION
 	pin1->destroy();
 	pin->destroy();
 	
@@ -265,9 +258,11 @@ void TestClone::CNavigClone(ISession *session)
 	
 	pv = pin->getValue(propID);
 	if (pv->type==VT_COLLECTION) {
-		SETVALUE_C(pvs[0], propID, pv->nav, OP_ADD, STORE_LAST_ELEMENT);
-	} else if (pv->type==VT_ARRAY) {
-		pvs[0].set((Value*)pv->varray,pv->length); pvs[0].setPropID(propID); pvs[0].op=OP_ADD; pvs[0].eid=STORE_LAST_ELEMENT;
+		if (pv->isNav()) {
+			SETVALUE_C(pvs[0], propID, pv->nav, OP_ADD, STORE_LAST_ELEMENT);
+		} else {
+			pvs[0].set((Value*)pv->varray,pv->length); pvs[0].setPropID(propID); pvs[0].op=OP_ADD; pvs[0].eid=STORE_LAST_ELEMENT;
+		}
 	} else TVERIFYRC(RC_TYPE);
 	TVERIFYRC(session->createPIN(pvs,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));	
 	pin->refresh();
@@ -275,10 +270,11 @@ void TestClone::CNavigClone(ISession *session)
 
 	//modify using CNavig coll of a given element
 	if (pv->type==VT_COLLECTION) {
-		SETVALUE_C(pvs[0], propID, pv->nav->clone(), OP_ADD, STORE_LAST_ELEMENT);
-		rc = pin->modify(pvs,1);
-	} else if (pv->type==VT_ARRAY) {
-		rc = pin->modify(pvs,2);
+		if (pv->isNav()) {
+			SETVALUE_C(pvs[0], propID, pv->nav->clone(), OP_ADD, STORE_LAST_ELEMENT);
+			rc = pin->modify(pvs,1);
+		} else 
+			rc = pin->modify(pvs,2);
 	} else
 		TVERIFYRC(RC_TYPE);
 
@@ -295,7 +291,7 @@ void TestClone::IQueryClone(ISession *session)
 	IStmt *query, *queryclone;
 	Value pvs[3];
 	Value args[2];//,argsfinal[2];
-	IExprTree *expr;//,*exprfinal
+	IExprNode *expr;//,*exprfinal
 	ICursor *result;
 	PropertyID pids[3];
 	MVTApp::mapURIs(session,"TestClone.IQueryClone",3,pids);	
@@ -412,8 +408,8 @@ void TestClone::ACLPinClone(ISession *session)
 	
 	IPIN *pin2 = pin1->clone(pvs,1,MODE_PERSISTENT);
 	pv = pin2->getValue(PROP_SPEC_ACL);
-	//VT_ARRAY -- check rights now!!!!!
-	if (pv->type == VT_ARRAY) {
+	//VT_COLLECTION -- check rights now!!!!!
+	if (pv->type == VT_COLLECTION && !pv->isNav()) {
 		// REVIEW: || instead of &&?
 		if(pv->varray[0].meta != 3 && pv->varray[0].iid != iid)
 			TVERIFY(0) ;
@@ -432,7 +428,7 @@ void TestClone::PiExprTreeClone(ISession *session){
 	MVTApp::mapURIs(session,"TestClone.PiExprTreeClone",4,pids);
 	RC rc;
 	
-	std::cout<<" Test cloning IExprTree/IExpr : "<<std::endl;
+	std::cout<<" Test cloning IExprNode/IExpr : "<<std::endl;
 	//Create some pins
 	pvs[0].set("Mumbai still inundated");pvs[0].setPropID(pids[0]);
 	pvs[1].set("Death toll 924");pvs[1].setPropID(pids[1]);
@@ -448,14 +444,14 @@ void TestClone::PiExprTreeClone(ISession *session){
 		PropertyID pid[1] = {pids[0]};
 		args[0].setVarRef(0,*pid);
 		args[1].set("Mumbai still inundated");
-		IExprTree *expr = session->expr(OP_EQ,2,args);
+		IExprNode *expr = session->expr(OP_EQ,2,args);
 
 		unsigned int lExpTFlgs = expr->getFlags();
 		unsigned int lExpTNumOps = expr->getNumberOfOperands();
 		ExprOp lExpTOp = expr->getOp();
 		const Value lExpTVal = expr->getOperand(lExpTNumOps-1);
 
-		IExprTree *exprclone = expr->clone();
+		IExprNode *exprclone = expr->clone();
 
 		unsigned int lExpTCFlgs = exprclone->getFlags();
 		unsigned int lExpTCNumOps = exprclone->getNumberOfOperands();
@@ -467,7 +463,7 @@ void TestClone::PiExprTreeClone(ISession *session){
 			lExpTOp == lExpTCOp &&
 			lExpTNumOps == lExpTCNumOps &&
 			lExpTOp == lExpTCOp, 
-			"ERROR:(PiExprTreeClone) The IExprTree clone specs are diff from original" ) ;
+			"ERROR:(PiExprTreeClone) The IExprNode clone specs are diff from original" ) ;
 
 		//Get IExpr instance
 		IExpr *lExp = expr->compile();
@@ -483,8 +479,8 @@ void TestClone::PiExprTreeClone(ISession *session){
 		exprclone->destroy();
 	}
 
-	// Case 2 : IExprTree Complex expression	
-	IExprTree *lET;
+	// Case 2 : IExprNode Complex expression	
+	IExprNode *lET;
 	{        
 		Value val[2];
 		// 1: pin has pids[0]
@@ -522,7 +518,7 @@ void TestClone::PiExprTreeClone(ISession *session){
 		val[1].set(lE6);
 		lET = EXPRTREEGEN(session)(OP_LOR, 2, val, 0);
 	}
-	IExprTree *lETC = lET->clone();
+	IExprNode *lETC = lET->clone();
 	int lETCnt = 0;
 	{
 		IStmt * lQ	= session->createStmt();
@@ -576,7 +572,7 @@ void TestClone::comparePIN(ISession *session,IPIN *pin,const map<Afy::PropertyID
 		
 		iter = pvl.find(pv->getPropID());
 		switch (pv->type) {
-		case VT_STRING: case VT_URL:
+		case VT_STRING:
 			if (0 != strcmp(iter->second.str,pv->str)) {
 				cout<<"Failed at propertyID: "<<i;
 				cout<<" (expected: "<<iter->second.str;

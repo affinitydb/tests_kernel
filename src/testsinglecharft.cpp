@@ -39,21 +39,17 @@ int TestSingleCharFT::execute()
 	tValue[0].set("wild a meadow");		//first pin
 	tValue[0].property=mProp[0];
 	tValue[0].meta = META_PROP_FTINDEX;
-	mIPIN = mSession->createPIN(tValue,1,MODE_COPY_VALUES);	
-	mSession->commitPINs(&mIPIN,1); 
+	TVERIFYRC(mSession->createPIN(tValue,1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
         
 	tValue[1].set("wild meadow");		//second pin
 	tValue[1].property=mProp[0];
 	tValue[1].meta = META_PROP_FTINDEX;
-	mIPIN = mSession->createPIN(&tValue[1],1,MODE_COPY_VALUES);	
-	mSession->commitPINs(&mIPIN,1); 
+	TVERIFYRC(mSession->createPIN(&tValue[1],1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 
 	tValue[2].set("wild meadow angel");		//third pin
 	tValue[2].property=mProp[0];
 	tValue[2].meta = META_PROP_FTINDEX;
-	mIPIN = mSession->createPIN(&tValue[2],1,MODE_COPY_VALUES);	
-	mSession->commitPINs(&mIPIN,1); 
-	mIPIN->destroy();
+	TVERIFYRC(mSession->createPIN(&tValue[2],1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 
 	IStmt * const lQ =mSession->createStmt();
 	unsigned const lVar= lQ->addVariable();	

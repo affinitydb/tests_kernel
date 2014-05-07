@@ -122,8 +122,10 @@ void TestDocModel::doTest()
 #if TEST_PROP_SPEC_DOC_CLASS
 	CreateDocFamily() ;
 #endif
-
-	mSession->createPINAndCommit( mUnrelatedPID, NULL, 0 ) ; 
+	IPIN *pin;
+	mSession->createPIN(NULL, 0, &pin, MODE_PERSISTENT) ;
+	mUnrelatedPID = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 
 	PID rootPID = populateStore() ;
 	PrintFileSystem( rootPID ) ;
@@ -188,7 +190,11 @@ PID TestDocModel::AddDirectory( const PID& inVolume, const PID& inParentDir, con
 
 	vals[3].setIdentity( STORE_OWNER ) ; vals[3].property = PROP_SPEC_CREATEDBY ; 
 
-	TVERIFYRC( mSession->createPINAndCommit( dirPID,vals,4) ) ;
+	IPIN *pin;
+	TVERIFYRC( mSession->createPIN(vals,4,&pin,MODE_COPY_VALUES|MODE_PERSISTENT) ) ;
+	dirPID = pin->getPID();
+	if(pin!=NULL) pin->destroy();
+	
 
 #if TEST_IPIN_MAKEPART
 	// PIN::makePart seems incomplete, currently returns RC_INTERNAL
@@ -239,7 +245,10 @@ PID TestDocModel::AddFile(
 	vals[2].set( inParentDir ) ; vals[2].property = PROP_SPEC_PARENT ;  // See comments elsewhere about this prop
 	vals[3].set( inFileText ) ; vals[3].property = mProps[idxFileSummary] ;  //vals[3].meta = META_PROP_STOPWORDS ;
 	vals[4].setU64(inFileSize ) ; vals[4].property = mProps[idxFileSize] ; 
-	TVERIFYRC( mSession->createPINAndCommit( filePID,vals,5) ) ;
+	IPIN *pin;
+	TVERIFYRC( mSession->createPIN(vals,5,&pin, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
+	filePID = pin->getPID();
+	pin ->destroy();
 
 	// Add the new file to the parent's collection
 	Value fileRef ;
@@ -257,7 +266,10 @@ PID TestDocModel::populateStore()
 	Value vals[2] ;
 	vals[0].set( "HD1" ) ; vals[0].property = mProps[idxVolumnLabel] ;
 	vals[1].set( "" ) ; vals[1].property = mProps[idxDirName] ;  // Volume acts as the root directory also
-	TVERIFYRC( mSession->createPINAndCommit( rootPID,vals,2) );
+	IPIN *pin;
+	TVERIFYRC( mSession->createPIN(vals,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES) );
+	rootPID = pin->getPID();
+	pin->destroy();
 
 	// Top level directories have the volume as their parent
 	PID tempDir = AddDirectory( rootPID, rootPID, "temp" ) ;
@@ -441,7 +453,7 @@ ClassID TestDocModel::CreateDocFamily()
 
 	exprNodes[0].setVarRef(0, docId ) ;	
 	exprNodes[1].setParam(0);
-	IExprTree *expr1 = mSession->expr(OP_EQ,2,exprNodes);
+	IExprNode *expr1 = mSession->expr(OP_EQ,2,exprNodes);
 	TVERIFYRC( classQ->addCondition( v, expr1 ) ) ;
 
 	/*	
@@ -490,7 +502,7 @@ void TestDocModel::GetFileSystemPids2( const PID & inRoot, bool /*inbFiles*/, bo
 	PropertyID docId = PROP_SPEC_DOCUMENT ; 
 	exprNodes[0].setVarRef(0, docId ) ;	
 	exprNodes[1].set(inRoot);
-	IExprTree *expr1 = mSession->expr(OP_EQ,2,exprNodes);
+	IExprNode *expr1 = mSession->expr(OP_EQ,2,exprNodes);
 	TVERIFYRC( elemsQ->addCondition( v, expr1 ) ) ;
 
 	if (isVerbose())

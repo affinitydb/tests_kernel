@@ -41,7 +41,7 @@ class TestMultiPinModif : public ITest
 		void testmultidelete(ISession *session);
 		void testmulticopy(ISession *session);
 		void createPINS(ISession *session,PropertyID *pm,int npm,const int qCase);
-		IExprTree * createExprTree(ISession *session, IStmt &query,const int qCase);
+		IExprNode * createExprTree(ISession *session, IStmt &query,const int qCase);
 		bool verifyModif(ISession *session, int qCase,Tstring serstr);
 };
 TEST_IMPLEMENT(TestMultiPinModif, TestLogger::kDStdOut);
@@ -77,7 +77,7 @@ void TestMultiPinModif::testmultimodif(ISession *session)
 	uint64_t cnt;
 	query = session->createStmt(STMT_UPDATE);
 	createPINS(session,pm,sizeof(pm)/sizeof(pm[0]),0);
-	IExprTree *expr = createExprTree(session,*query,0);
+	IExprNode *expr = createExprTree(session,*query,0);
 
 	//case 0 FS1: simple EQ query and update multiple property of a pin.
 	
@@ -232,7 +232,7 @@ void TestMultiPinModif::createPINS(ISession *session,PropertyID *pm,int npm,cons
 				val[0].set(str.c_str());val[0].setPropID(pm[0]);
 				val[1].set(str1.c_str());val[1].setPropID(pm[1]);
 				val[2].set("multimodftstr");val[2].setPropID(pm[2]);
-				val[3].setURL("http://www.vmware.com");val[3].setPropID(pm[5]);
+				val[3].set("http://www.vmware.com");val[3].setPropID(pm[5]);
 				val[0].meta = val[1].meta = val[2].meta = val[3].meta = META_PROP_FTINDEX;
 				TVERIFYRC(session->createPIN(val,4,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 			}
@@ -242,13 +242,13 @@ void TestMultiPinModif::createPINS(ISession *session,PropertyID *pm,int npm,cons
 		}
 }
 
-IExprTree * TestMultiPinModif::createExprTree(ISession *session, IStmt &query,const int qCase)
+IExprNode * TestMultiPinModif::createExprTree(ISession *session, IStmt &query,const int qCase)
 {
 	cls = STORE_INVALID_CLASSID;
 	clsd = STORE_INVALID_CLASSID;
 	PropertyID pids[1],pids1[1];
 	Value args[2],args1[2],argsfinal[2];
-	IExprTree *expr = NULL, *exprexst = NULL, *expreq = NULL;
+	IExprNode *expr = NULL, *exprexst = NULL, *expreq = NULL;
 	unsigned char var;
 	char lB[100];
 	RC rc;
@@ -411,7 +411,7 @@ void TestMultiPinModif::testmultidelete(ISession *session)
 	query = session->createStmt(STMT_DELETE);
 	//case 5: delete of "normal" pins.(not belonging to any class)
 	createPINS(session,pm,sizeof(pm)/sizeof(pm[0]),5);
-	IExprTree *expr = createExprTree(session,*query,5);
+	IExprNode *expr = createExprTree(session,*query,5);
 	query->addCondition(0,expr);
 	query->count(cnt);
 	TVERIFYRC(query->execute());
@@ -459,7 +459,7 @@ void TestMultiPinModif::testmulticopy(ISession *session)
 	query = session->createStmt(STMT_INSERT);
 	
 	createPINS(session,pm,sizeof(pm)/sizeof(pm[0]),8);
-	IExprTree *expr = createExprTree(session,*query,8);
+	IExprNode *expr = createExprTree(session,*query,8);
 	TVERIFYRC(query->addCondition(0,expr));
 	TVERIFYRC(query->count(cnt));
 	/* restricting the copy to a desired no, as the copyPINs() create pins in a loop 

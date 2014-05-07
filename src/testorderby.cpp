@@ -204,7 +204,7 @@ void TestOrderBy::doTest()
 		CmvautoPtr<IStmt> lQ(getClassQuery(lCLSID,mSession));
 
 		// 50% chance of being ORD_DESC
-		OrderSeg lOrder={NULL,mPropids[i],ORD_NULLS_BEFORE|(i == propStrNoCase?ORD_NCASE:0)|(MVTRand::getBool()?0:ORD_DESC),0,0};
+		OrderSeg lOrder={NULL,mPropids[i],uint8_t(ORD_NULLS_BEFORE|(i == propStrNoCase?ORD_NCASE:0)|(MVTRand::getBool()?0:ORD_DESC)),0,0};
 		TVERIFYRC(lQ->setOrder(&lOrder,1));
 
 		const char *lQStr = lQ->toString();	TVERIFY( lQStr != NULL ) ;
@@ -704,7 +704,7 @@ void TestOrderBy::testOrderByIndex( ISession * inSession, int inCntPins )
 	Value operands[2] ;
 	operands[0].setVarRef(0,dateProp) ;
 	operands[1].setParam(0) ;  
-	CmvautoPtr<IExprTree> e(inSession->expr( OP_IN, 2, operands )) ;
+	CmvautoPtr<IExprNode> e(inSession->expr( OP_IN, 2, operands )) ;
 	TVERIFYRC(classQ->addCondition(var,e));
 
 	string randClassName ;
@@ -750,8 +750,7 @@ void TestOrderBy::testOrderByIndex( ISession * inSession, int inCntPins )
 		v.setDateTime( dateValue[i] ) ;
 		v.property = dateProp ;
 
-		PID pid ;
-		TVERIFYRC(inSession->createPINAndCommit( pid, &v, 1 ));
+		TVERIFYRC(inSession->createPIN(&v, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 	}
 	//
 	// Create query to use index
@@ -861,12 +860,12 @@ void TestOrderBy::testOrderByIndex( ISession * inSession, int inCntPins )
 			}			
 		}
 		pin->destroy() ;
-		pos++ ;
-	}
+		pos++ ;	
+	}	
 	if ( (int)pos != inCntPins ) { mLogger.out() << "Expected matches " << inCntPins << " got " << (int)pos << endl; } 
 
 	// REVIEW: The timing of the two queries doesn't really prove the 
-	// use of the index but if one timing was way off it would certainly be interesting
+    // use of the index but if one timing was way off it would certainly be interesting
 	lEndTime = getTimeInMs() - lStartTime ;
 	mLogger.out() << "Enumeration time (ms)" << lEndTime << endl ;
 }

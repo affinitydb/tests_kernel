@@ -49,12 +49,12 @@ int testjoinorderby::execute()
 		Value ops1[1] ;
 		Value ops2[2] ;
 		ops[0].setVarRef(0, date_original_modifiedPropID ) ;ops[1].setParam(0);
-		IExprTree *lE= mSession->expr(OP_IN, 2, ops )  ;
+		IExprNode *lE= mSession->expr(OP_IN, 2, ops )  ;
 		ops1[0].setVarRef(0, mProp[i] ) ;
-		IExprTree *lE1= mSession->expr(OP_EXISTS, 1, ops1 )  ;
+		IExprNode *lE1= mSession->expr(OP_EXISTS, 1, ops1 )  ;
 		ops2[0].set(lE);
 		ops2[1].set(lE1);
-		IExprTree *lE2= mSession->expr(OP_LAND, 2, ops2 ) ;
+		IExprNode *lE2= mSession->expr(OP_LAND, 2, ops2 ) ;
 		TVERIFYRC(lFamilyQ->addCondition( lVar, lE2 )) ;
 		if(i<4)
 		{

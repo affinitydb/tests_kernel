@@ -48,7 +48,7 @@ class TestMultiColumnIndex : public ITest
         };
         typedef std::vector<DescrFamily> Scenarios; // To allow declaring all the indexes of the test (to control when the classes are created: beginning, or end, or progressive).
         int pos_end_collection;     // keep the position of last DescrFamily which is built on multiple columns with collection.
-        IExprTree * buildCondition(DescrCondition const & pDescr, size_t pCondIndex = 0)
+        IExprNode * buildCondition(DescrCondition const & pDescr, size_t pCondIndex = 0)
         {
             // Build an expression that compares mProps[pPropIndex] to the pCondIndex-th parameter of the index.
             Value lV[2];
@@ -62,7 +62,7 @@ class TestMultiColumnIndex : public ITest
             // Build a statement ready to define a class on the given condition.
             IStmt * const lResult = mSession->createStmt();
             QVarID const lVar = lResult->addVariable();
-            IExprTree * const lET = buildCondition(pDescr, 0);
+            IExprNode * const lET = buildCondition(pDescr, 0);
             lResult->addCondition(lVar, lET);
             lET->destroy();
             return lResult;
@@ -76,7 +76,7 @@ class TestMultiColumnIndex : public ITest
             DescrIndex::const_iterator iD;
             for (i = 0, iD = pDescr.begin(); pDescr.end() != iD; i++, iD++)
             {
-                CmvautoPtr<IExprTree> lET(buildCondition((*iD), i));
+                CmvautoPtr<IExprNode> lET(buildCondition((*iD), i));
                 lResult->addCondition(lVar, lET);
             }
             return lResult;
@@ -453,7 +453,7 @@ void TestMultiColumnIndex::deletePins()
     exprArgs[0].setVarRef(0,* &mProps[SPLIT]);
     exprArgs[1].setRange(&minmax[0]);
 
-    IExprTree *exprRange; 
+    IExprNode *exprRange; 
     exprRange=mSession->expr(OP_IN,2,&exprArgs[0]);
     TVERIFY(exprRange != NULL);
 

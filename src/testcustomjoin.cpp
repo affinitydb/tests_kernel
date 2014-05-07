@@ -60,7 +60,7 @@ void testcustomjoin::defineClasses()
 		{
 		Value lV[2];
 		lV[0].setVarRef(0,mProp[i]);
-		IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+		IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 		TVERIFYRC(lFamilyQ->addCondition(lVar,lET1));			
 		}
 		strRand = "testcustomjoinFamily." + strRand;
@@ -76,7 +76,7 @@ void testcustomjoin::createPins(int numPins)
 	vector<PID> classPins(cntElements);
 	unsigned int i ;IPIN *pin;
 	for ( i = 0 ; i < cntElements ; i++ )
-	{
+	{	
 		Value v[2] ; 
 		v[0].set( i ) ; v[0].property = mProp[1] ;
 		v[1].set( i ) ; v[1].property = mProp[2] ;
@@ -128,7 +128,7 @@ void testcustomjoin::customQuery()
 			Value lV1[2];
 			lV1[0].setVarRef(lhs,mProp[1]);
 			lV1[1].setVarRef(rhs,mProp[2]);
-			IExprTree *lET2 = mSession->expr(OP_EQ, 2, lV1);
+			IExprNode *lET2 = mSession->expr(OP_EQ, 2, lV1);
 			lQuery->join(lhs,rhs,lET2);
 			TVERIFYRC(lQuery->count(lCount));
 			TVERIFY(lCount==MAXNUMPINS);
@@ -147,7 +147,7 @@ void testcustomjoin::customQuery()
 			Value lV1[2];
 			lV1[0].setVarRef(lhs,mProp[1]);
 			lV1[1].setVarRef(rhs,mProp[3]);
-			IExprTree *lET2 = mSession->expr(OP_EQ, 2, lV1);
+			IExprNode *lET2 = mSession->expr(OP_EQ, 2, lV1);
 			lQuery->join(lhs,rhs,lET2);
 			TVERIFYRC(lQuery->count(lCount));
 			TVERIFY(lCount==MAXNUMPINS);
@@ -166,7 +166,7 @@ void testcustomjoin::customQuery()
 			Value lV1[2];
 			lV1[0].setVarRef(lhs,propspec);
 			lV1[1].setVarRef(rhs,mProp[4]);
-			IExprTree *lET2 = mSession->expr(OP_EQ, 2, lV1);
+			IExprNode *lET2 = mSession->expr(OP_EQ, 2, lV1);
 			lQuery->join(lhs,rhs,lET2);
 			TVERIFYRC(lQuery->count(lCount));
 			TVERIFY(lCount==MAXNUMPINS);

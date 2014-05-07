@@ -450,7 +450,7 @@ void TestDeadLock::modifyAllQuery(DeadlockThreadInfo *info)
 			Value lV[2];
 			lV[0].setVarRef(0 /*assumption about variable*/,mProp);
 			lV[1].set(100000); //assumed number > CNT_PINS, e.g. that all pins fit this filter cond
-			CmvautoPtr<IExprTree> e(pSession->expr(OP_LT,2,lV));
+			CmvautoPtr<IExprNode> e(pSession->expr(OP_LT,2,lV));
 
 			TVERIFYRC(classQ->addCondition(0,e));
 

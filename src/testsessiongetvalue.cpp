@@ -23,8 +23,8 @@ class TestSessionGetValue : public ITest
 	protected:
 		void populateStore(ISession *session,URIMap *pm,int npm, PID *pid);
 		void testGetValue(ISession *session,URIMap *pm,int npm, PID *pid);
-		void testGetValues(ISession *session,URIMap *pm,int npm, PID *pid);		
-		void testGetMissingValues(bool,bool);
+		//void testGetValues(ISession *session,URIMap *pm,int npm, PID *pid);		
+		//void testGetMissingValues(bool,bool);
 	protected:
 		// TODO: refine/complete these and provide as service in app.h
 		void logResult(string str,RC rc);		
@@ -45,12 +45,14 @@ int TestSessionGetValue::execute()
 
 		populateStore(mSession,pm,sizeof(pm)/sizeof(pm[0]),pid);
 		testGetValue(mSession,pm,sizeof(pm)/sizeof(pm[0]),pid);
+#if 0
 		testGetValues(mSession,pm,sizeof(pm)/sizeof(pm[0]),pid);
 		
 		testGetMissingValues(false/*session memory*/,false/*ssv data*/);
 		testGetMissingValues(true,false); 
 		testGetMissingValues(false,true);
 		testGetMissingValues(true,true); 
+#endif
 
 		mSession->terminate();
 		MVTApp::stopStore();
@@ -78,7 +80,7 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	SETVALUE(pvs[11], pm[11].uid, double(10000.50), OP_SET);
 	SETVALUE(pvs[12], pm[12].uid, 134343433, OP_SET);
 	SETVALUE(pvs[13], pm[13].uid, 01012005, OP_SET);
-	pvs[14].setURL("http://www.google.com"); SETVATTR(pvs[14], pm[14].uid, OP_SET);
+	pvs[14].set("http://www.google.com"); SETVATTR(pvs[14], pm[14].uid, OP_SET);
 	SETVALUE(pvs[15], pm[15].uid, "true", OP_SET);
 	unsigned int ui32 = 987654321;
 	SETVALUE(pvs[16], pm[16].uid, ui32, OP_SET);
@@ -119,17 +121,17 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	SETVALUE(pvs[5], pm[11].uid, double(64000.50), OP_SET);
 	SETVALUE(pvs[6], pm[12].uid, 34443164, OP_SET);
 	SETVALUE(pvs[7], pm[13].uid, 10091999, OP_SET);	
-	pvs[8].setURL("http://www.srilanka4ever.com"); SETVATTR_C(pvs[8], pm[14].uid, OP_ADD, STORE_COLLECTION_ID);
+	pvs[8].set("http://www.srilanka4ever.com"); SETVATTR_C(pvs[8], pm[14].uid, OP_ADD, STORE_COLLECTION_ID);
 	TVERIFYRC(session->createPIN(pvs,9,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 	pid[2] = pin->getPID();
 	
 	// Twice modifying the PIN to add 2 coll elements... Some issue if done at once.
 	// Shown to Sumanth
 	IPIN *pin1 = session->getPIN(pid[2]);
-	pvs[0].setURL("http://www.srilankanever.com"); SETVATTR_C(pvs[0], pm[14].uid, OP_ADD, STORE_LAST_ELEMENT);
+	pvs[0].set("http://www.srilankanever.com"); SETVATTR_C(pvs[0], pm[14].uid, OP_ADD, STORE_LAST_ELEMENT);
 	RC rc = pin1->modify(pvs,1);
 
-	pvs[0].setURL("http://www.srilankaalways.com"); SETVATTR_C(pvs[0], pm[14].uid, OP_ADD, STORE_LAST_ELEMENT);
+	pvs[0].set("http://www.srilankaalways.com"); SETVATTR_C(pvs[0], pm[14].uid, OP_ADD, STORE_LAST_ELEMENT);
 	rc = pin1->modify(pvs,1);
 
 	RefP rv;
@@ -158,10 +160,12 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 	IPIN *pinx = session->getPIN(pid[2]);
 	Value pvx = *pinx->getValue(pm[14].uid);
 	if (pvx.type==VT_COLLECTION) {
-		pvx.nav->navigate(GO_FIRST)->eid;
-		rv1.eid = pvx.nav->navigate(GO_NEXT)->eid;
-	} else if (pvx.type==VT_ARRAY) {
-		rv1.eid = pvx.varray[1].eid;
+		if (pvx.isNav()) {
+			pvx.nav->navigate(GO_FIRST)->eid;
+			rv1.eid = pvx.nav->navigate(GO_NEXT)->eid;
+		} else {
+			rv1.eid = pvx.varray[1].eid;
+		}
 	} else TVERIFYRC(RC_TYPE);
 	rv1.pin = pinx;
 	rv1.pid = pm[14].uid;	
@@ -171,11 +175,9 @@ void TestSessionGetValue::populateStore(ISession *session,URIMap *pm,int npm, PI
 
 	// PIN 7
 	RefVID ref1;
-	if (pvx.type==VT_COLLECTION) {
-		ref1.eid = pvx.nav->navigate(GO_NEXT)->eid;
-	} else if (pvx.type==VT_ARRAY) {
-		ref1.eid = pvx.varray[2].eid;
-	}
+	if (pvx.type==VT_COLLECTION)
+		ref1.eid = pvx.isNav() ? pvx.nav->navigate(GO_NEXT)->eid:pvx.varray[2].eid;
+	
 	ref1.id = pid[2];
 	ref1.pid = pm[14].uid;
 	SETVALUE(pvs[0], PROP_SPEC_VALUE, ref1, OP_SET);
@@ -228,7 +230,7 @@ void TestSessionGetValue::testGetValue(ISession *session,URIMap *pm,int npm, PID
 	// Caller must free!
 	session->free(const_cast<char*>(val[0].str));
 
-	// Get VT_URL property value
+	// Get VT_STRING property value
 	TVERIFYRC(session->getValue(val[0],pid[0],pm[14].uid));
 	TVERIFY(strcmp(val[0].str,"http://www.google.com") == 0);
 	session->free(const_cast<char*>(val[0].str));
@@ -271,6 +273,7 @@ void TestSessionGetValue::testGetValue(ISession *session,URIMap *pm,int npm, PID
 	logResult("getValue(PROP_SPEC_UDPDATED) ",rc);
 	lPIN1->destroy();
 
+#if 0 //obsolete
 	// For the overloaded getValue() method
 	// PROP_SPEC_VALUE with VT_PROPERTY
 	rc = RC_FALSE;
@@ -296,6 +299,7 @@ void TestSessionGetValue::testGetValue(ISession *session,URIMap *pm,int npm, PID
 	// PROP_SPEC_VALUE with VT_REFIDELT
 	TVERIFYRC(session->getValue(val[0],pid[6]));
 	TVERIFY(strcmp(val[0].str,"http://www.srilankaalways.com") == 0);
+#endif
 
 	//
 	// Error scenarios (bad input from user)
@@ -357,6 +361,7 @@ void TestSessionGetValue::testGetValue(ISession *session,URIMap *pm,int npm, PID
 	TVERIFY(RC_NOTFOUND==session->getValue(val[0],invalidpid,pm[1].uid));
 }
 
+#if 0
 void TestSessionGetValue::testGetValues(ISession *session,URIMap *pm,int npm, PID *pid){
 	RC rc = RC_FALSE;
 	Value vals[21];
@@ -391,7 +396,7 @@ void TestSessionGetValue::testGetValues(ISession *session,URIMap *pm,int npm, PI
 	for (int i = 0; i<nvals;i++){
 		switch(vals[i].type){
 			mLogger.out()<<pin->getValue(pm[i].uid)->str<<std::endl;
-		case VT_STRING: case VT_URL:
+		case VT_STRING:
 			mLogger.out()<<pin->getValue(pm[i].uid)->str;
 			if(strcmp(pin->getValue(pm[i].uid)->str,vals[i].str) != 0)
 				rc = RC_FALSE;
@@ -461,6 +466,7 @@ void TestSessionGetValue::testGetValues(ISession *session,URIMap *pm,int npm, PI
 	logResult("getValues(PROP_SPEC_UPDATED) ",rc);
 	pin->destroy();
 }
+#endif
 
 void TestSessionGetValue::logResult(string str, RC rc)
 {
@@ -482,6 +488,7 @@ void freeVals( ISession * session, const Value * inVals, int cnt )
 	}
 }
 
+#if 0
 void TestSessionGetValue::testGetMissingValues(bool useSessionMem, bool bSSV)
 {
 	mLogger.out() << endl <<  "testGetMissingValues: SessionMem? " << useSessionMem 
@@ -594,3 +601,4 @@ void TestSessionGetValue::testGetMissingValues(bool useSessionMem, bool bSSV)
 		free(readVals);
 	}
 }
+#endif

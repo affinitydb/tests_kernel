@@ -185,7 +185,7 @@ bool TestMergeSimple::createMeta()
 	exprVals[0].setVarRef(0,mDateProp);
 	exprVals[1].setParam(0);
 
-	CmvautoPtr<IExprTree> expr(mSession->expr(OP_IN,2,exprVals));
+	CmvautoPtr<IExprNode> expr(mSession->expr(OP_IN,2,exprVals));
 	qClassFamilyDef->addCondition(v,expr);
 
 	TVERIFYRC(defineClass(mSession,"TestMergeSimple_datefamily", qClassFamilyDef));
@@ -199,7 +199,8 @@ void TestMergeSimple::createPins()
 	int const lBatchSize = 100;
 	for (int i=0 ; i<CNT_PINS/lBatchSize; i++ )
 	{
-		TPINs lPINs;
+		IBatch *lBatch=mSession->createBatch();
+		TVERIFY(lBatch!=NULL);
 		for (int j=0 ; j<lBatchSize; j++ )
 		{
 			Value v[2]; 
@@ -220,15 +221,10 @@ void TestMergeSimple::createPins()
 			v[1].set(strRandWords.c_str()); 
 			v[1].property=mTextProp; // For FT lookup
 
-			IPIN * lP = mSession->createPIN(v,2,MODE_COPY_VALUES);
-			if (lP)
-				lPINs.push_back(lP);
+			TVERIFYRC(lBatch->createPIN(v,2,MODE_COPY_VALUES));
 		}
-		TVERIFY(lPINs.size() == size_t(lBatchSize));
-		TVERIFYRC(mSession->commitPINs(&lPINs[0], lPINs.size()));
-		for (TPINs::iterator iP = lPINs.begin(); lPINs.end() != iP; iP++)
-			(*iP)->destroy();
-		lPINs.clear();
+		TVERIFY(lBatch->getNumberOfPINs() == lBatchSize);
+		TVERIFYRC(lBatch->process());
 		mLogger.out() << "." << std::flush;
 	}
 	mLogger.out() << endl << "Created " << CNT_PINS << " pins" << endl;

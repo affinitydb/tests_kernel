@@ -118,7 +118,7 @@ void ITest::TestEventRC(const char* code, const char* extramsg, const char* file
 		"RC_ALREADYEXISTS",
 		"RC_INTERNAL",
 		"RC_NOACCESS",
-		"RC_NORESOURCES",
+		"RC_NOMEM",
 		"RC_FULL",
 		"RC_DEVICEERR",
 		"RC_DATAERROR",

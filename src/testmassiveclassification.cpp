@@ -96,7 +96,7 @@ void testmassiveclassification::defineClasses(int ClassCount)
 		unsigned char lVar = lClassQ->addVariable() ;
 		Value ops[1] ; 
 		ops[0].setVarRef(0, mProp[i] ) ;
-		IExprTree *lE=mSession->expr(OP_EXISTS, 1, ops ) ;
+		IExprNode *lE=mSession->expr(OP_EXISTS, 1, ops ) ;
 		lClassQ->addCondition( lVar, lE ) ;
 
 		TVERIFYRC(defineClass(mSession, lB, lClassQ ));
@@ -120,7 +120,6 @@ void testmassiveclassification::createPins(int PinCount)
 	long lBef = getTimeInMs();
 	for(i=0;i<PinCount;i++)
 	{
-		IPIN *lIPIN;
 		for(j=0;j<mLargeClass;j++)
 		{
 			tValue[j].set(j);
@@ -129,9 +128,7 @@ void testmassiveclassification::createPins(int PinCount)
 		tValue[j].set(j);
 		tValue[j].property=mProp[j+(i%COUNT_PROP-mLargeClass)];
 
-		lIPIN = mSession->createPIN(tValue,j+1,MODE_COPY_VALUES);	
-		TVERIFYRC(mSession->commitPINs(&lIPIN,1)); 
-		lIPIN->destroy();
+		TVERIFYRC(mSession->createPIN(tValue,j+1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));	
 		if(!(i%100))
 			std::cout<<"."<<std::flush;
 		if(!((i+1)%1000))

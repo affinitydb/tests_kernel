@@ -43,7 +43,7 @@ class TestPGTree : public ITest
 				}
 				static bool isInteger(ValueType pVT) { return pVT == VT_INT || pVT == VT_INT64 || pVT == VT_UINT || pVT == VT_UINT64; }
 				static bool isNumber(ValueType pVT) { return pVT >= VT_INT && pVT <= VT_DOUBLE; }
-				static bool isString(ValueType pVT) { return pVT >= VT_STRING && pVT <= VT_URL; }
+				static bool isString(ValueType pVT) { return pVT >= VT_STRING && pVT <= VT_BSTR; }
 			protected:
 				bool isInteger(Value const & pV) const { return isInteger((ValueType)pV.type); }
 				int64_t getInteger(Value const & pV) const
@@ -384,12 +384,11 @@ void TestPGTree::insertKey(ISession & pSession, Value const & pKey, PropertyID p
 	{
 		case VT_INT: SETVALUE(lV, pProp, pKey.i, OP_SET); break;
 		case VT_INT64: lV.setI64(pKey.i64); lV.property = pProp; lV.op = OP_SET; break;
-		case VT_STRING: SETVALUE(lV, pProp, pKey.str, OP_SET); break;
+		case VT_STRING: SETVALUE(lV, pProp, pKey.str, OP_SET); lV.meta = META_PROP_FTINDEX; break;
 		case VT_DOUBLE: SETVALUE(lV, pProp, pKey.d, OP_SET); break;
 		default: TVERIFY2(false, "Unexpected value type"); mRCUpdates = RC_OTHER; return;
 	}
-	PID lPID;
-	if (RC_OK != (mRCUpdates = pSession.createPINAndCommit(lPID, &lV, 1)))
+	if (RC_OK != (mRCUpdates = pSession.createPIN(&lV, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES)))
 		mLogger.out() << "  RC=" << mRCUpdates << std::endl;
 }
 
@@ -719,7 +718,7 @@ void TestPGTree::defineFamilies(ISession & pSession, size_t pPassIndex)
 			bool const lIntegerOnly = (iC >= kCFirst_int && iC <= kCEnd_int);
 			bool const lFloatOnly = (iC >= kCFirst_dbl && iC <= kCEnd_dbl);
 			bool const lNumberOnly = lIntegerOnly || lFloatOnly;
-			CmvautoPtr<IExprTree> lET(pSession.expr(OP_IN, 2, lV, lNumberOnly ? 0 : CASE_INSENSITIVE_OP));
+			CmvautoPtr<IExprNode> lET(pSession.expr(OP_IN, 2, lV, lNumberOnly ? 0 : CASE_INSENSITIVE_OP));
 			TVERIFYRC(lQ->addCondition(lVar, lET));
 			TVERIFYRC(defineClass(&pSession, lClassName, lQ, &mFamilies[pPassIndex][iC]));
 		}

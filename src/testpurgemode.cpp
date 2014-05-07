@@ -67,21 +67,21 @@ void TestPurgeMode::doTest()
     IStmt * const iStmt = mSession->createStmt();
     TVERIFY(iStmt != NULL);
     QVarID var = iStmt->addVariable();
-    
+
     Value val1[1], val2[1], vals[2]; 
     val1[0].setVarRef(0,ids[0]);
-    IExprTree * expr1 = mSession->expr(OP_EXISTS,1,val1);
+    IExprNode * expr1 = mSession->expr(OP_EXISTS,1,val1);
     TVERIFY( expr1 != NULL ) ;
     iStmt->addCondition(var,expr1);
-    
+
     val2[0].setVarRef(0,ids[1]);
-    IExprTree * expr2 = mSession->expr(OP_EXISTS,1,val2);
+    IExprNode * expr2 = mSession->expr(OP_EXISTS,1,val2);
     TVERIFY( expr2 != NULL ) ;    
     iStmt->addCondition(var,expr2);
 
     vals[0].set(expr1);
     vals[1].set(expr2);
-    IExprTree *expr = mSession->expr(OP_LAND,2,vals);
+    IExprNode *expr = mSession->expr(OP_LAND,2,vals);
     TVERIFYRC(iStmt->addCondition(var,expr));
 
     objectID = STORE_INVALID_CLASSID;
@@ -105,7 +105,7 @@ void TestPurgeMode::doTest()
         cout << "testPurgeMode(true) costs : " << (end - start) << " ms" << endl;
 
         TVERIFYRC(qry_stmt->count(count));
-        TVERIFY(count == (NUMBER_PINS/2));    
+        TVERIFY(count == (NUMBER_PINS/2));
 
         TVERIFYRC(del_stmt->execute());
         TVERIFYRC(qry_stmt->count(count));
@@ -117,7 +117,7 @@ void TestPurgeMode::doTest()
         end = getTimeInMs();
         purged_PIDs.clear();
         TVERIFYRC(qry_stmt->count(count));
-        TVERIFY(count == (NUMBER_PINS/2));     
+        TVERIFY(count == (NUMBER_PINS/2));
 
         qry_stmt->destroy();
         del_stmt->destroy();
@@ -138,9 +138,9 @@ void TestPurgeMode::doTest()
  */
 void TestPurgeMode::testPurgeMode_1of2(bool fTmp) 
 {
-    PID pid;
+    PID pid;IPIN *pin;
     int reused = 0, purged = 0;
-    
+
     cout << "testPurgeMode_1of2..." << endl;
 
     for (int i = 0; i < NUMBER_PINS; i++)  {  
@@ -152,7 +152,9 @@ void TestPurgeMode::testPurgeMode_1of2(bool fTmp)
         MVTApp::randomString(str2, 1, MAX_STR_LEN);
         value[1].set(str2.c_str());
         value[1].property = ids[1];
-        TVERIFYRC(mSession->createPINAndCommit(pid,value,2,fTmp?MODE_TEMP_ID:0));
+        TVERIFYRC(mSession->createPIN(value,2,&pin,(fTmp?MODE_TEMP_ID:0)|MODE_PERSISTENT|MODE_COPY_VALUES));
+        pid = pin->getPID();
+        pin->destroy();
         vector<PID>::iterator it;
         for (it=purged_PIDs.begin();purged_PIDs.end() != it; it++) {
             /* if this PID is reused */
@@ -166,7 +168,7 @@ void TestPurgeMode::testPurgeMode_1of2(bool fTmp)
             purged++;
         }
     }
-    
+
     cout << "Purge mode : " << (fTmp? "MODE_TEMP_ID":"MODE_PURGE") << endl;
     cout << "Purged PID counts : " << purged << endl;
     cout << "Reused PID counts : " << reused << endl;
@@ -180,7 +182,7 @@ void TestPurgeMode::testPurgeMode_1by1()
     // Here we test whether or not it's possible to recycle a pin ad infinitum on the same page, with MODE_TEMP_ID.
     // Note (maxw): I don't know whether or not this is meant to be supported... Mark will tell.
 
-    PID pid;
+    PID pid;IPIN *pin;
     unsigned long lPage = -1;
     int i;
 
@@ -196,7 +198,9 @@ void TestPurgeMode::testPurgeMode_1by1()
         MVTApp::randomString(str2, 1, MAX_STR_LEN);
         value[1].set(str2.c_str());
         value[1].property = ids[1];
-        TVERIFYRC(mSession->createPINAndCommit(pid,value,2,MODE_TEMP_ID));
+        TVERIFYRC(mSession->createPIN(value,2,&pin,MODE_TEMP_ID|MODE_PERSISTENT|MODE_COPY_VALUES));
+        pid = pin->getPID();
+	pin->destroy();
         if ((unsigned long)-1 == lPage)
             lPage = (unsigned long)(pid.pid >> 16);
         else
@@ -219,7 +223,7 @@ void TestPurgeMode::testPurgeMode_byPages(long pNumPages)
 {
     // Here we test whether or not recycling happens across multiple pages.
 
-    PID pid;
+    PID pid;IPIN *pin;
     typedef std::vector<PID> TPIDs;
     typedef std::set<unsigned long> TPages;
     TPIDs lPIDs;
@@ -238,7 +242,9 @@ void TestPurgeMode::testPurgeMode_byPages(long pNumPages)
         MVTApp::randomString(str2, 1, MAX_STR_LEN);
         value[1].set(str2.c_str());
         value[1].property = ids[1];
-        TVERIFYRC(mSession->createPINAndCommit(pid,value,2,MODE_TEMP_ID));
+        TVERIFYRC(mSession->createPIN(value,2,&pin,MODE_TEMP_ID|MODE_PERSISTENT|MODE_COPY_VALUES));
+        pid = pin->getPID();
+        pin->destroy();
         lPIDs.push_back(pid);
         unsigned long lPage = (pid.pid >> 16);
         lPages.insert(lPage);

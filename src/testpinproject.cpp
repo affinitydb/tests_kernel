@@ -71,7 +71,8 @@ void TestPinProject::doTest()
 
 	// Detail - its unnecessary to commit the original pin, but it won't be
 	// persisted
-	CmvautoPtr<IPIN> pOrig(mSession->createPIN(vals,4,MODE_COPY_VALUES));
+	IPIN *pOrig;
+	TVERIFYRC(mSession->createPIN(vals,4,&pOrig,MODE_COPY_VALUES));
 
 	//Case 1 - boring direct copy
 
@@ -149,7 +150,7 @@ void TestPinProject::doTest()
 	CmvautoPtr<IPIN> p7(pOrig->project(srcProps,1,NULL,MODE_PERSISTENT));
 
 	TVERIFY( p7->getNumberOfProperties() == 1 );
-	TVERIFY( p7->getValue(propW)->type == VT_ARRAY ); // REVIEW: if you retrieve it from
+	TVERIFY( p7->getValue(propW)->type == VT_COLLECTION ); // REVIEW: if you retrieve it from
 													// scratch it will appear as VT_COLLECTION
 	TVERIFY( p7->getValue(propW)->length == 3 );
 	if ( isVerbose()) MVTUtil::output( *(p7.Get()),mLogger.out(),mSession );

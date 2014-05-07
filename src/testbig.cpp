@@ -154,7 +154,7 @@ void TestBig::doTest( ISession * session )
 	bigCollection(session, 500/*cntElements*/, 4/*elementSize*/);
 #endif
 
-	mLogger.out()  << endl << "--------First pass - small collection with huge elements - VT_ARRAY"  << endl;
+	mLogger.out()  << endl << "--------First pass - small collection with huge elements - varray"  << endl;
 	bigCollection(session, 20/*cntElements*/, 2000/*elementSize*/);
 
 	session->setInterfaceMode(sesflags);
@@ -192,7 +192,7 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 	PID pid;
 	RC rc;
 
-	session->createPIN(NULL,0,&pin);
+	session->createPIN(NULL,0,&pin,MODE_PERSISTENT);
 	reportRunningCase("uncommited pin collection.");
 	for (i=0; i<cntElements; i++){
 		// two properties so double the size
@@ -203,19 +203,14 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 		pin->modify(val,2,MODE_COPY_VALUES);
 	}
 
-	TVERIFY(pin->getValue(propid)->type == VT_ARRAY) ;
 
 	verifyExpectedCollection(session,pin,propid,strCollItems,"case1.prop0.beforecommit") ;
 	verifyExpectedCollection(session,pin,propid1,strCollItems,"case1.prop1.beforecommit") ;
 
-	TVERIFYRC(session->commitPINs(&pin,1));
+	//TVERIFYRC(session->commitPINs(&pin,1));
 		// REVIEW: this fails in case of small collection with huge elements
 		// is that by design?
-		//TVERIFY(pin->getValue(propid)->type == VT_ARRAY) ;
-	if ( pin->getValue(propid)->type != VT_ARRAY )
-	{
-		mLogger.out() << "WARNING: didn't get VT_ARRAY even with ITF_COLLECTIONS_AS_ARRAYS specified" << endl ;
-	}
+	TVERIFY(pin->getValue(propid)->type == VT_COLLECTION) ;
 
 	verifyExpectedCollection(session,pin,propid,strCollItems,"case1.prop0") ;
 	verifyExpectedCollection(session,pin,propid1,strCollItems,"case1.prop1") ;
@@ -232,11 +227,7 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 		mLogger.out() << "\t\tNew pid: " << std::hex << pid.pid << std::dec << endl ;
 
 	//Review:	
-//	TVERIFY(pin->getValue(propid)->type == VT_ARRAY) ;
-	if ( pin->getValue(propid)->type != VT_ARRAY )
-	{
-		mLogger.out() << "WARNING: didn't get VT_ARRAY even with ITF_COLLECTIONS_AS_ARRAYS specified" << endl ;
-	}
+	TVERIFY(pin->getValue(propid)->type == VT_COLLECTION) ;
 
 	verifyExpectedCollection(session,pin,propid,strCollItems,"case1.prop0") ;
 	verifyExpectedCollection(session,pin,propid1,strCollItems,"case1.prop1") ;
@@ -252,7 +243,7 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 		val[i].set(strCollItems[i].c_str());val[i].setPropID((unsigned)propid);
 		val[i].op = OP_ADD; val[i].eid = STORE_LAST_ELEMENT;
 	}
-	TVERIFYRC(session->createPIN(val,cntElements,&pin,MODE_NO_EID | MODE_COPY_VALUES));
+	TVERIFYRC(session->createPIN(val,cntElements,&pin,MODE_NO_EID | MODE_COPY_VALUES | MODE_PERSISTENT));
 	pid= pin->getPID();
 	verifyExpectedCollection(session,pin,propid,strCollItems,"case2") ;
 	pin->destroy();
@@ -286,8 +277,7 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 		cval[i].set(i);cval[i].setPropID(propid);
 		cval[i].op = OP_ADD_BEFORE; cval[i].eid = STORE_LAST_ELEMENT;
 	}
-	clpin = pin->clone(cval,200);
-	TVERIFYRC(session->commitPINs(&clpin,1));
+	clpin = pin->clone(cval,200,MODE_PERSISTENT);
 
 	TVERIFY2( MVTApp::getCollectionLength(*clpin->getValue(propid)) == (cntElements+1+200), "case 4" ) ;
 	// Sanity check that original PIN is ok
@@ -319,7 +309,7 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 		val1[i].setPropID(propid);val1[i].op=OP_ADD;val1[i].eid = STORE_LAST_ELEMENT;
 	}
 #if 1	
-	//Workaround - create VT_ARRAY value pointing to elements
+	//Workaround - create VT_COLLECTION value pointing to elements
 	Value valArrayWrapper[1];
 	valArrayWrapper[0].set(val1,cntElements-1);
 	valArrayWrapper[0].setPropID(propid);valArrayWrapper[0].op=OP_ADD;valArrayWrapper[0].eid = STORE_COLLECTION_ID;
@@ -381,46 +371,48 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 	const Value *tmpVal = pin->getValue(propid);	
 	const unsigned int cntElementsToDelete = cntElements / 10 ;
 
-	if (VT_COLLECTION == tmpVal->type){
-		for (i=0; i < cntElementsToDelete && NULL != tmpVal; i++){
-			const Value * candidate = tmpVal->nav->navigate(i+1==cntElementsToDelete?
-											GO_LAST :
-											GO_FIRST );
-			if ( candidate == NULL ) {
-				break ;
+	if (VT_COLLECTION == tmpVal->type) {
+		if (tmpVal->isNav()) {
+			for (i=0; i < cntElementsToDelete && NULL != tmpVal; i++){
+				const Value * candidate = tmpVal->nav->navigate(i+1==cntElementsToDelete?
+												GO_LAST :
+												GO_FIRST );
+				if ( candidate == NULL ) {
+					break ;
+				}
+
+				ElementID elid=tmpVal->nav->getCurrentID();
+
+				if (i!=0 && i+1!=cntElementsToDelete){
+					// Skip ahead
+					for (int z=0,n=rand()%10; z < n; z++) {
+						elid = tmpVal->nav->navigate(GO_NEXT)->eid;
+					}				
+				}
+
+				if (isVerbose())
+					mLogger.out() << "\t\tDelete 0x" << std::hex << elid << std::dec << endl ;
+
+				val[0].setDelete(propid,elid);
+				TVERIFYRC(rc = pin->modify(val,1));
+				if (RC_OK != rc) break;
+				tmpVal = pin->getValue(propid); // Get updated navigator
 			}
-
-			ElementID elid=tmpVal->nav->getCurrentID();
-
-			if (i!=0 && i+1!=cntElementsToDelete){
-				// Skip ahead
-				for (int z=0,n=rand()%10; z < n; z++) {
-					elid = tmpVal->nav->navigate(GO_NEXT)->eid;
-				}				
-			}
-
-			if (isVerbose())
-				mLogger.out() << "\t\tDelete 0x" << std::hex << elid << std::dec << endl ;
-
-			val[0].setDelete(propid,elid);
-			TVERIFYRC(rc = pin->modify(val,1));
-			if (RC_OK != rc) break;
-			tmpVal = pin->getValue(propid); // Get updated navigator
 		}
-	}
-	else if (VT_ARRAY == tmpVal->type){
-		for (i=0; i < cntElementsToDelete && tmpVal && tmpVal->type == VT_ARRAY ; i++){
-			int randElement = MVTRand::getRange(0,tmpVal->length-1) ;
-			ElementID elid = tmpVal->varray[randElement].eid;
-			char buf[100]; sprintf(buf,"Del: %08X\n",elid); 
-			#ifdef WIN32
-				OutputDebugString(buf);
-			#endif
-			if (isVerbose()) mLogger.out() << buf ;
-			val[0].setDelete(propid,elid);
-			TVERIFYRC(rc = pin->modify(val,1));
-			if (RC_OK != rc) break;
-			tmpVal = pin->getValue(propid);
+		else {
+			for (i=0; i < cntElementsToDelete && tmpVal && tmpVal->type == VT_COLLECTION && !tmpVal->isNav() ; i++){
+				int randElement = MVTRand::getRange(0,tmpVal->length-1) ;
+				ElementID elid = tmpVal->varray[randElement].eid;
+				char buf[100]; sprintf(buf,"Del: %08X\n",elid); 
+				#ifdef WIN32
+					OutputDebugString(buf);
+				#endif
+				if (isVerbose()) mLogger.out() << buf ;
+				val[0].setDelete(propid,elid);
+				TVERIFYRC(rc = pin->modify(val,1));
+				if (RC_OK != rc) break;
+				tmpVal = pin->getValue(propid);
+			}
 		}
 	}
 	TVERIFY( MVTApp::getCollectionLength(*pin->getValue(propid)) == (cntElements - cntElementsToDelete) ) ;
@@ -465,14 +457,14 @@ void TestBig::bigCollection(ISession *session, unsigned int cntElements, unsigne
 	reportRunningCase("Replication BIG PIN");
 	const int oldmode = session->getInterfaceMode();
 	session->setInterfaceMode(ITF_REPLICATION | ITF_DEFAULT_REPLICATION);
-	session->createPIN(NULL,0,&pin);
+	
 	for (i=0; i<cntElements; i++){
-		val[0].set(strCollItems[i].c_str());val[0].setPropID(propid);
-		val[0].op = OP_ADD; /*val[0].eid = STORE_LAST_ELEMENT;*/
-		TVERIFYRC(pin->modify(val,1,MODE_COPY_VALUES));
+		val[i].set(strCollItems[i].c_str());val[i].setPropID(propid);
+		val[i].op = OP_ADD; /*val[0].eid = STORE_LAST_ELEMENT;*/
 	}
+	TVERIFYRC(session->createPIN(val,cntElements,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 	verifyExpectedCollection(session,pin,propid,strCollItems,"case12.prop0.beforecommit") ;
-	TVERIFYRC(session->commitPINs(&pin,1));
+	//TVERIFYRC(session->commitPINs(&pin,1));
 	verifyExpectedCollection(session,pin,propid,strCollItems,"case12.prop0") ;
 
 	pin->destroy();
@@ -615,7 +607,7 @@ void TestBig::testTransaction( ISession * session, PropertyID propid, vector<str
 		val3[i-1].set(strCollItems[i].c_str());
 		val3[i-1].setPropID(propid);val3[i-1].op=OP_ADD;val3[i-1].eid = STORE_LAST_ELEMENT;
 	}
-	// Wrap in VT_ARRAY
+	// Wrap in VT_COLLECTION
 	Value val2[1];
 	val2[0].set(val3,cntElements-1);
 	val2[0].setPropID(propid);val2[0].op=OP_ADD;val2[0].eid = STORE_COLLECTION_ID;
@@ -648,12 +640,13 @@ void TestBig::testTransaction( ISession * session, PropertyID propid, vector<str
 		{
 			if(backToOne->type==VT_COLLECTION)
 			{
-				TVERIFY(backToOne->nav->count()==1);
-			}
-			else if ( backToOne->type==VT_ARRAY)
-			{
-				TVERIFY(backToOne->length==1);
-				TVERIFY(strCollItems[0]==backToOne->varray[0].str);
+				if (backToOne->isNav())
+					TVERIFY(backToOne->nav->count()==1);
+				else
+				{
+					TVERIFY(backToOne->length==1);
+					TVERIFY(strCollItems[0]==backToOne->varray[0].str);
+				}
 			}
 			else if ( backToOne->type==VT_STRING )
 			{
@@ -695,40 +688,33 @@ void TestBig::testBigCollectionTransition(ISession * session, int elemSize)
 
 	mLogger.out() << "Building collection, each element is " << elemSize << " bytes" << endl ;
 
-	PID myPID ;
-	session->createPINAndCommit( myPID, NULL, 0 ) ;
-
 	unsigned char * largeData = (unsigned char*) malloc( elemSize ) ;
 	memset( largeData, 0, elemSize ) ;
 
 	PropertyID prop = MVTApp::getProp( session, "bigCollectionElement" ) ;
-
+	Value vals[256];
 	for ( int i = 0 ; i < 256 ; i++ )
 	{
-		Value v ;
-		v.set( largeData, elemSize ) ; 
-		v.property = prop ;
-		v.op = OP_ADD ;
+		vals[i].set(largeData, elemSize ) ; 
+		vals[i].property = prop ;
+		vals[i].op = OP_ADD ;
 		// v.meta = META_PROP_SSTORAGE ; // This fixes the issue
-		RC rc ;
-		TVERIFYRC( rc = session->modifyPIN( myPID, &v, 1 ) ) ;
-		if ( rc != RC_OK )
-		{
-			//RC_NORESOURCES, bug #8357
-			mLogger.out() << "Failure to add element " << i << endl ;
-			break ;
-		}
 	}
-
-	delete( largeData ) ;
+	RC rc = session->createPIN(vals, 256, NULL, MODE_COPY_VALUES|MODE_PERSISTENT) ;
+	if ( rc != RC_OK )
+	{
+		//RC_NOMEM, bug #8357
+		mLogger.out() << "Failure to add element " << endl ;
+	}
+	delete(largeData);
 }
 
 void TestBig::testCollectionDataLeak(ISession * session, int elemSize)
 {
 	//#8358 scenario
 	mLogger.out() << "Adding and deleting collection data. Each element is " << elemSize << " bytes" << endl ;
-	PID myPID ;
-	session->createPINAndCommit( myPID, NULL, 0 ) ;
+	IPIN *pin;
+	session->createPIN(NULL, 0,&pin, MODE_PERSISTENT) ;
 
 	unsigned char * largeData = (unsigned char*) malloc( elemSize ) ;
 	memset( largeData, 0, elemSize ) ;
@@ -743,7 +729,7 @@ void TestBig::testCollectionDataLeak(ISession * session, int elemSize)
 		v.op = OP_ADD ;
 		// v.meta = META_PROP_SSTORAGE ; // This fixes the issue
 		RC rc ;
-		TVERIFYRC( rc = session->modifyPIN( myPID, &v, 1 ) ) ;
+		TVERIFYRC( rc = pin->modify(&v, 1 ) ) ;
 		if ( rc != RC_OK )
 		{
 			mLogger.out() << "Failure to add element " << i << endl ;
@@ -753,14 +739,14 @@ void TestBig::testCollectionDataLeak(ISession * session, int elemSize)
 		// Now delete newly added element
 		Value v2 ;
 		v2.setDelete( prop, v.eid ) ;
-		TVERIFYRC( rc = session->modifyPIN( myPID, &v2, 1 ) ) ;
+		TVERIFYRC( rc = pin->modify(&v2, 1 ) ) ;
 		if ( rc != RC_OK )
 		{
 			mLogger.out() << "Failure to delete element " << i << endl ;
 			break ;
 		}
 	}
-
+	if(pin!=NULL) pin->destroy();
 	delete( largeData ) ;
 }
 
@@ -788,9 +774,6 @@ void TestBig::oneBigPin(bool bBigCollection, bool LOB)
 
 	string randStr = MVTRand::getString2(sizeElement);
 	PropertyID prop = MVTApp::getProp( mSession, "testbig.motherload" ) ;	
-	
-	PID pid1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pid1, NULL, 0)) ;
 
 	Value *v = (Value*)mSession->malloc(sizeof(Value)*cntElements);
 	for ( int i = 0 ; i < cntElements ; i++ )
@@ -802,16 +785,15 @@ void TestBig::oneBigPin(bool bBigCollection, bool LOB)
 	vArr.set(v,cntElements);
 	vArr.property=prop;
 	if ( bBigCollection ) { vArr.meta=META_PROP_SSTORAGE; }
-	TVERIFYRC(mSession->modifyPIN( pid1, &vArr, 1 )) ;
+	IPIN *pin1;
+	TVERIFYRC(mSession->createPIN(&vArr, 1, &pin1, MODE_PERSISTENT|MODE_COPY_VALUES)) ;
 
 	int cnt=0 ;
-
-	CmvautoPtr<IPIN> pin1(mSession->getPIN(pid1));
 	const Value * val = pin1->getValue(prop);
 
 	TVERIFY( val!=NULL );
 
-	if (val->type==VT_COLLECTION) {
+	if (val->type==VT_COLLECTION && val->isNav()) {
 		TVERIFY( val->nav != NULL ) ;
 		Value const * collElement = val->nav->navigate(GO_FIRST);
 		while (collElement)
@@ -822,13 +804,14 @@ void TestBig::oneBigPin(bool bBigCollection, bool LOB)
 
 		TVERIFY(cnt==cntElements);
 	}
+	if(pin1!=NULL) pin1->destroy();
 	mSession->free(v);
 }
 
 void TestBig::rcNoResources(ISession *session, int cntVals)
 {
 	// Searching for more scenarios that might have the
-	// RC_NORESOURCES problem when building large collections
+	// RC_NOMEM problem when building large collections
 	
 	mLogger.out() << "Building collections size " << cntVals << endl ;
 
@@ -850,37 +833,32 @@ void TestBig::rcNoResources(ISession *session, int cntVals)
 	}
 
 	//Case 1
-	PID pid1 ;
-	TVERIFYRC( session->createPINAndCommit( pid1, vals, cntVals )) ;
+	TVERIFYRC( session->createPIN(vals, cntVals,NULL,MODE_COPY_VALUES|MODE_PERSISTENT)) ;
 
 	//Case 2
 	for (i=0;i<cntVals;i++) { vals[i].eid=STORE_COLLECTION_ID; }
 	TVERIFYRC(session->createPIN(vals, cntVals, NULL, MODE_COPY_VALUES|MODE_PERSISTENT));
 
 	//Case 3
-	PID pid3 ;
-	TVERIFYRC( session->createPINAndCommit( pid3, NULL, 0 )) ;
 	for (i=0;i<cntVals;i++) 
 	{ 
 		vals[i].eid=STORE_COLLECTION_ID; 
-		TVERIFYRC(session->modifyPIN( pid3, &(vals[i]), 1 )) ;
 	}
+	TVERIFYRC(session->createPIN(vals, cntVals,NULL, MODE_COPY_VALUES|MODE_PERSISTENT)) ;
 
 	//Case 4
 	//See 8357 and testBigCollectionTransition
-	PID pid4 ;
-	TVERIFYRC( session->createPINAndCommit( pid4, NULL, 0 )) ;
 	for (i=0;i<cntVals;i++) 
 	{ 
 		vals[i].eid=STORE_COLLECTION_ID; 		
 	}
-	RC rc = session->modifyPIN( pid4, vals, cntVals ) ;
+	RC rc = session->createPIN(vals, cntVals, NULL, MODE_COPY_VALUES|MODE_PERSISTENT) ;
 #if TEST_COLLECTION_TRANSITION_8357
 	TVERIFYRC2(rc,"case4");
 #else
-	if ( rc == RC_NORESOURCES)
+	if ( rc == RC_NOMEM)
 	{
-		mLogger.out() << "RC_NORESOURCES hit in case 4" << endl ;
+		mLogger.out() << "RC_NOMEM hit in case 4" << endl ;
 	}
 #endif
 
@@ -918,7 +896,7 @@ void TestBig::rcNoResources(ISession *session, int cntVals)
 	pin8->destroy() ;
 
 	// TODO: more possibilities exist, e.g. with ISession::modifyPIN,
-	// with VT_ARRAY wrapper value etc
+	// with VT_COLLECTION wrapper value etc
 
 	session->free(vals);
 }
@@ -941,14 +919,16 @@ void TestBig::testBigCollectionDownsize(bool bDeleteFromEnd)
 	//
 	// Build the pin
 	//
-	PID pid;
-	TVERIFYRC(mSession->createPINAndCommit(pid,NULL,0));
-
+	PID pid;IPIN *pin;
+	TVERIFYRC(mSession->createPIN(NULL,0,&pin,MODE_PERSISTENT));
+	pid = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 
 	assert(cntElements%batchSize==0);
 	int cntBatches=cntElements/batchSize;
 	int i,j;
 	Value addBatch[batchSize]; string stringData[batchSize];
+
 	for (j=0; j<batchSize; j++) 
 	{
 		// Using a mix of string sizes to try to excercise many different possible 
@@ -1064,7 +1044,7 @@ void TestBig::testBigCollectionDownsize(bool bDeleteFromEnd)
 				CmvautoPtr<IPIN> p(mSession->getPIN(pid));
 				const Value * coll = p->getValue(prop);
 
-				if (coll->type==VT_COLLECTION) for ( int z=0;z<deleteBatch;z++)
+				if (coll->type==VT_COLLECTION && coll->isNav()) for ( int z=0;z<deleteBatch;z++)
 				{
 					if (isVerbose())
 						mLogger.out()<<"Verifying "<<std::hex<<addBatch[z].eid<<std::dec<<endl;
@@ -1095,7 +1075,7 @@ void TestBig::testBigCollectionDownsize(bool bDeleteFromEnd)
 			{
 				TVERIFY(cntRemaining==1);
 			}
-			else if ( coll->type==VT_COLLECTION)
+			else if ( coll->type==VT_COLLECTION && coll->isNav() )
 			{
 				bool bad=(coll->nav->count()!=uint32_t(cntRemaining));
 				TVERIFY(coll->nav->count()==uint32_t(cntRemaining));

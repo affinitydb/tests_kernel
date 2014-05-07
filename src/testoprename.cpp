@@ -49,7 +49,6 @@ void TestRename::testrename(ISession *session)
 {
 	IPIN *pin;
 	URIMap pm[6];
-	PID pid;
 	Value val[10];
 	Tstring str;
 	/*
@@ -69,8 +68,7 @@ void TestRename::testrename(ISession *session)
 	MVTRand::getString(str,100,0,true,true);
 	val[1].set(str.c_str());val[1].setPropID(pm[1].uid);
 
-	RC rc = session->createPINAndCommit(pid,val,2);
-	pin = session->getPIN(pid);
+	RC rc = session->createPIN(val,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 	//rename the property 2 to property 5
 	val[0].setRename(pm[1].uid,pm[5].uid);
@@ -102,8 +100,7 @@ void TestRename::testrename(ISession *session)
 	MVTRand::getString(str,100,0,true,true);
 	val[1].set(str.c_str());val[1].setPropID(pm[3].uid);
 
-	rc = session->createPINAndCommit(pid,val,2);
-	pin = session->getPIN(pid);
+	rc = session->createPIN(val,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 	//rename the property 3 to property 1
 	val[0].setRename(pm[3].uid,pm[0].uid);
@@ -136,10 +133,9 @@ void TestRename::testrename(ISession *session)
 	MVTRand::getString(str,75,100,true,true);
 	val[1].set(str.c_str());val[1].setPropID(pm[0].uid);
 	val[1].op = OP_ADD; val[1].eid = STORE_LAST_ELEMENT;
-	rc = session->createPINAndCommit(pid,val,2);
+	rc = session->createPIN(val,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 	
 	if(RC_OK == rc){
-		pin = session->getPIN(pid);
 		val[0].setRename(pm[0].uid,pm[1].uid);
 		rc = pin->modify(val,1);
 		if(RC_OK != rc || MVTApp::getCollectionLength(*pin->getValue(pm[1].uid)) !=2 || NULL != pin->getValue(pm[0].uid))
@@ -149,10 +145,9 @@ void TestRename::testrename(ISession *session)
 	}
 	//case 5: rename a pin with a stream property.
 	val[0].set(MVTApp::wrapClientStream(session, new MyStream(120000)));val[0].setPropID(pm[0].uid);
-	rc = session->createPINAndCommit(pid,val,1);
+	rc = session->createPIN(val,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 	if(RC_OK == rc){
-		pin = session->getPIN(pid);
 		val[0].setRename(pm[0].uid,pm[1].uid);
 		rc = pin->modify(val,1);
 		if(RC_OK != rc ||pin->getValue(pm[1].uid)->stream.is->length() != 120000 || NULL != pin->getValue(pm[0].uid))
@@ -170,7 +165,7 @@ void TestRename::testrename(ISession *session)
 
 	pids[0]=pm[1].uid;
 	args[0].setVarRef(0,*pids);
-	IExprTree *classopexistexpr = session->expr(OP_EXISTS,1,args);
+	IExprNode *classopexistexpr = session->expr(OP_EXISTS,1,args);
 	query->addCondition(var,classopexistexpr);
 	char lB[100];
 	Tstring lStr; MVTRand::getString(lStr,10,10,false,false);
@@ -182,10 +177,9 @@ void TestRename::testrename(ISession *session)
 	
 	MVTRand::getString(str,100,0,true,true);
 	val[0].set(str.c_str());val[0].setPropID(pm[0].uid);
-	rc = session->createPINAndCommit(pid,val,1);
+	rc = session->createPIN(val,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 	if(RC_OK == rc){
-		pin = session->getPIN(pid);
 		val[0].setRename(pm[0].uid,pm[1].uid);
 		rc = pin->modify(val,1);
 		if (RC_OK != rc || !pin->testClassMembership(cls))

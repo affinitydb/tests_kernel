@@ -169,7 +169,7 @@ void TestBasic::doTest()
 	// TODO : Record children relationships to demonstrate collections
 
 	// Comment out this line if you want to dump the store
-	// RemoveData() ;
+//	RemoveData() ;
 
 	mSession->terminate(); // No return code to test
 	MVTApp::stopStore();  // No return code to test
@@ -571,7 +571,7 @@ void TestBasic::RecordChild( char * inMother, char * inChild )
 
 	if ( children == NULL )
 	{
-		// First child - establish the VT_ARRAY
+		// First child - establish the VT_COLLECTION
 		// (If this is not done then the first child will be recorded without an 
 		// array, and the array will be established as the second child is added.
 		// That is convenient, but would potentially make the code in GetChildCount
@@ -580,7 +580,7 @@ void TestBasic::RecordChild( char * inMother, char * inChild )
 		childrenArray.set( &childElem, 1 ) ;
 		childrenArray.property = mProps[ChildrenIndex].uid ;
 
-		TVERIFY( childrenArray.type == VT_ARRAY ) ;
+		TVERIFY( childrenArray.type == VT_COLLECTION && !childrenArray.isNav() ) ;
 		TVERIFYRC( pMother->modify( &childrenArray, 1 ) ) ;
 	}
 	else
@@ -611,39 +611,40 @@ bool TestBasic::IsChild( char * inMother, char * inChild )
 	{
 		if ( children->type == VT_COLLECTION )
 		{
-			// 	VT_COLLECTION is currently the default case.  Even though
-			// we build a VT_ARRAY initially (see RecordChild), the 
-			// store returns a Navigator
-			INav * pNav = children->nav ;
-			const Value * elem = pNav->navigate( GO_FIRST ) ;
-
-			do 
+			if ( children->isNav() )
 			{
-				TVERIFY( elem->type == VT_REFID) ;
-				if ( elem->id == childPID )
+				// 	VT_COLLECTION is currently the default case.  Even though
+				// we build a VT_COLLECTION initially (see RecordChild), the 
+				// store returns a Navigator
+				INav * pNav = children->nav ;
+				const Value * elem = pNav->navigate( GO_FIRST ) ;
+
+				do 
 				{
-					bFound = true ;
-					break ;
-				}
+					TVERIFY( elem->type == VT_REFID) ;
+					if ( elem->id == childPID )
+					{
+						bFound = true ;
+						break ;
+					}
+					
+					// REVIEW: is any cleanup necessary for the elements?
 
-				// REVIEW: is any cleanup necessary for the elements?
-
-				elem = pNav->navigate( GO_NEXT ) ;
-			} while ( elem != NULL ) ;
-		}
-		else 		
-		{
-			// Also handle the VT_ARRAY case, which can arise when ITF_COLLECTIONS_AS_ARRAYS is specified
+					elem = pNav->navigate( GO_NEXT ) ;
+				} while ( elem != NULL ) ;
+			}
+			else 		
+			{
+				// Also handle the VT_COLLECTION case, which can arise when ITF_COLLECTIONS_AS_ARRAYS is specified
 	
-			TVERIFY( children->type == VT_ARRAY ) ; 
-
-			for ( uint32_t i = 0 ; i < children->length ; i++ )
-			{
-				TVERIFY( children->varray[i].type == VT_REFID) ;
-				if ( children->varray[i].id == childPID )
+				for ( uint32_t i = 0 ; i < children->length ; i++ )
 				{
-					bFound = true ;
-					break ;
+					TVERIFY( children->varray[i].type == VT_REFID) ;
+					if ( children->varray[i].id == childPID )
+					{
+						bFound = true ;
+						break ;
+					}
 				}
 			}
 		}
@@ -662,17 +663,16 @@ uint32_t TestBasic::GetChildrenCount( char * inMother )
 	const Value * children = pMother->getValue( mProps[ChildrenIndex].uid ) ;
 
 	// Null means no children at all
-	if ( children != NULL )
+	if ( children != NULL && children->type == VT_COLLECTION )
 	{
 		// Handle both possible collection representations
-		if ( children->type == VT_COLLECTION )
+		if ( children->isNav() )
 		{
 			INav * pNav = children->nav ;
 			cntChildren = pNav->count() ;
 		}
 		else 		
 		{
-			TVERIFY( children->type == VT_ARRAY ) ; 
 			cntChildren = children->length ;
 		}
 	}
@@ -708,7 +708,7 @@ IPIN * TestBasic::FindPerson( char * inName, bool bAllowMissing )
 	op[0].setVarRef(0 /*variable not defined yet, but Mark says 0 is safe assumption*/,prop);
 	op[1].set(inName);
 
-	IExprTree *exprfinal = mSession->expr(OP_EQ,2,op);
+	IExprNode *exprfinal = mSession->expr(OP_EQ,2,op);
 
 	//Rather than calling "query->addCondition(exprfinal)";
 	//it is possible to provide the expression immediately at query creation time
@@ -807,33 +807,33 @@ unsigned long TestBasic::FindBachelors( )
 
 	args[0].setVarRef(0,(mProps[GenderIndex].uid) );
 	args[1].set(true);
-	IExprTree * exprMale = mSession->expr(OP_EQ,2,args);
+	IExprNode * exprMale = mSession->expr(OP_EQ,2,args);
 	TVERIFY( exprMale != NULL ) ;
 
 	// Note: args have been copied internally so we can reuse the args array
 	args[0].setVarRef(0,(mProps[AgeIndex].uid) );
 	args[1].set(16);
-	IExprTree * exprAdult = mSession->expr(OP_GE,2,args);
+	IExprNode * exprAdult = mSession->expr(OP_GE,2,args);
 	TVERIFY( exprAdult != NULL) ;
 
 	args[0].setVarRef(0,(mProps[SpouseIndex].uid) );
-	IExprTree * exprMarried = mSession->expr(OP_EXISTS,1,args);
+	IExprNode * exprMarried = mSession->expr(OP_EXISTS,1,args);
 	TVERIFY( exprMarried != NULL ) ;
 
 	args[0].set(exprMarried );
-	IExprTree * exprNotMarried = mSession->expr(OP_LNOT,1,args);
+	IExprNode * exprNotMarried = mSession->expr(OP_LNOT,1,args);
 	TVERIFY( exprNotMarried != NULL ) ;
 
 	// OP_LAND only supports 2 arguments so we need to use two nodes to AND the 3 conditions
 
 	args[0].set(exprMale);
 	args[1].set(exprAdult);
-	IExprTree * exprMaleAdult = mSession->expr(OP_LAND,2,args);
+	IExprNode * exprMaleAdult = mSession->expr(OP_LAND,2,args);
 	TVERIFY( exprMaleAdult != NULL ) ;
 
 	args[0].set(exprMaleAdult);
 	args[1].set(exprNotMarried);
-	IExprTree * exprCompound = mSession->expr(OP_LAND,2,args);
+	IExprNode * exprCompound = mSession->expr(OP_LAND,2,args);
 	TVERIFY( exprCompound != NULL ) ;
 
 	qry->addCondition(var,exprCompound);
@@ -843,7 +843,7 @@ unsigned long TestBasic::FindBachelors( )
 	mSession->free( strQuery ) ;
 
 	/*
-	//Only the final IExprTree should be destroyed - it will clean everything else
+	//Only the final IExprNode should be destroyed - it will clean everything else
 	//up recursively
 	exprMale->destroy() ;
 	exprAdult->destroy() ;

@@ -146,7 +146,7 @@ public:
 		Value ops[2];
 		ops[0].setVarRef(v0,mNumberProp);
 		ops[1].setParam(0);
-		IExprTree * lE = mSession->expr(OP_EQ,2,ops);
+		IExprNode * lE = mSession->expr(OP_EQ,2,ops);
 		lQ->addCondition(v0,lE);
 
 		TVRC_R(ITest::defineClass(mSession,mFamilyName, lQ ),mTest);
@@ -223,7 +223,7 @@ public:
 		Value ops[2];
 		ops[0].setVarRef(v0,mNumberProp);
 		ops[1].set( inNumber );
-		IExprTree * lE = mSession->expr(OP_EQ,2,ops);
+		IExprNode * lE = mSession->expr(OP_EQ,2,ops);
 		lQ->addCondition(v0,lE);
 		lE->destroy();
 		return lQ;
@@ -289,8 +289,7 @@ public:
 				mCntSpecific++;
 
 			Value v; v.set( val ); v.property = mNumberProp;
-			PID newPid;
-			TVRC_R(mSession->createPINAndCommit(newPid,&v,1),mTest);
+			TVRC_R(mSession->createPIN(&v,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES),mTest);
 		}
 		*mOut << "Add PIN time: " << endTimer() << endl;
 	}	
@@ -403,8 +402,7 @@ public:
 			if ( val == mSpecificNumber )
 				mCntSpecific++;
 			Value v; v.set( val ); v.property = mNumberProp;
-			PID newPid;
-			TVRC_R(mSession->createPINAndCommit(newPid,&v,1),mTest);
+			TVRC_R(mSession->createPIN(&v,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES),mTest);
 			cntAddRemaining--;
 		}
 

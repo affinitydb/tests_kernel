@@ -401,7 +401,7 @@ void TestUndelete::createMeta()
 		Value lV[2];
 		lV[0].setVarRef(0,mPropIDs[0]);
 		lV[1].setParam(0);
-		CmvautoPtr<IExprTree> lET(mSession->expr(OP_BEGINS, 2, lV));
+		CmvautoPtr<IExprNode> lET(mSession->expr(OP_BEGINS, 2, lV));
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 0);
@@ -415,7 +415,7 @@ void TestUndelete::createMeta()
 		Value lV[2];
 		lV[0].setVarRef(0,mPropIDs[1]);
 		lV[1].setParam(0);
-		CmvautoPtr<IExprTree> lET(mSession->expr(OP_EQ, 2, lV));
+		CmvautoPtr<IExprNode> lET(mSession->expr(OP_EQ, 2, lV));
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 1);
@@ -429,7 +429,7 @@ void TestUndelete::createMeta()
 		Value lV[2];
 		lV[0].setVarRef(0,mPropIDs[2]);
 		lV[1].setParam(0);
-		CmvautoPtr<IExprTree> lET(mSession->expr(OP_EQ, 2, lV));
+		CmvautoPtr<IExprNode> lET(mSession->expr(OP_EQ, 2, lV));
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 2);
@@ -442,7 +442,7 @@ void TestUndelete::createMeta()
 		unsigned const char lVar = lQ->addVariable();
 		Value lV[1];
 		lV[0].setVarRef(0,mPropIDs[2]);
-		CmvautoPtr<IExprTree> lET(mSession->expr(OP_EXISTS, 1, lV));
+		CmvautoPtr<IExprNode> lET(mSession->expr(OP_EXISTS, 1, lV));
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 3);
@@ -455,7 +455,7 @@ void TestUndelete::createMeta()
 		Value lV[2];
 		lV[0].setVarRef(0,mPropIDs[3]);
 		lV[1].setParam(0);
-		CmvautoPtr<IExprTree> lET(mSession->expr(OP_EQ, 2, lV));
+		CmvautoPtr<IExprNode> lET(mSession->expr(OP_EQ, 2, lV));
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[64]; sprintf(lB, "TestUndelete.%s.%d", lRandStr.c_str(), 4);
@@ -502,7 +502,7 @@ void TestUndelete::createData()
 		if(lRepl)
 		{
 			IPIN *lPIN=NULL;
-			RC rc = mSession->createPIN(lV, j, &lPIN, MODE_COPY_VALUES|MODE_FORCE_EIDS|MODE_PERSISTENT);
+			RC rc = mSession->createPIN(lV, j, &lPIN, MODE_COPY_VALUES|MODE_PERSISTENT);
 			if(rc == RC_OK) lPID = lPIN->getPID();
 			else lPID.pid = STORE_INVALID_PID;
 			if(lPIN) lPIN->destroy();			
@@ -540,7 +540,7 @@ IStmt * TestUndelete::getQuery(int pQueryType, PropertyID pPropID, Value *pPropV
 				Value lV[2];
 				lV[0].setVarRef(0,pPropID);
 				lV[1].set(pPropValue->str);
-				IExprTree *lET = mSession->expr(OP_EQ, 2, lV);
+				IExprNode *lET = mSession->expr(OP_EQ, 2, lV);
 				lQ->addCondition(lVar,lET);
 				lET->destroy();
 			}
@@ -581,7 +581,7 @@ IStmt * TestUndelete::getQuery(int pQueryType, PropertyID pPropID, Value *pPropV
 				Value lV[2];
 				lV[0].setVarRef(0,pPropID);
 				lV[1].set(pPropValue->i);
-				IExprTree *lET = mSession->expr(OP_EQ, 2, lV);
+				IExprNode *lET = mSession->expr(OP_EQ, 2, lV);
 				lQ->addCondition(lVar,lET);
 				lET->destroy();
 			}

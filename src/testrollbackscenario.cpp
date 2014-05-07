@@ -106,7 +106,6 @@ void testrollbackscenario::commit_pins()
 		
 		int pCnt = (MVTRand::getRange(1,10)%nProps)+1;
 		Value *lV = (Value *)lSession->malloc(pCnt * sizeof(Value));
-		PID pid;
 
 		//mLogger.out()<<"Start transaction\n";
 		TVERIFYRC(lSession->startTransaction());
@@ -139,9 +138,9 @@ void testrollbackscenario::commit_pins()
 
 		//Commit half of the pins without indexing.
 		if(i < NPINS/2)
-			TVERIFYRC(lSession->createPINAndCommit(pid,lV,pCnt,PIN_HIDDEN));
+			TVERIFYRC(lSession->createPIN(lV,pCnt,NULL,PIN_HIDDEN|MODE_PERSISTENT|MODE_COPY_VALUES));
 		else
-			TVERIFYRC(lSession->createPINAndCommit(pid,lV,pCnt));
+			TVERIFYRC(lSession->createPIN(lV,pCnt,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 		TVERIFYRC(lSession->commit());
 		lSession->free(lV);
@@ -208,7 +207,7 @@ int testrollbackscenario::execute()
 		
 		args[0].setVarRef(0,(mPropIDs[1]));
 		args[1].setParam(0);
-		IExprTree *expr = lSession->expr(OP_BEGINS,2,args,CASE_INSENSITIVE_OP);
+		IExprNode *expr = lSession->expr(OP_BEGINS,2,args,CASE_INSENSITIVE_OP);
 		
 		query->addCondition(v,expr);
 

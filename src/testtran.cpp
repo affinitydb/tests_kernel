@@ -237,7 +237,7 @@ int TestTransactions::execute()
 void TestTransactions::simpleTran(ISession *session)
 {
 	//create a simple pin and modify with tran.
-	PID pid;
+	IPIN *pin;
 	Value pvs[2];
 	Value newVal ; // For changing property values
 
@@ -247,56 +247,55 @@ void TestTransactions::simpleTran(ISession *session)
 
 	// Create initial PIN
 	SETVALUE(pvs[0], propID[0], "Tran1 prop", OP_SET);
-	pvs[1].setURL("http://www.cricinfo.com"); SETVATTR(pvs[1], propID[1], OP_SET);
-	TVERIFYRC( session->createPINAndCommit(pid,pvs,2) );
+	pvs[1].set("http://www.cricinfo.com"); SETVATTR(pvs[1], propID[1], OP_SET);
+	TVERIFYRC( session->createPIN(pvs,2,&pin,MODE_COPY_VALUES|MODE_PERSISTENT) );
 
-	CmvautoPtr<IPIN> pin( session->getPIN(pid) );
-	if (isVerbose()) MVTApp::output(*pin.Get(), mLogger.out(), session);
+	if (isVerbose()) MVTApp::output(*pin, mLogger.out(), session);
 
 	memset(pvs,0,2*sizeof(Value));
 
 	//Case 1: simple commit of modification to an existing property
-	pvs[0].setURL("http://www.google.com"); SETVATTR(pvs[0], propID[1], OP_SET);
+	pvs[0].set("http://www.google.com"); SETVATTR(pvs[0], propID[1], OP_SET);
 	//start trans.
 	TVERIFYRC(session->startTransaction());
-		TVERIFYRC(pin->modify(pvs,1));
+	TVERIFYRC(pin->modify(pvs,1));
 	TVERIFYRC2(session->commit(), "****Case 1(commit)" );
 
 	TVERIFYRC(pin->refresh());;
 	TVERIFY( 0 == strcmp( pin->getValue( propID[1] )->str, "http://www.google.com" ) ) ;
 
-	if (isVerbose()) MVTApp::output(*pin.Get(), mLogger.out(), session);
+	if (isVerbose()) MVTApp::output(*pin, mLogger.out(), session);
 
 	//case 2: simple rollback of modification to existing Property
-	newVal.setURL("http://fantasy.premierleague.com"); SETVATTR(newVal, propID[1], OP_SET);
+	newVal.set("http://fantasy.premierleague.com"); SETVATTR(newVal, propID[1], OP_SET);
 	//start trans.
 	TVERIFYRC(session->startTransaction());
-		TVERIFYRC(pin->modify(&newVal,1));
+	TVERIFYRC(pin->modify(&newVal,1));
 	TVERIFYRC2(session->rollback(),"****Case 2(rollback)");
 
 	// pin has snapshot so it does not initially see the result of the rollback
 	TVERIFY( 0 == strcmp( pin->getValue( propID[1] )->str, "http://fantasy.premierleague.com" ) ) ;
 	TVERIFYRC(pin->refresh());; 
-	if (isVerbose()) MVTApp::output(*pin.Get(), mLogger.out(), session);
+	if (isVerbose()) MVTApp::output(*pin, mLogger.out(), session);
 	TVERIFY( 0 == strcmp( pin->getValue( propID[1] )->str, "http://www.google.com" ) ) ;
 
 	//case 3: adding a new prop within a transaction
 	npidsorig = pin->getNumberOfProperties();	
 	SETVALUE(newVal, propID[2], 10000, OP_SET);
 	TVERIFYRC(session->startTransaction());
-		pin->modify(&newVal,1);
+	pin->modify(&newVal,1);
 	TVERIFYRC2(session->commit(),"****Case 3(commit)");
 		
 	npidslatest = pin->getNumberOfProperties();
 	TVERIFY2( npidslatest == npidsorig + 1, "****Case 3(add prop)" ) ;
 	TVERIFY( pin->getValue( propID[2] )->i == 10000 ) ;
-	if (isVerbose()) MVTApp::output(*pin.Get(), mLogger.out(), session);
+	if (isVerbose()) MVTApp::output(*pin, mLogger.out(), session);
 
 	//case 4: reverting a new prop within a transaction
 	npidsorig = pin->getNumberOfProperties();	
 	SETVALUE(newVal, propID[3], 10000, OP_SET);
 	TVERIFYRC(session->startTransaction());
-		TVERIFYRC(pin->modify(pvs,1));
+	TVERIFYRC(pin->modify(pvs,1));
 	TVERIFYRC(session->rollback());		
 	TVERIFY( pin->getNumberOfProperties() == npidsorig) ;
 	TVERIFY( pin->getValue( propID[3] ) == NULL ) ;
@@ -306,22 +305,22 @@ void TestTransactions::simpleTran(ISession *session)
 	//case 5: deleting a property and rollback.
 	
 	// Set expected value
-		SETVALUE(newVal, propID[1], 789, OP_SET);
-		TVERIFYRC(pin->modify( &newVal,1));
+	SETVALUE(newVal, propID[1], 789, OP_SET);
+	TVERIFYRC(pin->modify( &newVal,1));
 
-		npidsorig = pin->getNumberOfProperties();
+	npidsorig = pin->getNumberOfProperties();
 	TVERIFYRC(session->startTransaction());
-		newVal.setDelete(propID[1]);
-		TVERIFYRC(pin->modify(&newVal,1));
-		if (isVerbose()) MVTApp::output(*pin.Get(), mLogger.out(), session);
+	newVal.setDelete(propID[1]);
+	TVERIFYRC(pin->modify(&newVal,1));
+	if (isVerbose()) MVTApp::output(*pin, mLogger.out(), session);
 	TVERIFYRC(session->rollback());
-		TVERIFYRC(pin->refresh());
-		npidslatest = pin->getNumberOfProperties();
-		if (isVerbose()) MVTApp::output(*pin.Get(), mLogger.out(), session);
+	TVERIFYRC(pin->refresh());
+	npidslatest = pin->getNumberOfProperties();
+	if (isVerbose()) MVTApp::output(*pin, mLogger.out(), session);
 
-		TVERIFY2( npidslatest == npidsorig,"****Case 5(setDelete) ");
-		TVERIFY( pin->getValue(propID[1])->i == 789 ) ;
-
+	TVERIFY2( npidslatest == npidsorig,"****Case 5(setDelete) ");
+	TVERIFY( pin->getValue(propID[1])->i == 789 ) ;
+	if(pin!=NULL) pin->destroy();
 #if 0 // REVIEW - why was this commented out?
 	//case 7: add a couple of props and commit or rollback
     TVERIFYRC(session->startTransaction());
@@ -334,16 +333,18 @@ void TestTransactions::simpleTran(ISession *session)
 #endif
 
 	//case 8: Roll back of value added through ISession::modifyPIN
-	PID pid2 ;
+	PID pid2 ; IPIN *pin2;
 	pvs[0].set("Modify PIN check");pvs[0].setPropID(propID[3]);
-	TVERIFYRC(session->createPINAndCommit(pid2,pvs,1));
+	TVERIFYRC(session->createPIN(pvs,1,&pin2,MODE_COPY_VALUES|MODE_PERSISTENT));
+	pid2 = pin2->getPID();
+	if(pin2!=NULL) pin2->destroy();
 
-    // Verify that it shows up in query
+	// Verify that it shows up in query
 	TVERIFY2( 1 == findPIN("Modify PIN check",propID[3],session), "findPIN string query problem" );
 
 	pvs[0].set("Modification string");pvs[0].setPropID(propID[4]);
 	TVERIFYRC(session->startTransaction());
-		TVERIFYRC(session->modifyPIN(pid2,pvs,1));
+	TVERIFYRC(session->modifyPIN(pid2,pvs,1));
 	TVERIFYRC(session->rollback());
 	
 	TVERIFY2(0 == findPIN("Modification string",propID[4],session),"****Case 8(Session modify PIN) ");
@@ -352,8 +353,8 @@ void TestTransactions::simpleTran(ISession *session)
 	TVERIFY( 1 == findPIN("Modify PIN check",propID[3],session) );
 
     // Verify other property available in direct
-    CmvautoPtr<IPIN> pid2Lookup( session->getPIN( pid2 ) );
-    TVERIFY( 0 == strcmp( "Modify PIN check", pid2Lookup->getValue(propID[3])->str )  ) ;
+	CmvautoPtr<IPIN> pid2Lookup( session->getPIN( pid2 ) );
+	TVERIFY( 0 == strcmp( "Modify PIN check", pid2Lookup->getValue(propID[3])->str )  ) ;
 	if (isVerbose()) MVTApp::output(*pid2Lookup.Get(), mLogger.out(), session);
 }
 
@@ -362,7 +363,7 @@ void TestTransactions::pinTransactions(ISession *session)
 	// Creation and deletion of pins within transactions
 
 	//create a simple pin and modify with tran.
-	PID pid, pid2;
+	PID pid, pid2;IPIN *pin;
 	Value pvs[2];	
 	RC rc;
 	PropertyID lPropIDs[5];
@@ -375,14 +376,16 @@ void TestTransactions::pinTransactions(ISession *session)
 	//case 1: delete a PIN (without purge and rollback).
 	pvs[0].set("This pin is getting slaughtered");pvs[0].setPropID(lPropIDs[0]);
 	pvs[1].set("This PIN wont be purged");pvs[1].setPropID(lPropIDs[1]);
-	TVERIFYRC(session->createPINAndCommit(pid,pvs,2));
+	TVERIFYRC(session->createPIN(pvs,2,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
+	pid = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 
 	TVERIFYRC(session->startTransaction());
-		TVERIFYRC(session->deletePINs(&pid,1));
+	TVERIFYRC(session->deletePINs(&pid,1));
 
-		// prove that PIN is gone
-		TVERIFY(session->getPIN(pid)==NULL) ;
-		TVERIFY(0 == findPIN("This pin is getting slaughtered",lPropIDs[0],session)) ;
+	// prove that PIN is gone
+	TVERIFY(session->getPIN(pid)==NULL) ;
+	TVERIFY(0 == findPIN("This pin is getting slaughtered",lPropIDs[0],session)) ;
 
 	TVERIFYRC(session->rollback());
 	
@@ -400,10 +403,12 @@ void TestTransactions::pinTransactions(ISession *session)
 
 	pvs[0].set("Purge Me please");pvs[0].setPropID(lPropIDs[2]);
 	pvs[1].set("Under the effect of a transaction");pvs[1].setPropID(lPropIDs[3]);
-	TVERIFYRC( session->createPINAndCommit(pid2,pvs,2) );
+	TVERIFYRC( session->createPIN(pvs,2,&pin,MODE_COPY_VALUES|MODE_PERSISTENT) );
+	pid2 = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 
 	TVERIFYRC(session->startTransaction());
-		TVERIFYRC(session->deletePINs(&pid2,1,MODE_PURGE));
+	TVERIFYRC(session->deletePINs(&pid2,1,MODE_PURGE));
 	TVERIFYRC(session->rollback());
 
 	pinRecovered.Attach( session->getPIN(pid2) ) ;
@@ -416,8 +421,10 @@ void TestTransactions::pinTransactions(ISession *session)
 	//case 10: create a pin in transaction and rollback and check
 	pid.pid = STORE_INVALID_PID ;
 	TVERIFYRC(session->startTransaction());
-		pvs[0].set("One property PIN");pvs[0].setPropID(lPropIDs[2]);
-		rc = session->createPINAndCommit(pid,pvs,1);
+	pvs[0].set("One property PIN");pvs[0].setPropID(lPropIDs[2]);
+	rc = session->createPIN(pvs,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT);
+	pid = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 	TVERIFYRC(session->rollback());
 	TVERIFY(session->getPIN(pid)==NULL) ;	
 	cntAfter = findPIN("One property PIN",lPropIDs[2],session);
@@ -427,9 +434,11 @@ void TestTransactions::pinTransactions(ISession *session)
 	//(See BUG 619 - previously didn't work if multiple properties)
 	pid.pid = STORE_INVALID_PID ;
 	TVERIFYRC(session->startTransaction());
-		pvs[0].set("Prop1");pvs[0].setPropID(lPropIDs[2]);
-		pvs[1].set(46);pvs[1].setPropID(lPropIDs[3]);
-		TVERIFYRC(session->createPINAndCommit(pid,pvs,2));
+	pvs[0].set("Prop1");pvs[0].setPropID(lPropIDs[2]);
+	pvs[1].set(46);pvs[1].setPropID(lPropIDs[3]);
+	TVERIFYRC(session->createPIN(pvs,2,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
+	pid = pin->getPID();
+	if(pin!=NULL) pin->destroy();	
 	TVERIFYRC(session->rollback());
 	TVERIFY(session->getPIN(pid)==NULL) ;	
 	cntAfter = findPIN("Prop1",lPropIDs[2],session);
@@ -683,7 +692,7 @@ int TestTransactions::findPIN(const string& str, unsigned int propid,ISession *s
 	op[0].setVarRef(0,prop);
 	op[1].set(str.c_str());
 
-	IExprTree *exprfinal = session->expr(OP_EQ,2,op);
+	IExprNode *exprfinal = session->expr(OP_EQ,2,op);
 	query->addCondition(var,exprfinal);
 
 	// Direct way to get the count
@@ -726,12 +735,12 @@ void TestTransactions::populateStore(ISession *session,URIMap *pm,int npm, PID *
 	// TODO: randomize this + provide as a service in app.h
 
 	MVTApp::mapURIs(session,"TestTransactions.prop",npm,pm);
-
-	session->createPINAndCommit(pid[0],NULL,0);
-	session->createPINAndCommit(pid[1],NULL,0);
-	session->createPINAndCommit(pid[2],NULL,0);
-	session->createPINAndCommit(pid[3],NULL,0);
-	session->createPINAndCommit(pid[4],NULL,0);
+	for(int i =0;i<5;i++) {
+		IPIN *pin;
+		session->createPIN(NULL,0,&pin,MODE_PERSISTENT);
+		pid[i] = pin->getPID();
+		if(pin!=NULL) pin->destroy();
+	}
 }
 
 void TestTransactions::SetInitial( ISession* session, URIMap *pm, PID & outpid, const char* prop0, const char* prop1, const char* prop2 )
@@ -741,8 +750,10 @@ void TestTransactions::SetInitial( ISession* session, URIMap *pm, PID & outpid, 
 	SETVALUE(pvs[0], pm[Prop0].uid, prop0, OP_SET);
 	SETVALUE(pvs[1], pm[Prop1].uid, prop1, OP_SET);
 	SETVALUE(pvs[2], pm[Prop2].uid, prop2, OP_SET);
-
-	session->createPINAndCommit(outpid,pvs,3);
+	IPIN *pin;
+	session->createPIN(pvs,3,&pin,MODE_COPY_VALUES|MODE_PERSISTENT);
+	outpid = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 }
 
 void TestTransactions::VerifyExpected( ISession* session, URIMap *pm, const PID & pid, const char* prop0, const char* prop1, const char* prop2 )
@@ -760,8 +771,10 @@ void TestTransactions::multisessionTrans(ISession * session)
 	// behave as a SINGLE PIN is modified from two sessions
 	RC rc ;
 
-	PID pid ;
-	TVERIFYRC(session->createPINAndCommit(pid,NULL,0));
+	PID pid ;IPIN *pin;
+	TVERIFYRC(session->createPIN(NULL,0,&pin,MODE_PERSISTENT));
+	pid = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 
 	PropertyID propids[5] ; 
 	MVTApp::mapURIs(session,"TestTransactions.multisessionTrans",sizeof(propids)/sizeof(propids[0]),propids);
@@ -979,12 +992,14 @@ void TestTransactions::multisessionDeadlock(ISession * session)
 
 	PropertyID strProp =propids[0] ;
 
-	PID pids[2] ;
-	TVERIFYRC(session->createPINAndCommit(pids[0],NULL,0));
-	TVERIFYRC(session->createPINAndCommit(pids[1],NULL,0));
+	IPIN *pinX,*pinY;
+	TVERIFYRC(session->createPIN(NULL,0,&pinX,MODE_PERSISTENT));
+	TVERIFYRC(session->createPIN(NULL,0,&pinY,MODE_PERSISTENT));
 
-	PID pidX = pids[0] ; // For test readability
-	PID pidY = pids[1] ;
+	PID pidX = pinX->getPID() ; // For test readability
+	PID pidY = pinY->getPID() ;
+	if(pinX!=NULL) pinX->destroy();
+	if(pinY!=NULL) pinY->destroy();
 
 	TVERIFYRC(session->detachFromCurrentThread()) ;
 	TransactionMultiSessionTester tester(NULL,0) ;
@@ -1082,7 +1097,10 @@ static THREAD_SIGNATURE threadTestDeadlock(void * pDeadlockThreadInfo)
 	// Also create a dummy pin as part of this transaction
 	// to see whether deadlock will roll back entire transaction
 	// 
-	TVRC_R(session->createPINAndCommit( pTI->unrelatedPID,NULL,0), pTI->ctxt);
+	IPIN *pin;
+	TVRC_R(session->createPIN(NULL,0,&pin,MODE_PERSISTENT), pTI->ctxt);
+	pTI->unrelatedPID = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 
 
 	TVRC_R(session->modifyPIN( pTI->pids[0], &pTI->valpin0, 1 ), pTI->ctxt) ;
@@ -1141,12 +1159,14 @@ void TestTransactions::multithreadDeadlock(ISession * session)
 	MVTApp::mapURIs(session,"TestTransactions.multisessionDeadlock",1,propids);
 
 	PropertyID strProp =propids[0] ;
+	IPIN *pinX,*pinY;
+	TVERIFYRC(session->createPIN(NULL,0,&pinX,MODE_PERSISTENT));
+	TVERIFYRC(session->createPIN(NULL,0,&pinY,MODE_PERSISTENT));
 
-	PID pids[2] ;
-	TVERIFYRC(session->createPINAndCommit(pids[0],NULL,0));
-	TVERIFYRC(session->createPINAndCommit(pids[1],NULL,0));
-	PID pidX = pids[0] ; // For test readability
-	PID pidY = pids[1] ;
+	PID pidX = pinX->getPID() ; // For test readability
+	PID pidY = pinY->getPID() ;
+	if(pinX!=NULL) pinX->destroy();
+	if(pinY!=NULL) pinY->destroy();
 
 	long volatile lSyncPoint = 2;
 
@@ -1292,6 +1312,22 @@ int pinUpdateMethod2( UpdateThreadInfo * pTI, ISession * session, long threadId 
 	// This is a more elaborate way to accomplish the same thing
 
 	// Do an atomic read to get the current string and associated pin version	
+#if 1
+	IPIN *pin = session->getPIN(pTI->mPid);
+	TV_R(pin!=NULL,pTI->mTest);
+	const Value *val0=NULL,*val1=NULL;
+	if (pin!=NULL) {
+		val0 = pin->getValue(pTI->mProperty);
+		TV_R(val0!=NULL && val0->type == VT_STRING,pTI->mTest) ;
+		val1 = pin->getValue(PROP_SPEC_STAMP);
+		TV_R(val1!=NULL && val1->type == VT_UINT,pTI->mTest) ;
+	}
+	std::string newString( val0!=NULL?val0->str:(char*)0 ) ;
+	TV_R(!newString.empty(),pTI->mTest);
+	TV_R(newString[0]==START_CHAR,pTI->mTest);
+	VersionID existingVersion = val1!=NULL?val1->ui:~0u ;
+	pin->destroy();
+#else	// using obsolete getValues()
 	Value pinVals[2] ;
 	pinVals[0].setError(pTI->mProperty) ;
 	pinVals[1].setError(PROP_SPEC_STAMP) ;
@@ -1304,8 +1340,9 @@ int pinUpdateMethod2( UpdateThreadInfo * pTI, ISession * session, long threadId 
 	TV_R(!newString.empty(),pTI->mTest);
 	TV_R(newString[0]==START_CHAR,pTI->mTest);
 	session->free( const_cast<char*>(pinVals[0].str) ) ; 
-
 	VersionID existingVersion = pinVals[1].i ;
+#endif
+
 
 	// Sleep, during which time the pin might change
 	// This simulates some long calculation.
@@ -1337,7 +1374,7 @@ int pinUpdateMethod2( UpdateThreadInfo * pTI, ISession * session, long threadId 
 	Value args[2];
 	args[0].setVarRef(0,propSpecStamp );
 	args[1].set((unsigned int)existingVersion); /* PIN version when it was last read */
-	IExprTree * expr = session->expr( OP_EQ, 2, args ) ;
+	IExprNode * expr = session->expr( OP_EQ, 2, args ) ;
 
 	lQ->addCondition(var,expr) ;
 	expr->destroy() ;
@@ -1396,8 +1433,10 @@ void TestTransactions::safePinUpdates(ISession * session)
 	initial[0].set(0u); initial[0].property=PROP_SPEC_STAMP;
 	initial[1].set( initialString ) ; initial[1].property = strProp ;
 
-	PID pid ;
-	TVERIFYRC(session->createPINAndCommit(pid,initial,2));
+	PID pid ;IPIN *pin;
+	TVERIFYRC(session->createPIN(initial,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 	
 	UpdateThreadInfo info(this,pid,strProp,mStoreCtx) ;
 	

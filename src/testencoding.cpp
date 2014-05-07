@@ -47,7 +47,6 @@ int TestEncoding::execute()
 void TestEncoding::populatestore(ISession *session)
 {
 	Value val[3];
-	PID pid;
 		
 	string ustr;
 	std::ifstream input;
@@ -68,8 +67,7 @@ void TestEncoding::populatestore(ISession *session)
 		{
 			val[0].set(ustr.c_str());val[0].setPropID(pm[0].uid);
 			val[0].meta = META_PROP_FTINDEX;
-			TVERIFYRC(session->createPINAndCommit(pid,val,1));
-			pin = session->getPIN(pid);
+			TVERIFYRC(session->createPIN(val,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 			assert(0 == strcmp(pin->getValue(pm[0].uid)->str,ustr.c_str()));
 			pin->destroy();
 		}

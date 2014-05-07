@@ -63,7 +63,7 @@ inline static void CREATEPIN(ISession *session, PID* pid, Value *prop, unsigned 
 	}
 }
 PID const gInvalidPID = {STORE_INVALID_PID, STORE_INVALID_IDENTITY};
-typedef IExprTree * TExprTreePtr;
+typedef IExprNode * TExprTreePtr;
 #define EXPRTREEGEN(sessionptr) (sessionptr)->expr
 
 /*

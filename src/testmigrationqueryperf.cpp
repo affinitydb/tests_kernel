@@ -225,7 +225,7 @@ void TestMigrationQueryPerf::doTest()
 													1,&ord));  // Order by
 
 		// fs_path sometimes being migrated
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0/*variable*/,this->fs_path_id);
@@ -348,8 +348,10 @@ PID TestMigrationQueryPerf::addPhotoPin(Value * pExtra, unsigned int cntExtra)
 		memcpy(&(vals[7]),pExtra,sizeof(Value)*cntExtra) ;
 	}
 
-	PID newpin ;
-	TVERIFYRC( mSession->createPINAndCommit( newpin, vals, basePropCount + cntExtra ) );
+	PID newpin ;IPIN *pin;
+	TVERIFYRC( mSession->createPIN(vals, basePropCount + cntExtra,&pin,MODE_PERSISTENT|MODE_COPY_VALUES) );
+	newpin = pin->getPID();
+	pin->destroy();
 
 #if 1  //#ifdef WIN32
 	if ( newpin.pid == 0x1000000001400073ll )

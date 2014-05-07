@@ -79,7 +79,7 @@ void TestACLsInfer::testJoinACLs(ISession *pSession)
 	SourceSpec lCS[2] = {{mCLSID, 0, NULL}, {mCLSID2, 1, &lParam[2]}};
 	unsigned char lVar1 = lQ->addVariable(&lCS[0], 1);
 	unsigned char lVar2 = lQ->addVariable(&lCS[1], 1);
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		Value lV[2];
 		lV[0].setVarRef(lVar1,mPropIDs[1]);
@@ -137,7 +137,7 @@ void TestACLsInfer::createMeta()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIDs[1]);
@@ -152,7 +152,7 @@ void TestACLsInfer::createMeta()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIDs[2]);

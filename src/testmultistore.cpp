@@ -448,7 +448,8 @@ void TestMultiStore::simulateDumpload(ISession* session, unsigned short inStoreI
 	RC rc;
 	for ( k = 0 ; k < pages; k++ )
 	{
-		TVERIFYRC(rc = session->reservePage( startPage+k )) ;
+		uint32_t pageID = startPage+k;
+		TVERIFYRC(rc = session->reservePages( &pageID, 1 )) ;
 		if ( rc != RC_OK ) { mLogger.out() << "Page: " << startPage+k << endl ;  }
 	}
 	#endif
@@ -510,7 +511,7 @@ void TestMultiStore::doStuffInStore( ISession* inS  )
 	args[0].setVarRef(v0,coll_id);
 	args[1].setParam(0);
 
-	IExprTree *lExpr = inS->expr(OP_EQ,2,args,CASE_INSENSITIVE_OP);
+	IExprNode *lExpr = inS->expr(OP_EQ,2,args,CASE_INSENSITIVE_OP);
 	lQ->addCondition(v0,lExpr);
 
 	rc=defineClass(inS,"StringLookup", lQ ) ;
@@ -537,11 +538,13 @@ void TestMultiStore::doStuffInStore( ISession* inS  )
 		vals[1].set( lstr.c_str() ) ; vals[1].property= str_id; 
 		vals[2].set( i ) ; vals[2].property= int_id; 
 
-		PID newpid ;
-		TVERIFYRC(inS->createPINAndCommit(newpid,vals,1)) ;
+		PID newpid ;IPIN *pin;
+		TVERIFYRC(inS->createPIN(vals,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+		newpid = pin->getPID();
 		TVERIFY( inS->getLocalStoreID() == inS->getStoreID( newpid ) ) ;
 
 		lAllPins[i] = newpid ;
+		pin->destroy();
 	}	
 	
 	// Modify pins to add collections

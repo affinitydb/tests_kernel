@@ -53,7 +53,7 @@ int	TestFTIndexPage::execute()
 		
 		args[0].setVarRef(0,*propid);
 		args[1].set("testftindexpagepin");		
-		IExprTree *expr = session->expr(OP_EQ,2,args);
+		IExprNode *expr = session->expr(OP_EQ,2,args);
 		query->addCondition(var,expr);
 		query->count(rescount);
 		
@@ -93,11 +93,10 @@ void TestFTIndexPage::populateStore(ISession *session)
 {
 	Value pvs[2];
 	string titleStr;
-	PID	pid;
 	//create a control pin to allow this test run multiple times w.o failure.
 	pvs[0].set("testftindexpagepin");pvs[0].setPropID(propid[0]);
 	pvs[0].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->createPINAndCommit(pid,pvs,1));
+	TVERIFYRC(session->createPIN(pvs,1,NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	URIMap pm[1];
 	/*
@@ -109,7 +108,7 @@ void TestFTIndexPage::populateStore(ISession *session)
 	MVTApp::mapURIs(session,"TestFTIndexPage.prop",1,pm);
 
 	mLogger.out() << "Populating" << std::endl;
-	for(int	i =0; i<NUMBEROFPINS;i++)
+	for(int i =0; i<NUMBEROFPINS;i++)
 	{
 		if (0 == i % 100)
 			mLogger.out() << ".";

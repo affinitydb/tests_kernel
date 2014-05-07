@@ -111,7 +111,7 @@ void TestClassPerf::createPINS(ISession *session)
 	pids[0]=pm[0].uid;
 	args[0].setVarRef(0,*pids);
 	args[1].set("class pin");
-	IExprTree *classopexistexpr = session->expr(OP_EQ,2,args);
+	IExprNode *classopexistexpr = session->expr(OP_EQ,2,args);
 	classquery->addCondition(var,classopexistexpr);
 
 	if (RC_OK != defineClass(session,"TestClassPerf.classperf",classquery,&cls))
@@ -204,7 +204,7 @@ bool TestClassPerf::testclassperf(ISession *session, int pWhich)
 		pids1[0] = pm[0].uid;
 		val[0].setVarRef(0,*pids1);
 		val[1].set("class pin");
-		IExprTree *expr = session->expr(OP_EQ,2,val);
+		IExprNode *expr = session->expr(OP_EQ,2,val);
 		fsquery->addCondition(var2,expr);
 		{
 			lBef = getTimeInMs();

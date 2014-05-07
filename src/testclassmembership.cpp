@@ -68,7 +68,7 @@ void TestClassMembership::testClassMembership()
 	args[0].setVarRef(0,(pm[0])); 
 	args[1].set("Bipasha");
 
-	IExprTree *expr = mSession->expr(OP_EQ,2,args);
+	IExprNode *expr = mSession->expr(OP_EQ,2,args);
 	TVERIFYRC(classquery->addCondition(var,expr));
 
 	// Generate classname with random component
@@ -99,7 +99,7 @@ void TestClassMembership::testClassMembership()
 	Value operands[2] ; 
 	operands[0].setVarRef(0);
 	operands[1].setURIID( cls ) ;
-	CmvautoPtr<IExprTree> lE1B( mSession->expr( OP_IS_A, 2, operands ) );
+	CmvautoPtr<IExprNode> lE1B( mSession->expr( OP_IS_A, 2, operands ) );
 	TVERIFYRC(lQ1B->addCondition( v, lE1B )) ;
 	uint64_t cnt ;
 	TVERIFYRC(lQ1B->count( cnt )) ;
@@ -111,17 +111,17 @@ void TestClassMembership::testClassMembership()
 	unsigned varexist = classopexist->addVariable();
 
 	args[0].setVarRef(0,(pm[0]));
-	IExprTree *classopexistexpr1 = mSession->expr(OP_EXISTS,1,args);
+	IExprNode *classopexistexpr1 = mSession->expr(OP_EXISTS,1,args);
 
 	Value args1[1];
 
 	args1[0].setVarRef(0,(pm[1]));
-	IExprTree *classopexistexpr2 = mSession->expr(OP_EXISTS,1,args1);
+	IExprNode *classopexistexpr2 = mSession->expr(OP_EXISTS,1,args1);
 
 	Value final[2];
 	final[0].set(classopexistexpr1);
 	final[1].set(classopexistexpr2);
-	IExprTree *exprexistfinal = mSession->expr(OP_LOR,2,final);
+	IExprNode *exprexistfinal = mSession->expr(OP_LOR,2,final);
 
 	TVERIFYRC(classopexist->addCondition(varexist,exprexistfinal));
 	
@@ -158,7 +158,7 @@ void TestClassMembership::testClassMembership()
 	TVERIFYRC(mSession->createPIN(val,1,&pin3,MODE_PERSISTENT|MODE_COPY_VALUES));
 	TVERIFY(!pin3->testClassMembership(clsopexist)) ;
 	pin3->destroy();
-
+	
 	//Case 3: test for app issue after upgrade: get pin with specific pids and test for class membership
 	//REVIEW: This only works with some specific store that had some specific predefined classes,
 	//unclear how it could be used in future, perhaps it should be removed.
@@ -229,7 +229,7 @@ void TestClassMembership::testFamilyMembership()
 			{
 				CmvautoPtr<IStmt> lQ( mSession->createStmt());
 				unsigned char lVar = lQ->addVariable();
-				IExprTree *lET;
+				IExprNode *lET;
 				{
 					Value lV[2];
 					lV[0].setVarRef(0,lPropIDs[0]);

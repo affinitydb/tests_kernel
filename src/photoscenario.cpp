@@ -323,22 +323,22 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,cache_id);
 			lV[1].set(0);
-			IExprTree *lET1 = EXPRTREEGEN(mSession)(OP_GT, 2, lV);
+			IExprNode *lET1 = EXPRTREEGEN(mSession)(OP_GT, 2, lV);
 
 			lV[0].setVarRef(0,refreshNodeID_id);
 			lV[1].set(mHostID.c_str()); 
-			IExprTree *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);	
+			IExprNode *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);	
 
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			IExprTree *lET3 = EXPRTREEGEN(mSession)(OP_LAND, 2, lV);
+			IExprNode *lET3 = EXPRTREEGEN(mSession)(OP_LAND, 2, lV);
 
 			lV[0].setVarRef(0,binary_id);
-			IExprTree *lET4 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);	
+			IExprNode *lET4 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);	
 
 			lV[0].set(lET3);
 			lV[1].set(lET4);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_LAND, 2, lV, 0));			
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_LAND, 2, lV, 0));			
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSUncachedImageID));
@@ -356,7 +356,7 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[1];
 			lV[0].setVarRef(0,prop_system_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSSystemPinID));
@@ -375,15 +375,15 @@ void PhotoScenario::createPhotoClasses()
 		
 			Value lV[2];
 			lV[0].setVarRef(0,feedinfo_id);
-			IExprTree *lET1 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
+			IExprNode *lET1 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
 
 			lV[0].setVarRef(0,feedtype_id);
 			lV[1].setParam(0);
-			IExprTree *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);		
+			IExprNode *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);		
 			
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_LAND, 2, lV, 0));			
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_LAND, 2, lV, 0));			
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lFamilyFeedID));
@@ -402,15 +402,15 @@ void PhotoScenario::createPhotoClasses()
 		
 			Value lV[2];
 			lV[0].setVarRef(0,feed_id);
-			IExprTree *lET1 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
+			IExprNode *lET1 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
 
 			lV[0].setVarRef(0,feedtype_id);
 			lV[1].set(3);
-			IExprTree *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);		
+			IExprNode *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);		
 			
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_LAND, 2, lV, 0));			
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_LAND, 2, lV, 0));			
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSRSSFeedID));
@@ -430,15 +430,15 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,feedtype_id);
 			lV[1].set(2);
-			IExprTree *lET1 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);	
+			IExprNode *lET1 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);	
 
 			lV[0].setVarRef(0,acceptemail_id);
 			lV[1].set(1);
-			IExprTree *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);
+			IExprNode *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);
 			
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_LAND, 2, lV, 0));			
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_LAND, 2, lV, 0));			
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSEmailFeedID));
@@ -456,7 +456,7 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[1];
 			lV[0].setVarRef(0,tagword_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSTagID));
@@ -474,7 +474,7 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[1];
 			lV[0].setVarRef(0,tag_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSTaggedPinID));
@@ -492,21 +492,21 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[2];
 			lV[0].setVarRef(0,name_id);
-			IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].setVarRef(0,shortname_id);
-			IExprTree *lET2 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET2 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].setVarRef(0,posts_id);
-			IExprTree *lET3 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET3 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].set(lET2);
 			lV[1].set(lET3);
-			IExprTree *lET4 = mSession->expr(OP_LAND, 2, lV, 0);	
+			IExprNode *lET4 = mSession->expr(OP_LAND, 2, lV, 0);	
 
 			lV[0].set(lET1);
 			lV[1].set(lET4);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_LAND, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_LAND, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
@@ -525,31 +525,31 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[2];
 			lV[0].setVarRef(0,name_id);
-			IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].setVarRef(0,shortname_id);
-			IExprTree *lET2 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET2 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].setVarRef(0,posts_id);
-			IExprTree *lET3 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET3 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].set(lET2);
 			lV[1].set(lET3);
-			IExprTree *lET4 = mSession->expr(OP_LAND, 2, lV, 0);
+			IExprNode *lET4 = mSession->expr(OP_LAND, 2, lV, 0);
 
 			lV[0].setVarRef(0,prop_system_id);
-			IExprTree *lET5 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET5 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].set(lET5);
-			IExprTree *lET6 = mSession->expr(OP_LNOT, 1, lV, 0);			
+			IExprNode *lET6 = mSession->expr(OP_LNOT, 1, lV, 0);			
 
 			lV[0].set(lET1);
 			lV[1].set(lET4);
-			IExprTree *lET7 = mSession->expr(OP_LAND, 2, lV, 0);
+			IExprNode *lET7 = mSession->expr(OP_LAND, 2, lV, 0);
 
 			lV[0].set(lET7);
 			lV[1].set(lET6);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_LAND, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_LAND, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
@@ -569,7 +569,7 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,mime_id);
 			lV[1].set("image");
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSImageID));
@@ -587,7 +587,7 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[1];
 			lV[0].setVarRef(0,posts_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSListID));
@@ -605,7 +605,7 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[1];
 			lV[0].setVarRef(0,cluster_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSClusterParentID));
@@ -623,7 +623,7 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[1];
 			lV[0].setVarRef(0,fs_path_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSImportedFileID));
@@ -641,7 +641,7 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[1];
 			lV[0].setVarRef(0,fs_folder_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSImportedFolderID));
@@ -660,7 +660,7 @@ void PhotoScenario::createPhotoClasses()
 
 			Value lV[2];
 			lV[0].setVarRef(0,feed_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr( OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr( OP_EXISTS, 1, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));		
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSSubscriptionID));
@@ -680,15 +680,15 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,name_id);
 			lV[1].set("subscriptionqueue");
-			IExprTree *lET1 = mSession->expr( OP_EQ, 2, lV, 0);
+			IExprNode *lET1 = mSession->expr( OP_EQ, 2, lV, 0);
 
 			lV[0].setVarRef(0,prop_system_id);
 			lV[1].set("true");
-			IExprTree *lET2 = mSession->expr( OP_EQ, 2, lV, 0);
+			IExprNode *lET2 = mSession->expr( OP_EQ, 2, lV, 0);
 
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			CmvautoPtr<IExprTree> lET( mSession->expr( OP_LAND, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr( OP_LAND, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));		
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSSubscriptionQueueID));
@@ -708,15 +708,15 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,name_id);
 			lV[1].set("subscriptionlist");
-			IExprTree *lET1 = mSession->expr( OP_EQ, 2, lV, 0);
+			IExprNode *lET1 = mSession->expr( OP_EQ, 2, lV, 0);
 
 			lV[0].setVarRef(0,prop_system_id);
 			lV[1].set("true");
-			IExprTree *lET2 =  mSession->expr( OP_EQ, 2, lV, 0);
+			IExprNode *lET2 =  mSession->expr( OP_EQ, 2, lV, 0);
 
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			CmvautoPtr<IExprTree> lET( mSession->expr( OP_LAND, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr( OP_LAND, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));		
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSSubscriptionListID));
@@ -734,7 +734,7 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[1];
 			lV[0].setVarRef(0,email_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSContactID));
@@ -752,28 +752,28 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[2];
 			lV[0].setVarRef(0,visIdentity_id);
-			IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].setVarRef(0,name_id);
-			IExprTree *lET2 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET2 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].setVarRef(0,shortname_id);
-			IExprTree *lET3 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET3 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].setVarRef(0,posts_id);
-			IExprTree *lET4 = mSession->expr(OP_EXISTS, 1, lV, 0);
+			IExprNode *lET4 = mSession->expr(OP_EXISTS, 1, lV, 0);
 
 			lV[0].set(lET3);
 			lV[1].set(lET4);
-			IExprTree *lET5 = mSession->expr(OP_LOR, 2, lV, 0);
+			IExprNode *lET5 = mSession->expr(OP_LOR, 2, lV, 0);
 
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			IExprTree *lET6 = mSession->expr(OP_LAND, 2, lV, 0);
+			IExprNode *lET6 = mSession->expr(OP_LAND, 2, lV, 0);
 
 			lV[0].set(lET6);
 			lV[1].set(lET5);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_LAND, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_LAND, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
@@ -798,7 +798,7 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,date_id);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_IN, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_IN, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));		
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lFamilyImageClusterID));
@@ -822,7 +822,7 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,tag_id);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EQ, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EQ, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));		
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lFamilytaggedImagesID));
@@ -846,24 +846,24 @@ void PhotoScenario::createPhotoClasses()
 			// class imagetag() = pin[pin is image()and ((pin has imgStatus_id and imgStatus_id = 0) or !(pin has imgStatus_id))]
 			Value lV[2];
 			lV[0].setVarRef(0,imgStatus_id);
-			IExprTree *lET1 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
+			IExprNode *lET1 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
 
 			lV[0].setVarRef(0,imgStatus_id);
 			lV[1].set(0);
-			IExprTree *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);		
+			IExprNode *lET2 = EXPRTREEGEN(mSession)(OP_EQ, 2, lV);		
 			
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			IExprTree *lET3 = EXPRTREEGEN(mSession)(OP_LAND, 2, lV);	
+			IExprNode *lET3 = EXPRTREEGEN(mSession)(OP_LAND, 2, lV);	
 
 			lV[0].setVarRef(0,imgStatus_id);
-			IExprTree *lET4 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
+			IExprNode *lET4 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
 			lV[0].set(lET4);
-			IExprTree *lET5 = EXPRTREEGEN(mSession)(OP_LNOT, 1, lV);	
+			IExprNode *lET5 = EXPRTREEGEN(mSession)(OP_LNOT, 1, lV);	
 
 			lV[0].set(lET3);
 			lV[1].set(lET5);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_LOR, 2, lV, 0));			
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_LOR, 2, lV, 0));			
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSSubImageID));
@@ -888,7 +888,7 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,imgStatus_id);
 			lV[1].set(1);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EQ, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EQ, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSWasteImageID));
@@ -912,7 +912,7 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,tag_id);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EQ, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EQ, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));		
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lFamilytaggedImagesEWID));
@@ -937,7 +937,7 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,date_id);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_IN, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_IN, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));		
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lFamilyID));
@@ -962,7 +962,7 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,date_id);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_IN, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_IN, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));		
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lWasteFamilyID));
@@ -987,7 +987,7 @@ void PhotoScenario::createPhotoClasses()
 			PropertyID propid = PROP_SPEC_CREATED;
 			lV[0].setVarRef(0,propid);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_IN, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_IN, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lFamilyImageClusterEWCRID));
@@ -1012,7 +1012,7 @@ void PhotoScenario::createPhotoClasses()
 			PropertyID propid = PROP_SPEC_CREATED;
 			lV[0].setVarRef(0,propid);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_IN, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_IN, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lFamilyImageClusterWCRID));
@@ -1036,7 +1036,7 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,fs_path_id);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EQ, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EQ, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lFamilyFileImageID));
@@ -1054,7 +1054,7 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[1];
 			lV[0].setVarRef(0,tabname_id);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_EXISTS, 1, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSTabInfoID));
@@ -1072,14 +1072,14 @@ void PhotoScenario::createPhotoClasses()
 			unsigned const char lVar = lQ->addVariable();
 			Value lV[2];
 			lV[0].setVarRef(0,owner_id_id);
-			IExprTree *lET1 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
+			IExprNode *lET1 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
 
 			lV[0].setVarRef(0,owner_name_id);
-			IExprTree *lET2 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
+			IExprNode *lET2 = EXPRTREEGEN(mSession)(OP_EXISTS, 1, lV);
 
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			CmvautoPtr<IExprTree> lET( mSession->expr(OP_LAND, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(OP_LAND, 2, lV, 0));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lCLSOwnerInfoID));
@@ -1103,7 +1103,7 @@ void PhotoScenario::createPhotoClasses()
 			Value lV[2];
 			lV[0].setVarRef(0,fs_path_id);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr( OP_BEGINS, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr( OP_BEGINS, 2, lV, 0));
 
 			TVERIFYRC(lQ->addCondition(lVar,lET));		
 			TVERIFYRC(defineClass(mSession,className.c_str(), lQ, &lFamilyAllImportedFilesID));
@@ -1224,13 +1224,13 @@ bool PhotoScenario::createAppPINs()
 
 	bool lSuccess = true;	
 	IPIN * lPIN = NULL;
-	std::vector<IPIN *> lClusterPINs;
 	const int sClusterSize = mNumPINsPerFolder;
 	int i, k;
 	size_t y = 0;
 	Tstring lTagStr;
 	char *pFolderName = NULL;
-
+	IBatch *lBatch=NULL;
+	
 	// Create Tags to be added to the Image PINs
 	for(i = 0; i < (int)mTagCount; i++)
 	{
@@ -1249,6 +1249,11 @@ bool PhotoScenario::createAppPINs()
 			pFolderName = (char *)mFilePathPool[y++].c_str();
 			lNumTags = MVTRand::getRange((int)mTagCount/4,(int)mTagCount);
 		}
+		
+		if((k==1 || k==0) && lBatch==NULL) 
+			lBatch=mSession->createBatch();
+		TVERIFY(lBatch!=NULL);
+		
 		if(i%100 == 0) mLogger.out() << ".";
 
 		strLen = (int)strlen(pFolderName) + 1;
@@ -1339,57 +1344,58 @@ bool PhotoScenario::createAppPINs()
 
 		SETVALUE(lPVs[23],cache_id,0,OP_SET); // cache
 
-		TVERIFYRC(mSession->createPIN(lPVs,24,&lPIN,MODE_COPY_VALUES));
-		
-		// Add Tags to the Image PIN
-		{			
-			int j = 0;
-			Value *lTagVal = (Value *)mSession->malloc(lNumTags*sizeof(Value));
-			char *lTag = NULL;
-			for(j = 0; j < lNumTags; j++)
-			{
-				lTag = (char *)mSession->malloc((mTagPool[j].length() + 1)*sizeof(char));
-				strcpy(lTag, mTagPool[j].c_str());
-				SETVALUE_C(lTagVal[j],tag_id,lTag,OP_ADD,STORE_COLLECTION_ID);
-			}
-			if(RC_OK!=lPIN->modify(lTagVal,lNumTags)) assert(false);
-			for(j = 0; j < lNumTags; j++)
-			{
-				if(lTagVal[j].type == VT_STRING)
-				{
-					const char *pTempStr = lTagVal[j].str;
-					mSession->free((void *)pTempStr);
-				}
-			}
-			mSession->free(lTagVal);
-
-			// Add ACLs if notification is disabled. Notification adds ACLs otherwise
-			if(mCreateACLs)
-			{
-				Value *lACLVal = (Value *)mSession->malloc(1*sizeof(Value));
-				RefVID *lRef = (RefVID *)mSession->malloc(1*sizeof(RefVID));
-				for(j = 0; j < lNumTags; j++)
-				{
-					RefVID l = {mTagPINs[0], PROP_SPEC_ACL, STORE_COLLECTION_ID, STORE_CURRENT_VERSION};
-					*lRef = l;
-					lACLVal[0].set(*lRef); lACLVal[0].setPropID(PROP_SPEC_ACL); lACLVal[0].op = OP_ADD;
-					if(RC_OK!=lPIN->modify(lACLVal,1)) assert(false);
-				}
-				mSession->free(lRef);
-				mSession->free(lACLVal);
-			}					
-
-			lClusterPINs.push_back(lPIN);
-		}
+		TVERIFYRC(lBatch->createPIN(lPVs,24,MODE_COPY_VALUES));
 
 		if(k == sClusterSize || i == int(mPinCount-1))
 		{
-			if(RC_OK != mSession->commitPINs(&lClusterPINs[0],k==sClusterSize?sClusterSize:k)){
+			if(RC_OK != lBatch->process(false)){
 				mLogger.out() << "ERROR (PhotoScenario::createAppPINs): Failed to commit cluster of pins " << std::endl;
 				lSuccess = false;
 			}
 			else
-			{				
+			{	
+				for(unsigned pos = 0; pos < lBatch->getNumberOfPINs(); pos++) {
+					int j = 0;
+					PID pid;
+					TVERIFYRC(lBatch->getPID(pos, pid));
+					TVERIFY(NULL != (lPIN = mSession->getPIN(pid)));
+					Value *lTagVal = (Value *)mSession->malloc(lNumTags*sizeof(Value));
+					char *lTag = NULL;
+					for(j = 0; j < lNumTags; j++)
+					{
+					    lTag = (char *)mSession->malloc((mTagPool[j].length() + 1)*sizeof(char));
+					    strcpy(lTag, mTagPool[j].c_str());
+					    SETVALUE_C(lTagVal[j],tag_id,lTag,OP_ADD,STORE_COLLECTION_ID);
+					}
+					if(RC_OK!=lPIN->modify(lTagVal,lNumTags)) assert(false);
+					for(j = 0; j < lNumTags; j++)
+					{
+					    if(lTagVal[j].type == VT_STRING)
+					    {
+					        const char *pTempStr = lTagVal[j].str;
+					        mSession->free((void *)pTempStr);
+					    }
+					}
+					mSession->free(lTagVal);
+
+					// Add ACLs if notification is disabled. Notification adds ACLs otherwise
+					if(mCreateACLs)
+					{
+					    Value *lACLVal = (Value *)mSession->malloc(1*sizeof(Value));
+					    RefVID *lRef = (RefVID *)mSession->malloc(1*sizeof(RefVID));
+					    for(j = 0; j < lNumTags; j++)
+					    {
+					        RefVID l = {mTagPINs[0], PROP_SPEC_ACL, STORE_COLLECTION_ID, STORE_CURRENT_VERSION};
+					        *lRef = l;
+					        lACLVal[0].set(*lRef); lACLVal[0].setPropID(PROP_SPEC_ACL); lACLVal[0].op = OP_ADD;
+					        if(RC_OK!=lPIN->modify(lACLVal,1)) assert(false);
+					    }
+					    mSession->free(lRef);
+					    mSession->free(lACLVal);
+					}
+					if(lPIN!=NULL) lPIN->destroy();
+				}
+				
 				// Create a Feed PIN and a Folder PIN for every commitPINs()				
 				int lIndex = 0;
 				PID lFeedPID = createFeedPIN(pFolderName);
@@ -1400,14 +1406,13 @@ bool PhotoScenario::createAppPINs()
 				Value *lPVs = (Value *)mSession->malloc((mNumPINsPerFolder+1)*sizeof(Value));
 				for(lIndex = 0; lIndex < (k==sClusterSize?sClusterSize:k); lIndex++) 
 				{					
-					PID lPID = lClusterPINs[lIndex]->getPID();
+					PID lPID;
+					TVERIFYRC(lBatch->getPID(lIndex,lPID));
 					SETVALUE_C(lPVs[lIndex],posts_id,lPID,OP_ADD_BEFORE,STORE_FIRST_ELEMENT); 
-					lClusterPINs[lIndex]->destroy();
 					mPids.push_back(lPID);
-					
 				}
-				/* This is a workaround for the BIG Collection issue. If list of values are passed to IPIN::modify(), RC_NORESOURCES is returned.
-				So passing the values as VT_ARRAY */
+				/* This is a workaround for the BIG Collection issue. If list of values are passed to IPIN::modify(), RC_NOMEM is returned.
+				So passing the values as VT_COLLECTION */
 				RC lRC;
 				Value lV[1];
 				lV[0].set(lPVs,k==sClusterSize?sClusterSize:k);lV[0].setPropID(posts_id);
@@ -1417,11 +1422,11 @@ bool PhotoScenario::createAppPINs()
 					mLogger.out() << "ERROR (PhotoScenario::createAppPINs): Failed to modify folder pin  with RC = " << lRC << std::endl;
 				}
 				lPIN->destroy();
-				mSession->free(lPVs);				
-				lClusterPINs.clear();
+				mSession->free(lPVs);
 				k = 0;
 				mLogger.out() << " DONE" <<std::endl;
-			}
+				if(lBatch != NULL){lBatch->destroy();lBatch=NULL;}
+			}	
 		}		
 			
 	}
@@ -1440,7 +1445,7 @@ PID PhotoScenario::createFeedPIN(const char *pFolderName)
 	SETVALUE(lPVs[4],feedimportsubfolder_id,0,OP_SET); // feedimportsubfolder
 	SETVALUE(lPVs[5],feedflattensubfolder_id,0,OP_SET); // feedflattensubfolder
 	SETVALUE(lPVs[6],autogen_id,1,OP_SET); // autogen
-	
+
 	IPIN *pin;
 	if(RC_OK !=  mSession->createPIN(lPVs,7,&pin,MODE_PERSISTENT|MODE_COPY_VALUES))
 	{

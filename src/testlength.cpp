@@ -97,7 +97,7 @@ void TestLength::testoplength(ISession *session,URIMap *pm, int npm,int op,ExpRe
 	int res;
 	Tstring outstr;
 	Value args[1],argsfinal[2];
-	IExprTree *exprfinal,*expr;
+	IExprNode *exprfinal,*expr;
 	ICursor *result;
 	PropertyID pids[1];
 	Value const *pvl;
@@ -109,8 +109,9 @@ void TestLength::testoplength(ISession *session,URIMap *pm, int npm,int op,ExpRe
 	SETVALUE(pvs[1], pm[1].uid, "city ZX V7", OP_SET);
 	SETVALUE(pvs[2], pm[2].uid, "Galactico Street", OP_SET);
 
-	session->createPINAndCommit(pid,pvs,3);
-	IPIN *pin = session->getPIN(pid);
+	IPIN *pin;
+	TVERIFYRC(session->createPIN(pvs,3,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid = pin->getPID();
 	MVTApp::registerTestPINs(mTestPINs,&pid);
 
 	switch(op){
@@ -135,7 +136,7 @@ void TestLength::testoplength(ISession *session,URIMap *pm, int npm,int op,ExpRe
 		res != expres.expVTSTR?mRCFinal=RC_FALSE:mRCFinal=RC_OK;
 		break;
 	case PI_URL:
-		pvs[0].setURL("http://www.cricinfo.com");
+		pvs[0].set("http://www.cricinfo.com");
 		pvs[0].setPropID(pm[14].uid);
 		pin->modify(pvs,1);
 		expres.expVTURL++;

@@ -69,7 +69,7 @@ class TestMultiVarJoin : public ITest
 
 		void compareQueries(bool addFT, int orderByProp = -1);
 
-		IExprTree * getQueryAsExpression();
+		IExprNode * getQueryAsExpression();
 
 		IStmt * getQuery(QueryVariation whichQ);
 
@@ -163,7 +163,7 @@ void TestMultiVarJoin::createMeta()
 
 		// OP_GT isn't really realistic, doing an OP_IN range would 
 		// be more broadly useful, but its good enough for this simple test
-		CmvautoPtr<IExprTree> expr(mSession->expr(OP_GT,2,qexpr));
+		CmvautoPtr<IExprNode> expr(mSession->expr(OP_GT,2,qexpr));
 
 		TVERIFYRC(qFamily->addCondition(v,expr));
 
@@ -194,9 +194,10 @@ void TestMultiVarJoin::createPINs(int inCntPins, bool bLargePins)
 			vals[k].property=mProps[k];
 		}
 
-		PID pid;
-		TVERIFYRC(mSession->createPINAndCommit(pid,vals,CNT_SUB_QUERY));
-
+		PID pid;IPIN *pin;
+		TVERIFYRC(mSession->createPIN(vals,CNT_SUB_QUERY,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+		pid = pin->getPID();
+		pin->destroy();
 		Value strVal;
 
 		// When FT turned on then only 80% of the pins will match
@@ -590,7 +591,7 @@ IStmt * TestMultiVarJoin::doFullScan()
 	// Compare with raw query (no joins)
 	IStmt * rawQ=mSession->createStmt();
 
-	CmvautoPtr<IExprTree> exprTreeRoot(getQueryAsExpression());
+	CmvautoPtr<IExprNode> exprTreeRoot(getQueryAsExpression());
 	
 	// Use a full scan query
 	unsigned char rawVar = rawQ->addVariable();
@@ -609,7 +610,7 @@ IStmt * TestMultiVarJoin::do1FamilyAndExpressions()
 
 	IStmt * lQ=mSession->createStmt();
 
-	CmvautoPtr<IExprTree> exprTreeRoot(getQueryAsExpression());
+	CmvautoPtr<IExprNode> exprTreeRoot(getQueryAsExpression());
 
 	Value minValFirstFam;
 	minValFirstFam.set(mRandLookups[0]); 
@@ -634,7 +635,7 @@ IStmt * TestMultiVarJoin::doClassAndExpressions()
 
 	IStmt * lQ=mSession->createStmt();
 
-	CmvautoPtr<IExprTree> exprTreeRoot(getQueryAsExpression());
+	CmvautoPtr<IExprNode> exprTreeRoot(getQueryAsExpression());
 
 	SourceSpec csClass;
 	csClass.objectID=mClass;
@@ -655,7 +656,7 @@ IStmt * TestMultiVarJoin::doImplicitClassFamExpr(bool bClassFirst)
 	// replace the other CNT_SUB_QUERY-1 families
 	IStmt * lQ=mSession->createStmt();
 
-	CmvautoPtr<IExprTree> exprTreeRoot(getQueryAsExpression());
+	CmvautoPtr<IExprNode> exprTreeRoot(getQueryAsExpression());
 
 	Value minValFirstFam;
 	minValFirstFam.set(mRandLookups[0]); 
@@ -680,7 +681,7 @@ IStmt * TestMultiVarJoin::doImplicitClassFamExpr(bool bClassFirst)
 	return serializeQ(lQ);
 }
 
-IExprTree * TestMultiVarJoin::getQueryAsExpression()
+IExprNode * TestMultiVarJoin::getQueryAsExpression()
 {
 	// This expression tree makes no reference to families but evalutes to the same results
 	// e.g.
@@ -690,7 +691,7 @@ IExprTree * TestMultiVarJoin::getQueryAsExpression()
 	// Performance note: Evaluation of such an expression implies that the PIN must be 
 	// loaded and its values examined!
 
-	IExprTree *baseExpr[CNT_SUB_QUERY];
+	IExprNode *baseExpr[CNT_SUB_QUERY];
 	Value childPair[CNT_SUB_QUERY];
 
 	size_t i;
@@ -703,7 +704,7 @@ IExprTree * TestMultiVarJoin::getQueryAsExpression()
 		childPair[i].set(baseExpr[i]);
 	}	
 
-	IExprTree *parentExpr[2];
+	IExprNode *parentExpr[2];
 	parentExpr[0] = mSession->expr(OP_LAND,2,childPair);
 	parentExpr[1] = mSession->expr(OP_LAND,2,childPair+2);
 

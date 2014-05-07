@@ -58,8 +58,10 @@ void TestCompareValues::doTest()
 	TVERIFY(0!=mSession->compareValues(v1,v2,true));
 	TVERIFY(0!=mSession->compareValues(v2,v1,true));
 
-	Afy::PID pid;
-	TVERIFYRC(mSession->createPINAndCommit(pid,NULL,0));
+	Afy::PID pid;IPIN *pin;
+	TVERIFYRC(mSession->createPIN(NULL,0,&pin,MODE_PERSISTENT));
+	pid =pin->getPID();
+	if(pin!=NULL) pin->destroy();
 	v1.set(pid); v2.set(pid);
 	TVERIFY(0==mSession->compareValues(v1,v2,true));
 

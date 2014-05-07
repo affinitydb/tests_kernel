@@ -59,7 +59,7 @@ void TestClassInfo::testClassInfo()
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[2]);
 		lV[1].setParam(0);
-		CmvautoPtr<IExprTree> lET(mSession->expr(OP_IN, 2, lV,CASE_INSENSITIVE_OP));
+		CmvautoPtr<IExprNode> lET(mSession->expr(OP_IN, 2, lV,CASE_INSENSITIVE_OP));
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 		lClassString = lQ->toString();
 		TVERIFYRC(defineClass(mSession,lB, lQ, &lCLSID));
@@ -103,7 +103,7 @@ void TestClassInfo::testSimpleFamily()
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[3]);
 		lV[1].setParam(0);
-		CmvautoPtr<IExprTree> lET(mSession->expr(OP_IN, 2, lV, CASE_INSENSITIVE_OP));
+		CmvautoPtr<IExprNode> lET(mSession->expr(OP_IN, 2, lV, CASE_INSENSITIVE_OP));
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 		lClassString = lQ->toString();
 		TVERIFYRC(defineClass(mSession,lB, lQ, &lCLSID));

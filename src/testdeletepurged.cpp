@@ -4,6 +4,7 @@ Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 **************************************************************************************/
 
+
 #include "app.h"
 using namespace std;
 
@@ -42,13 +43,13 @@ int testdeletepurged::execute()
 	Afy::PID lpid;
 	lpid.pid = 0xe5940000000b0017LL; lpid.ident = STORE_OWNER;
 
-	Afy::IPIN *lPin1 = session->createPIN(lVal,2);
+	Afy::IPIN *lPin1;
+	TVERIFYRC(session->createPIN(lVal,2,&lPin1,MODE_PERSISTENT));
 
-	lMode = MODE_FORCE_EIDS | PIN_REPLICATED;
-	Afy::IPIN *lPin2 = session->createPIN(lVal2,2,lMode,&lpid);
+	lMode = PIN_REPLICATED|MODE_PERSISTENT;
+	Afy::IPIN *lPin2;
+	TVERIFYRC(session->createPIN(lVal2,2,&lPin2,lMode,&lpid));
 	
-	session->commitPINs(&lPin1,1,0);
-	session->commitPINs(&lPin2,1,lMode);
 	lpid = lPin1->getPID();
 	lPin1->destroy();
 	RC rc =session->deletePINs(&lpid,1,MODE_PURGE);

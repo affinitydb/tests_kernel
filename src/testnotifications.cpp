@@ -88,7 +88,7 @@ class PITNotifierCallback1 : public IStoreNotification
 					for (j = 0; j < events->nData; j++)
 					{
 						lReceived.push_back(PITNotification(events[i].pin, events[i].data[j].propID, events[i].data[j].eid));
-						if (events[i].data[j].oldValue && events[i].data[j].oldValue->type == VT_COLLECTION)
+						if (events[i].data[j].oldValue && events[i].data[j].oldValue->type == VT_COLLECTION && events[i].data[j].oldValue->isNav())
 						{
 							size_t iV;
 							Value const * const lChecked = events[i].data[j].oldValue;
@@ -285,13 +285,13 @@ int TestNotifications::execute()
 			Value lV[2];
 			SETVALUE(lV[0], lPropIDPinIndex, (int)i, OP_ADD);
 			SETVALUE(lV[1], lPropIDTestPass, lTestPass.c_str(), OP_ADD); /*lV[1].setMeta(META_PROP_NOFTINDEX);*/
-			if (RC_OK != (rc=lSession->createPINAndCommit(lPID, &lV[0], 2)))
+			if (RC_OK != (rc=lSession->createPIN(&lV[0], 2,&lPINs[i],MODE_PERSISTENT|MODE_COPY_VALUES)))
 			{
 				lSuccess = false;
 				mLogger.out()<<"Failed with RC:"<<rc<<std::endl;
 				assert(false);
 			}
-
+			lPID = lPINs[i]->getPID();
 			#if ISOLATE_1647a
 				if (lPID.pid == lPID1647.pid)
 					lIndexTrack1647 = (int)i;
@@ -301,7 +301,6 @@ int TestNotifications::execute()
 					lIndexTrack1647b = (int)i;
 			#endif
 
-			lPINs[i] = lSession->getPIN(lPID);
 			lPINs[i]->setNotification();
 			lPINMasks[i] = 0;
 
@@ -313,10 +312,8 @@ int TestNotifications::execute()
 					char lSpacerT[1024];
 					memset(lSpacerT, 'a', 1024);
 					lSpacerT[1023] = 0;
-					lPID.ident = STORE_OWNER;
-					lPID.pid = STORE_INVALID_PID;
 					lV[0].set((unsigned char *)lSpacerT, 1024); lV[0].setPropID(PropertyID(mPropID999[0])); lV[0].setOp(OP_ADD);
-					if (RC_OK != lSession->createPINAndCommit(lPID, &lV[0], 1))
+					if (RC_OK != lSession->createPIN(&lV[0], 1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES))
 						assert(false);
 				}
 			#endif
@@ -681,7 +678,7 @@ int TestNotifications::execute()
 				Value lV[2];
 				lV[0].setVarRef(0,lPropIDTestPass);
 				lV[1].set(lTestPass.c_str());
-				IExprTree * const lE = lSession->expr(OP_EQ, 2, lV);
+				IExprNode * const lE = lSession->expr(OP_EQ, 2, lV);
 				lQ->addCondition(lVar,lE);
 				lE->destroy();
 			#endif

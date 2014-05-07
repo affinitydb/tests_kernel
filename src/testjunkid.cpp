@@ -59,7 +59,7 @@ void TestJunkID::doGetPIN()
 			Value lV[2];
 			lV[0].setVarRef(0);
 			lV[1].set(lPID);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_EQ, 2, lV));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_EQ, 2, lV));
 			TVERIFYRC(lQ->addCondition(lVar,lET));
 		}
 		ICursor* lC = NULL;

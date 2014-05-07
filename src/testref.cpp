@@ -63,13 +63,12 @@ void TestRef::testValidRefs()
 	valsOnChild[0].set(99); valsOnChild[0].property=mPropX; valsOnChild[0].op = OP_ADD ; valsOnChild[0].eid = STORE_LAST_ELEMENT;
 	valsOnChild[1].set(11); valsOnChild[1].property=mPropX; valsOnChild[1].op = OP_ADD ; valsOnChild[1].eid = STORE_LAST_ELEMENT;
 
-	PID child ;
-	TVERIFYRC(mSession->createPINAndCommit(child,valsOnChild,2));
-	CmvautoPtr<IPIN> childPIN(mSession->getPIN(child));
+	PID child;IPIN *childPIN;
+	TVERIFYRC(mSession->createPIN(valsOnChild,2,&childPIN,MODE_PERSISTENT|MODE_COPY_VALUES));
+	child = childPIN->getPID();
 
 	ElementID validEID = valsOnChild[1].eid  ;
 
-	PID parent ;
 	Value valsOnParent[1];
 	RefVID ref ; 
 	RefVID *lRef = (RefVID *)mSession->malloc(1*sizeof(RefVID));
@@ -79,17 +78,16 @@ void TestRef::testValidRefs()
 
 	// Scenario
 	valsOnParent[0].set(child) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
-	p=mSession->getPIN(parent); 
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,&p,MODE_PERSISTENT|MODE_COPY_VALUES));
 	TVERIFY(p->getValue(mPropX)->type == VT_REFID);
 	p->destroy() ;
 
 	// Scenario
 	// You can set VT_REF but you get VT_REFID back
-	valsOnParent[0].set(childPIN.Get()) ; valsOnParent[0].property = mPropX ; 
+	valsOnParent[0].set(childPIN) ; valsOnParent[0].property = mPropX ; 
 	TVERIFY(valsOnParent[0].type==VT_REF);
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
-	p=mSession->getPIN(parent); 
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,&p,MODE_PERSISTENT|MODE_COPY_VALUES));
+	p->refresh();
 	TVERIFY(p->getValue(mPropX)->type == VT_REFID);
 	p->destroy() ;
 
@@ -100,8 +98,8 @@ void TestRef::testValidRefs()
 	ref.vid = 0 ;
 	*lRef = ref;
 	valsOnParent[0].set(*lRef) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
-	p=mSession->getPIN(parent); 
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,&p,MODE_PERSISTENT|MODE_COPY_VALUES));
+	p->refresh();
 	TVERIFY(p->getValue(mPropX)->type == VT_REFIDPROP);
 	p->destroy() ;
 
@@ -112,8 +110,8 @@ void TestRef::testValidRefs()
 	ref.vid = 0 ;
 	*lRef = ref;
 	valsOnParent[0].set(*lRef) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
-	p=mSession->getPIN(parent); 
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,&p,MODE_PERSISTENT|MODE_COPY_VALUES));
+	p->refresh();
 	TVERIFY(p->getValue(mPropX)->type == VT_REFIDELT);
 	p->destroy() ;
 
@@ -125,8 +123,8 @@ void TestRef::testValidRefs()
 	*lRefP = refP;
 	valsOnParent[0].set(*lRefP) ; valsOnParent[0].property = mPropX ; 
 	TVERIFY(valsOnParent[0].type == VT_REFPROP );
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
-	p=mSession->getPIN(parent); 
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,&p,MODE_PERSISTENT|MODE_COPY_VALUES));
+	p->refresh();
 	TVERIFY(p->getValue(mPropX)->type == VT_REFIDPROP);
 	p->destroy() ;
 
@@ -137,11 +135,12 @@ void TestRef::testValidRefs()
 	*lRefP = refP;
 	valsOnParent[0].set(*lRefP) ; valsOnParent[0].property = mPropX ; 
 	TVERIFY(valsOnParent[0].type == VT_REFELT );
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
-	p=mSession->getPIN(parent); 
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,&p,MODE_PERSISTENT|MODE_COPY_VALUES));
+	p->refresh();
 	TVERIFY(p->getValue(mPropX)->type == VT_REFIDELT);
 	p->destroy() ;
-
+	
+	childPIN->destroy();
 	// TODO:
 	// Ref VersionID not covered as it is not implemented
 	// Show query/path resolution (is it available?)
@@ -158,47 +157,48 @@ void TestRef::testBrokenRefs()
 	//
 	// However dangling/broken references are almost certainly a app level bug
 
-	PID parent ;
 	Value valsOnParent[1];
 
 	// Scenario 1 - Completely invalid PID
 	//	PID is clearly invalid so call fails	
 	PID noExist ; memset(&noExist,0,sizeof(PID));	
 	valsOnParent[0].set(noExist) ; valsOnParent[0].property = mPropX ; 
-	TVERIFY(RC_INVPARAM==mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFY(RC_INVPARAM==mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	//	PID is clearly invalid so call fails
 	noExist.pid=STORE_INVALID_PID ; noExist.ident=STORE_OWNER ;
 	valsOnParent[0].set(noExist) ; valsOnParent[0].property = mPropX ; 
-	TVERIFY(RC_INVPARAM==mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFY(RC_INVPARAM==mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	//	Store does not validate PID is valid (by design)
 	memset(&noExist,0xCD,sizeof(PID));	
 	valsOnParent[0].set(noExist) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	// Scenario 2 - softdeleted PID
-	PID deletedChild ;
-	TVERIFYRC(mSession->createPINAndCommit(deletedChild,NULL,0));
+	PID deletedChild;IPIN *pin;
+	TVERIFYRC(mSession->createPIN(NULL,NULL,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	deletedChild = pin->getPID();pin->destroy();
 	TVERIFYRC(mSession->deletePINs(&deletedChild,1));
 	valsOnParent[0].set(deletedChild) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	// Scenario 3 - purged PID
 	PID purgedChild;
-	TVERIFYRC(mSession->createPINAndCommit(purgedChild,NULL,0));
+	TVERIFYRC(mSession->createPIN(NULL,NULL,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	purgedChild = pin->getPID();pin->destroy();
 	TVERIFYRC(mSession->deletePINs(&purgedChild,1,MODE_PURGE));
 	valsOnParent[0].set(purgedChild) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	// Scenario 4 - invalid property on valid PID
 	Value valsOnChild[2] ;
 	valsOnChild[0].set(99); valsOnChild[0].property=mPropX; valsOnChild[0].op = OP_ADD ;
 	valsOnChild[1].set(11); valsOnChild[1].property=mPropX; valsOnChild[1].op = OP_ADD ;
 
-	PID child ;
-	TVERIFYRC(mSession->createPINAndCommit(child,valsOnChild,2));
-	CmvautoPtr<IPIN> childPIN(mSession->getPIN(child));
+	PID child;IPIN *childPIN;
+	TVERIFYRC(mSession->createPIN(valsOnChild,2,&childPIN,MODE_PERSISTENT|MODE_COPY_VALUES));
+	child = childPIN->getPID();
 
 	RefVID ref ;
 	ref.id = child ;
@@ -206,7 +206,7 @@ void TestRef::testBrokenRefs()
 	ref.eid = STORE_COLLECTION_ID ;
 
 	valsOnParent[0].set(ref) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	// Scenario 5 - invalid collection item within valid property on valid PID
 	ref.id = child ;
@@ -214,7 +214,7 @@ void TestRef::testBrokenRefs()
 	ref.eid = 9999 ;
 
 	valsOnParent[0].set(ref) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	// Scenario 6 - REFIDELT where property doesn't exist (on valid PID)
 	ref.id = child ;
@@ -222,7 +222,7 @@ void TestRef::testBrokenRefs()
 	ref.eid = 9999 ;
 
 	valsOnParent[0].set(ref) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	// Scenario 7 - REFIDELT on invalid PID
 	ref.id = noExist ;
@@ -230,7 +230,7 @@ void TestRef::testBrokenRefs()
 	ref.eid = 9999 ;
 
 	valsOnParent[0].set(ref) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	// Scenario 8 - REFIDVAL on invalid PID
 	ref.id = noExist ;
@@ -238,8 +238,9 @@ void TestRef::testBrokenRefs()
 	ref.eid = STORE_COLLECTION_ID ;
 
 	valsOnParent[0].set(ref) ; valsOnParent[0].property = mPropX ; 
-	TVERIFYRC(mSession->createPINAndCommit(parent,valsOnParent,1));
+	TVERIFYRC(mSession->createPIN(valsOnParent,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
+	if(childPIN!=NULL) childPIN->destroy();
 	//
 	// TODO: once supported more extensively for queries 
 	// try these out to make sure store won't croak

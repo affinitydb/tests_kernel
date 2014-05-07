@@ -62,7 +62,7 @@ void TestIndexNav::doTest()
       * create class TestIndexNav as select * where $0 = :0;
       */
     Value lV[2];
-    IExprTree *iExpr = NULL;
+    IExprNode *iExpr = NULL;
     lV[0].setVarRef(0, ids[0]);
     lV[1].setParam(0);
     iExpr = mSession->expr(OP_EQ, 2, lV);
@@ -195,8 +195,7 @@ void TestIndexNav::populate() {
             values[j+1].set(str.c_str());
             values[j+1].property = ids[j+1];
         }
-        PID pid;
-        TVERIFYRC(mSession->createPINAndCommit(pid,values,cnt+1));
+        TVERIFYRC(mSession->createPIN(values,cnt+1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
         if (i % 10 == 0) 
             cout << ".";
         if (i == NUMBER_PINS -1)

@@ -36,8 +36,7 @@ int testmetapropmodify::execute()
 
 	lV[0].set(strRand.c_str());		//Creating pin with strRand
 	lV[0].property=mProp[0];
-	mIPIN = mSession->createPIN(lV,1);	
-	mSession->commitPINs(&mIPIN,1); 
+	TVERIFYRC( mSession->createPIN(lV,1,&mIPIN,MODE_COPY_VALUES|MODE_PERSISTENT));	
 	PID lpid=mIPIN->getPID();
  
 	lV[0].set("modified");  //Modifying pin to replace strRand

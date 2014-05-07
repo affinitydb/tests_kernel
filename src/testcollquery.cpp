@@ -6,7 +6,7 @@ Copyright © 2004-2013 GoPivotal, Inc. All rights reserved.
 
 // 
 // Coverage of 
-//		IStmt::addVariable(const PID& pid,PropertyID propID,IExprTree *cond=NULL)
+//		IStmt::addVariable(const PID& pid,PropertyID propID,IExprNode *cond=NULL)
 // which is special signature for searching a collection of PIN references
 //
 
@@ -74,33 +74,34 @@ void TestCollQuery::queryCollection( unsigned int cntElements )
 	unsigned int i ;
 	for ( i = 0 ; i < cntElements ; i++ )
 	{
+		IPIN *pin;
 		// Put a unique value on each pin that could be queried for
 		Value v ; v.set( i ) ; v.property = mPinIDProp ;
-		TVERIFYRC(mSession->createPINAndCommit(referencedPins[i],&v,1));
+		TVERIFYRC(mSession->createPIN(&v,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+		referencedPins[i] = pin->getPID();
+		if(pin!=NULL) pin->destroy();
 	}
 
 	// Create pin that points to all of the referencedPins
-	PID pinWithColl ;
-	TVERIFYRC(mSession->createPINAndCommit(pinWithColl,NULL,0));
 
 	// Create the references 
+	IPIN *pin;
 	unsigned int k ;
+	Value *refs = (Value *)mSession->malloc(cntElements*sizeof(Value));
+	TVERIFY(refs!=NULL);
 	for ( k = 0 ; k < cntElements ; k++ )
 	{
-		Value ref ;	
-		ref.set(referencedPins[k]) ; ref.op = OP_ADD ; ref.property = mCollectionProp ; 
+		refs[k].set(referencedPins[k]) ; refs[k].op = OP_ADD ; refs[k].property = mCollectionProp ; 
 		
 		// REVIEW: doesn't seem to force it as a big collection
-		ref.meta = META_PROP_SSTORAGE ;
-
-		TVERIFYRC(mSession->modifyPIN( pinWithColl, &ref, 1 )) ;
+		refs[k].meta = META_PROP_SSTORAGE ;
 	}
-	
+	TVERIFYRC(mSession->createPIN(refs,cntElements,&pin,MODE_PERSISTENT));
+	PID pinWithColl = pin->getPID();
 	// Sanity check
-	IPIN * pin = mSession->getPIN(pinWithColl) ;
 	MvStoreEx::CollectionIterator collection(pin,mCollectionProp);
 	TVERIFY( collection.getSize() == cntElements ) ;
-	pin = NULL ;
+	if(pin!=NULL) pin->destroy();	pin = NULL ;
 
 	/*
 	Run query on the collection rather than entire store.  
@@ -118,7 +119,7 @@ void TestCollQuery::queryCollection( unsigned int cntElements )
 	operands[0].setVarRef(0,mPinIDProp); 
 	operands[1].set(indexOfPinToSearchFor) ;
 
-	CmvautoPtr<IExprTree> lExpr(mSession->expr(OP_EQ,2,operands,0)) ;
+	CmvautoPtr<IExprNode> lExpr(mSession->expr(OP_EQ,2,operands,0)) ;
 	TVERIFYRC(lQ->addCondition(lVar,lExpr));
 
 	verifyQueryFoundPIN( lQ, pidToSearchFor ) ;
@@ -175,15 +176,19 @@ void TestCollQuery::queryCollectionWithDuplicates( unsigned int cntElements, boo
 	unsigned int i ;
 	for ( i = 0 ; i < cntElements ; i++ )
 	{
-		TVERIFYRC(mSession->createPINAndCommit(referencedPins[i],NULL,0));
+		IPIN *pin;
+		TVERIFYRC(mSession->createPIN(NULL,0,&pin,MODE_PERSISTENT));
+		referencedPins[i] = pin->getPID();
+		if(pin!=NULL) pin->destroy();
 	}
 
 	Value bogus ; bogus.set( "something to ignore in collection" ) ; 
 	bogus.property = mCollectionProp ;
 	//bogus.meta = META_PROP_SSTORAGE ;
 
-	PID pinWithColl ;
-	TVERIFYRC(mSession->createPINAndCommit(pinWithColl,&bogus,1));
+	PID pinWithColl; IPIN *pin;
+	TVERIFYRC(mSession->createPIN(&bogus,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pinWithColl = pin->getPID();
 
 	unsigned int k ;
 	for ( k = 0 ; k < cntElements ; k++ )
@@ -196,10 +201,10 @@ void TestCollQuery::queryCollectionWithDuplicates( unsigned int cntElements, boo
 	}
 
 	// Sanity check
-	IPIN * pin = mSession->getPIN(pinWithColl) ;
+	pin = mSession->getPIN(pinWithColl) ;
 	MvStoreEx::CollectionIterator collection(pin,mCollectionProp);
 	TVERIFY( collection.getSize() == (1+cntElements*2) ) ;
-	pin = NULL ;
+	if(pin!=NULL) pin->destroy();	pin = NULL ;
 
 	/*
 	Run query on the collection rather than entire store.  
@@ -215,7 +220,7 @@ void TestCollQuery::queryCollectionWithDuplicates( unsigned int cntElements, boo
 	operands[0].setVarRef(0,propPinID); 
 	operands[1].set(pidToSearchFor); // Look for the 10th pin
 
-	IExprTree * lExpr = mSession->expr(OP_EQ,2,operands,0) ;
+	IExprNode * lExpr = mSession->expr(OP_EQ,2,operands,0) ;
 	TVERIFYRC(lQ->addCondition(lVar,lExpr));
 
 	verifyQueryFoundPIN( lQ, pidToSearchFor );

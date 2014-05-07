@@ -81,7 +81,7 @@ RC convCode(DWORD dwError)
 	case ERROR_MAX_THRDS_REACHED:
 	case ERROR_TOO_MANY_MODULES:
 	case ERROR_TOO_MANY_POSTS:
-	case ERROR_OUTOFMEMORY: rc = RC_NORESOURCES; break;
+	case ERROR_OUTOFMEMORY: rc = RC_NOMEM; break;
 
 	case ERROR_BAD_UNIT:
 	case ERROR_NOT_READY:
@@ -184,7 +184,7 @@ RC convCode(int err)
 	case E2BIG:
 	case ENOMEM:
 	case ENOBUFS:
-	case EFBIG: rc = RC_NORESOURCES; break;
+	case EFBIG: rc = RC_NOMEM; break;
 	case EINTR:			//The open operation was interrupted by a signal. See Interrupted Primitives. 
 	case ESPIPE:	//The file descriptor filedes is associated with a pipe or a FIFO and this device does not allow positioning of the file pointer. 
 	case EIO: rc = RC_DEVICEERR; break;

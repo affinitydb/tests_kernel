@@ -88,7 +88,7 @@ public:
 
 		Value lV[1];
 		lV[0].setVarRef(0,*inProps);
-		CmvautoPtr<IExprTree> lPropExist( mSession->expr(OP_EXISTS, 1, lV, 0));
+		CmvautoPtr<IExprNode> lPropExist( mSession->expr(OP_EXISTS, 1, lV, 0));
 		TVRC_R(lQ->addCondition(lVar,lPropExist),mTest);
 
 		/*
@@ -121,7 +121,7 @@ public:
 		Value args[2] ;
 		args[0].setVarRef(0,inKey );
 		args[1].setParam(0);
-		CmvautoPtr<IExprTree> expr(mSession->expr(OP_EQ,2,args));
+		CmvautoPtr<IExprNode> expr(mSession->expr(OP_EQ,2,args));
 
 		TVRC_R(lQ->addCondition( lVar, expr ),mTest) ;
 
@@ -238,7 +238,6 @@ public:
 
 	void AddClient( const char * inFirstName, const char * inLastName, int inAge )
 	{
-		PID pid ;
 		Value vals[4] ;
 
 		vals[0].set( mNextKey ) ; vals[0].property = mLibraryCardNumber_id ;
@@ -246,7 +245,7 @@ public:
 		vals[2].set( inLastName ) ; vals[2].property = mLastName_id ;
 		vals[3].set( inAge ) ; vals[3].property = mAge_id ;
 
-		TVRC_R(mSession->createPINAndCommit( pid, vals, 4),mTest) ;
+		TVRC_R(mSession->createPIN(vals, 4, NULL, MODE_PERSISTENT|MODE_COPY_VALUES),mTest) ;
 
 		mNextKey++ ;
 	}
@@ -301,14 +300,13 @@ public:
 
 	void AddBook( int isbn, const char * inTitle, const char * inAuthor )
 	{
-		PID pid ;
 		Value vals[3] ;
 
 		vals[0].set( isbn ) ; vals[0].property = mISBN_id ; // ISBN is presumably unique and good key
 		vals[1].set( inTitle ) ; vals[1].property = mTitle_id ;
 		vals[2].set( inAuthor ) ; vals[2].property = mAuthor_id ;
 
-		TVRC_R(mSession->createPINAndCommit( pid, vals, 3),mTest) ;
+		TVRC_R(mSession->createPIN(vals, 3, NULL, MODE_PERSISTENT|MODE_COPY_VALUES),mTest) ;
 	}
 
 #ifdef BIG_DATA
@@ -436,7 +434,6 @@ public:
 
 	void AddLoan( IPIN * inBook, IPIN * inClient, uint64_t borrowDate, uint64_t dueDate )
 	{
-		PID pid ;
 		Value vals[4] ;
 
 #if USE_PIN_REF
@@ -453,7 +450,7 @@ public:
 		vals[2].setDateTime( borrowDate ) ; vals[2].property = mBorrowDate_id ;
 		vals[3].setDateTime( dueDate ) ; vals[3].property = mDueDate_id ;
 
-		TVRC_R(mSession->createPINAndCommit( pid, vals, 4),mTest) ;
+		TVRC_R(mSession->createPIN(vals, 4, NULL, MODE_PERSISTENT|MODE_COPY_VALUES),mTest) ;
 	}
 
 	int mCntLoans ;
@@ -660,7 +657,7 @@ void TestRDBMS::FindOverdueBooks()
 	args[1].setDateTime( tsNow ) ;
 #endif
 
-	CmvautoPtr<IExprTree> expr(mSession->expr(OP_LE,2,args)) ;
+	CmvautoPtr<IExprNode> expr(mSession->expr(OP_LE,2,args)) ;
 	TVERIFYRC(qLoansTimeRange->addCondition(0, expr )) ;
 
 	uint64_t cntOverdue ;

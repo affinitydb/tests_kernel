@@ -349,8 +349,10 @@ void TestServices1::doCase5()
     values[iP].set(CASE5_FILENAME); values[iP].property = PROP_SPEC_ADDRESS; values[iP].meta = META_PROP_CREATE | META_PROP_WRITE; iP++;
     values[iP].set(1); values[iP].property = pmaps[0].uid; iP++;
     
-    PID pid={0, 0};
-    TVERIFYRC(mSession->createPINAndCommit(pid, values, iP)); 
+    PID pid={0, 0};IPIN *pin;
+    TVERIFYRC(mSession->createPIN(values, iP,&pin,MODE_PERSISTENT|MODE_COPY_VALUES)); 
+    pid = pin->getPID();
+    pin->destroy();
     TVERIFY(pid.pid != STORE_INVALID_PID); 
 
      // repro bug#395
@@ -577,7 +579,7 @@ class Case8Service : public IService
         case ISRV_WRITE:
           dscr|=ISRV_ALLOCBUF;
         case ISRV_READ:
-          if (NULL == (ret = new(ctx->malloc(sizeof(Proc8))) Proc8(*this, ctx))) return RC_NORESOURCES;
+          if (NULL == (ret = new(ctx->malloc(sizeof(Proc8))) Proc8(*this, ctx))) return RC_NOMEM;
           break;
         default:
           return RC_INVOP;

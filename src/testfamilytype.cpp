@@ -83,8 +83,7 @@ void TestFamilyType::testIndexBeforePin()
 	// first pin doesn't establish type of index anymore
 	int i=-1 ;
 	Value v ; v.set( i ) ; v.property = prop1 ;
-	PID pid1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pid1, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1, NULL,MODE_PERSISTENT|MODE_COPY_VALUES ) ) ;
 
 	// Add some doubles
 
@@ -95,17 +94,21 @@ void TestFamilyType::testIndexBeforePin()
 	for (size_t i = 0; i < (sizeof( dbls )/sizeof(dbls[0])) ; i++)
 	{
 		v.set( dbls[i] ) ; v.property = prop1 ;
-		TVERIFYRC( mSession->createPINAndCommit( pid1, &v, 1 ) ) ;
+		TVERIFYRC( mSession->createPIN(&v, 1, NULL,MODE_PERSISTENT|MODE_COPY_VALUES ) ) ;
 	}
 
 	// String can be converted to -1
-	PID pidConvertableStr ;
+	PID pidConvertableStr; IPIN *pin;
 	v.set( "-1" ) ; v.property = prop1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pidConvertableStr, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1, &pin, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
+	pidConvertableStr  = pin->getPID();
+	pin->destroy();
 
 	PID pidBadType ;
 	v.set( "bogus" ) ; v.property = prop1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pidBadType, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1, &pin, MODE_PERSISTENT|MODE_COPY_VALUES ) ) ;
+	pidBadType = pin->getPID();
+	pin->destroy();
 
 	// Try out the family
 	countIndexMatches(mFamilyFirst, prop1, -1 /*val to test*/, 2 /*expected matches -1 and "-1"*/) ; 
@@ -132,8 +135,7 @@ void TestFamilyType::testIndexForceInt()
 	
 	int i=-1 ;
 	Value v ; v.set( i ) ; v.property = prop1 ;
-	PID pid1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pid1, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
 
 	// Add some doubles. No truncation of decimal part (violates semantics)
 
@@ -144,18 +146,22 @@ void TestFamilyType::testIndexForceInt()
 	for (size_t i = 0; i < (sizeof( dbls )/sizeof(dbls[0])) ; i++)
 	{
 		v.set( dbls[i] ) ; v.property = prop1 ;
-		TVERIFYRC( mSession->createPINAndCommit( pid1, &v, 1 ) ) ;
+		TVERIFYRC( mSession->createPIN(&v, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES ) ) ;
 	}
 
 	// String can be converted to -1
-	PID pidConvertableStr ;
+	PID pidConvertableStr ;IPIN *pin;
 	v.set( "-1" ) ; v.property = prop1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pidConvertableStr, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1, &pin, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
+	pidConvertableStr = pin->getPID();
+	pin->destroy();
 
 	// String not indexed at all.  Overall transaction of committing the pin does not fail
 	PID pidBadType ;
 	v.set( "bogus" ) ; v.property = prop1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pidBadType, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN( &v, 1,&pin, MODE_PERSISTENT|MODE_COPY_VALUES ) ) ;
+	pidBadType = pin->getPID();
+	pin->destroy();
 
 	// Try out the family
 	countIndexMatches(mFamilyFirst, prop1, -1 /*val to test*/, 2 /*expected matches -1 and "-1"*/) ; 
@@ -182,15 +188,14 @@ void TestFamilyType::testIndexAfterPin()
 	// pin that will belong to family
 	int i=100 ;
 	Value v ; v.set( i ) ; v.property = prop1 ;
-	PID pid1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pid1, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
 
 	// Create family.  pid1 should be categorized and establish the type
 	ClassID mFamily = createEqFamily( "PinFirst", prop1 ) ;
 
 	// String can be converted to a number
 	v.set( "100" ) ; v.property = prop1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pid1, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
 
 	// Try out the family
 	// (If we only got one match it would suggest that the type was VT_STR,
@@ -209,8 +214,7 @@ void TestFamilyType::testForceType()
 	// first pin is int but index should remain double
 	int i=-1 ;
 	Value v ; v.set( i ) ; v.property = prop1 ;
-	PID pid1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pid1, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
 
 	// Add some doubles
 
@@ -221,12 +225,12 @@ void TestFamilyType::testForceType()
 	for (size_t i = 0 ; i < (sizeof( dbls )/sizeof(dbls[0])) ; i++)
 	{
 		v.set( dbls[i] ) ; v.property = prop1 ;
-		TVERIFYRC( mSession->createPINAndCommit( pid1, &v, 1 ) ) ;
+		TVERIFYRC( mSession->createPIN(&v, 1 , NULL, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
 	}
 
 	// String can be converted to -1.0
 	v.set( "-1" ) ; v.property = prop1 ;
-	TVERIFYRC( mSession->createPINAndCommit( pid1, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1, NULL,  MODE_PERSISTENT|MODE_COPY_VALUES ) ) ;
 
 	// Try out the family
 	countIndexMatches(mFamilyFirst, prop1, -1 /*val to test*/, 2 /*expected matches -1 and "-1"*/) ; 
@@ -246,8 +250,7 @@ void TestFamilyType::testStringIndex()
 	Value v ; 
 	
 	v.set( "First Data" ) ; v.property = prop1 ;
-	PID pid ;
-	TVERIFYRC( mSession->createPINAndCommit( pid, &v, 1 ) ) ;
+	TVERIFYRC( mSession->createPIN(&v, 1 , NULL, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
 	
 	countIndexMatches(mFamilyFirst, prop1, "First Data", 1) ; 
 }
@@ -268,7 +271,7 @@ ClassID TestFamilyType::createEqFamily
 	ops[0].setVarRef(0, inProp ) ;
 	ops[1].setParam(0,inIndexType);
 
-	CmvautoPtr<IExprTree> lE( mSession->expr( OP_EQ, 2, ops ) ) ;
+	CmvautoPtr<IExprNode> lE( mSession->expr( OP_EQ, 2, ops ) ) ;
 	lFamilyQ->addCondition( lVar, lE ) ;
 	
 	// Make sure query can survive persistence to/freom string format, including the param type

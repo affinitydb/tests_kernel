@@ -165,6 +165,7 @@ public:
 		: mSession( inSession)
 		, mTest( inTest )
 		, mBatchSize( inPinsPerBatch )
+		, mBatch(NULL)
 		, mEmailHelp( inSession )
 	{
 	}
@@ -211,9 +212,10 @@ public:
 	{
 		mCntEmails++ ;
 		// Not specifying MODE_COPY_VALUES so memory ownership passes to store
-		long lBeginTime = getTimeInMs() ;	
-		IPIN * pin;
-		TV_R(mSession->createPIN( ioPinCreator->mVals, ioPinCreator->mValPos, &pin,MODE_COPY_VALUES),mTest);
+		long lBeginTime = getTimeInMs() ;
+		if(mBatch==NULL)
+			mBatch=mSession->createBatch();
+		TVRC_R(mBatch->createPIN( ioPinCreator->mVals, ioPinCreator->mValPos, MODE_COPY_VALUES),mTest);
 		long lCommitTime = getTimeInMs() - lBeginTime ;
 
 		mBatchPinCreateTimes += lCommitTime ;
@@ -222,20 +224,11 @@ public:
 
 		ioPinCreator->destroy() ;
 
-		if ( pin == NULL )
-		{	
-			TV_R(!"Failure to create uncommitedPIN",mTest) ;
-			return false ;
-		}
 
-		mBatchPins.push_back( pin );
-
-		if ( (int)mBatchPins.size() == mBatchSize )
+		if ( (int)mBatch->getNumberOfPINs() == mBatchSize )
 		{
 			if ( !commitBatch() )
 				return false ;
-
-			assert( mBatchPins.empty() ) ;
 		}
 		return true ;		
 	}
@@ -244,7 +237,7 @@ private:
 	bool commitBatch()
 	{
 		// REVIEW: How will batch commits fit with the concept of transactions?
-		int cntPinsInBatch = (int) mBatchPins.size() ; // Could be less than mBatchSize
+		int cntPinsInBatch = (int) mBatch->getNumberOfPINs() ; // Could be less than mBatchSize
 
 		if ( cntPinsInBatch == 0 ) return true ;
 
@@ -256,7 +249,7 @@ private:
 #endif
 
 		long lBeginTime = getTimeInMs() ;	
-		RC rc = mSession->commitPINs( &(mBatchPins[0]), cntPinsInBatch ) ;
+		RC rc = mBatch->process() ;
 		long lCommitTime = getTimeInMs() - lBeginTime ;
 
 		// Timing/progress periodically logged by this helper
@@ -266,11 +259,7 @@ private:
 
 		TVRC_R(rc,mTest);
 
-		for ( int i = 0 ; i < cntPinsInBatch ; i++ )
-		{
-			mBatchPins[i]->destroy() ;
-		}
-		mBatchPins.clear() ;
+		mBatch=NULL;
 		mBatchPinCreateTimes = 0 ;
 		return ( rc == RC_OK ) ;
 	}
@@ -280,8 +269,7 @@ private:
 	ITest * mTest ;
 
 	int mBatchSize ;
-	vector<IPIN *> mBatchPins ;
-
+	IBatch *mBatch;
 	EmailPinHelp mEmailHelp ;
 	TimedActionReporter mActionReporter ;
 

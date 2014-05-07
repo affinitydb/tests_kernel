@@ -61,7 +61,7 @@ void testclassfilter::defineClass(int numClasses)
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mProp[i]);
-			IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+			IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 			TVERIFYRC(lClassQ->addCondition(lVar,lET1));			
 		}
 		strRand = "testclassfilterClass." + strRand;
@@ -99,7 +99,7 @@ void testclassfilter::createPins(int numPins)
 			tValue[0].set(1);
 			tValue[0].property=mProp[1];
 			TVERIFYRC(mSession->createPIN(tValue,1,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
-		}
+		} 
 	}
 }
 
@@ -121,7 +121,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1);
 	lV[0].setVarRef(0,mProp[2]);
-	IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+	IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 	TVERIFYRC(lQ->addCondition(lVar2,lET1));
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
 	else {lQ->setOp(lVar2,lVar1,QRY_UNION);}
@@ -135,7 +135,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	IStmt * const lQ =mSession->createStmt();
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	lV[0].setVarRef(0,mProp[2]);
-	IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+	IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1,lET1);
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
 	else {lQ->setOp(lVar2,lVar1,QRY_UNION);}
@@ -149,7 +149,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	IStmt * const lQ =mSession->createStmt();
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1);
 	lV[0].setVarRef(0,mProp[2]);
-	IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+	IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 	TVERIFYRC(lQ->addCondition(lVar2,lET1));
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
@@ -163,7 +163,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	{
 	IStmt * const lQ =mSession->createStmt();
 	lV[0].setVarRef(0,mProp[2]);
-	IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+	IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1,lET1);
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
@@ -180,7 +180,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1);
 	lV[0].setVarRef(0,mProp[2]);
 	lV[1].set(99);
-	IExprTree *lET1 = mSession->expr(OP_EQ, 2, lV);
+	IExprNode *lET1 = mSession->expr(OP_EQ, 2, lV);
 	TVERIFYRC(lQ->addCondition(lVar2,lET1));
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
 	else {lQ->setOp(lVar2,lVar1,QRY_UNION);}
@@ -195,7 +195,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	lV[0].setVarRef(0,mProp[2]);
 	lV[1].set(99);
-	IExprTree *lET1 = mSession->expr(OP_EQ, 2, lV);
+	IExprNode *lET1 = mSession->expr(OP_EQ, 2, lV);
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1,lET1);
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
 	else {lQ->setOp(lVar2,lVar1,QRY_UNION);}
@@ -210,7 +210,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1);
 	lV[0].setVarRef(lVar2,mProp[2]);
 	lV[1].set(99);
-	IExprTree *lET1 = mSession->expr(OP_EQ, 2, lV);
+	IExprNode *lET1 = mSession->expr(OP_EQ, 2, lV);
 	TVERIFYRC(lQ->addCondition(lVar2,lET1));
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
@@ -225,7 +225,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	IStmt * const lQ =mSession->createStmt();
 	lV[0].setVarRef(0,mProp[2]);
 	lV[1].set(99);
-	IExprTree *lET1 = mSession->expr(OP_EQ, 2, lV);
+	IExprNode *lET1 = mSession->expr(OP_EQ, 2, lV);
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1,lET1);
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
@@ -241,7 +241,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1);
 	lV[0].setVarRef(0,mProp[3]);
-	IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+	IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 	TVERIFYRC(lQ->addCondition(lVar2,lET1));
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
 	else {lQ->setOp(lVar2,lVar1,QRY_UNION);}
@@ -255,7 +255,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	IStmt * const lQ =mSession->createStmt();
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	lV[0].setVarRef(0,mProp[3]);
-	IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+	IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1,lET1);
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
 	else {lQ->setOp(lVar2,lVar1,QRY_UNION);}
@@ -269,7 +269,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	IStmt * const lQ =mSession->createStmt();
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1);
 	lV[0].setVarRef(lVar2,mProp[3]);
-	IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+	IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 	TVERIFYRC(lQ->addCondition(lVar2,lET1));
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}
@@ -283,7 +283,7 @@ void testclassfilter::verifyJoinQuery(bool lhs)
 	{
 	IStmt * const lQ =mSession->createStmt();
 	lV[0].setVarRef(0,mProp[3]);
-	IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+	IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 	unsigned char lVar2 = lQ->addVariable(&lCS2,1,lET1);
 	unsigned char lVar1 = lQ->addVariable(&lCS1,1);
 	if (lhs) {lQ->setOp(lVar1,lVar2,QRY_UNION);}

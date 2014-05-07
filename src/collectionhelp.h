@@ -19,7 +19,6 @@ namespace MvStoreEx
 		// Those include 
 		// -missing property (empty collection)
 		// -single value (1 element collection)
-		// -VT_ARRAY
 		// -VT_COLLECTION
 		//
 		// WARNING: this object is only valid for as long as the
@@ -53,17 +52,9 @@ namespace MvStoreEx
 				// representation of an empty collection 
 				m_size = 0 ;
 			}
-			else if ( m_value->type == Afy::VT_ARRAY )
+			else
 			{
-				m_size = m_value->length;
-			}
-			else if ( m_value->type == Afy::VT_COLLECTION )
-			{
-				m_size = m_value->nav->count();
-			}
-			else 
-			{
-				m_size = 1;
+				m_size = m_value->count();
 			}
 		}
 		uint32_t getSize( void )
@@ -76,13 +67,9 @@ namespace MvStoreEx
 
 			if ( m_value == NULL ) return NULL ;
 
-			if ( m_value->type == Afy::VT_ARRAY )
+			if ( m_value->type == Afy::VT_COLLECTION )
 			{
-				return m_value->varray + m_index;
-			}
-			else if ( m_value->type == Afy::VT_COLLECTION )
-			{
-				return m_value->nav->navigate( Afy::GO_FIRST );
+				return m_value->isNav() ? m_value->nav->navigate( Afy::GO_FIRST ) : m_value->varray;
 			}
 			return m_value;
 		}
@@ -92,13 +79,9 @@ namespace MvStoreEx
 
 			m_index = m_size -1 ;
 
-			if ( m_value->type == Afy::VT_ARRAY )
+			if ( m_value->type == Afy::VT_COLLECTION )
 			{
-				return m_value->varray + m_size - 1;
-			}
-			else if ( m_value->type == Afy::VT_COLLECTION )
-			{
-				return m_value->nav->navigate( Afy::GO_LAST );
+				return m_value->isNav() ? m_value->nav->navigate( Afy::GO_LAST ) : m_value->varray + m_size - 1;
 			}
 			return m_value;
 		}
@@ -107,15 +90,11 @@ namespace MvStoreEx
 			++m_index ;
 			if ( m_value == NULL ) return NULL ;
 
-			if ( m_value->type == Afy::VT_ARRAY && m_index < m_size )
+			if ( m_value->type == Afy::VT_COLLECTION )
 			{
-				return m_value->varray + m_index;
+				return m_value->isNav() ? m_value->nav->navigate( Afy::GO_NEXT ) : m_index < m_size ? m_value->varray + m_index : NULL;
 			}
-			else if ( m_value->type == Afy::VT_COLLECTION )
-			{
-				return m_value->nav->navigate( Afy::GO_NEXT );
-			}
-			return 0;
+			return NULL;
 		}
 		Afy::Value const* getElementId( Afy::ElementID in_id )
 		{
@@ -127,8 +106,11 @@ namespace MvStoreEx
 			if ( in_id == STORE_FIRST_ELEMENT )
 				return getFirst() ;
 
-			if ( m_value->type == Afy::VT_ARRAY )
+			if ( m_value->type == Afy::VT_COLLECTION )
 			{
+				// m_index is no longer valid!
+				if (m_value->isNav()) return m_value->nav->navigate( Afy::GO_FINDBYID, in_id );
+				
 				for ( uint32_t i=0; i < m_size; ++i )
 				{
 					if ( m_value->varray[i].eid == in_id )
@@ -137,12 +119,7 @@ namespace MvStoreEx
 						return m_value->varray + i;
 					}
 				}
-				return 0;
-			}
-			else if ( m_value->type == Afy::VT_COLLECTION )
-			{
-				// m_index is no longer valid!
-				return m_value->nav->navigate( Afy::GO_FINDBYID, in_id );
+				return NULL;
 			}
 
 			if ( in_id == STORE_COLLECTION_ID ||
@@ -152,7 +129,7 @@ namespace MvStoreEx
 				return m_value;
 			}
 
-			return 0;
+			return NULL;
 		}
 
 		uint32_t getCurrentPos() {

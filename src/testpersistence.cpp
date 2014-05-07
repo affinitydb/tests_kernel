@@ -135,8 +135,8 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	pm[14].URI = "TestPersistence.VT_REFIDELT";
 	pm[15].URI = "TestPersistence.VT_REFPROP";
 	pm[16].URI = "TestPersistence.VT_REFELT";
-	pm[17].URI = "TestPersistence.VT_ARRAY";
-	pm[18].URI = "TestPersistence.VT_COLLECTION";
+	pm[17].URI = "TestPersistence.VT_COLLECTION";
+	pm[18].URI = "TestPersistence.VT_COLLECTION";	// change to VT_ARRAY
 	pm[19].URI = "TestPersistence.VT_BOOL";
 	pm[20].URI = "TestPersistence.VT_DATETIME";
 	pm[21].URI = "TestPersistence.VT_INTERVAL";
@@ -148,19 +148,24 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	
 	RC rc = session->mapURIs(28,pm);
 
-	session->createPINAndCommit(pid1000,NULL,0);
-	session->createPINAndCommit(pid1001,NULL,0);
+	IPIN *pin;
+	TVERIFYRC(session->createPIN(NULL,0,&pin,MODE_PERSISTENT));
+	pid1000 = pin->getPID();
+	if(pin!=NULL) pin->destroy();
+	TVERIFYRC(session->createPIN(NULL,0,&pin,MODE_PERSISTENT));
+	pid1001 = pin->getPID();
+	if(pin!=NULL) pin->destroy();	
 	propOnRef=pm[13].uid;
 	propOnRef1=pm[12].uid;
 
 	//pin for VT_REFXXX
-	PID rpid;
+	PID rpid;IPIN *rpin;
 	val[0].set("pin for reference datatypes");val[0].setPropID(propOnRef);
 	val[1].set("collection prop0");val[1].setPropID(propOnRef1);val[1].op = OP_ADD;val[1].eid = STORE_LAST_ELEMENT;
 	val[2].set("collection prop1");val[2].setPropID(propOnRef1);val[2].op = OP_ADD;val[2].eid = STORE_LAST_ELEMENT;
 	val[3].set("collection prop2");val[3].setPropID(propOnRef1);val[3].op = OP_ADD;val[3].eid = STORE_LAST_ELEMENT;
-	rc = session->createPINAndCommit(rpid,val,4);
-	IPIN *rpin = session->getPIN(rpid);
+	TVERIFYRC(session->createPIN(val,4,&rpin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	rpid = rpin->getPID();
 	
 	//pin for persistence test
 	val[0].set("Revenge of the Sith");val[0].setPropID(pm[0].uid);
@@ -170,8 +175,8 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	char buf[16] = "Luke Skywalker";unsigned char *ubuf;
 	ubuf = (unsigned char*)malloc(strlen(buf)); memcpy(ubuf,buf,strlen(buf));
 	val[3].set(ubuf,(unsigned long)strlen(buf));val[3].setPropID(pm[3].uid);
-	val[4].setURL("http://www.starwars.com");val[4].setPropID(pm[4].uid);
-	val[5].setURL("http://www.lucasfilms.com");val[5].setPropID(pm[5].uid);
+	val[4].set("http://www.starwars.com");val[4].setPropID(pm[4].uid);
+	val[5].set("http://www.lucasfilms.com");val[5].setPropID(pm[5].uid);
 	val[3].meta = META_PROP_FTINDEX; 
 	val[6].set(unsigned(123612));val[6].setPropID(pm[6].uid);
 	int64_t i64 = 123456789;
@@ -202,7 +207,7 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	RefP rvalelt;
 	rvalelt.pin = rpin; rvalelt.pid=propOnRef1; rvalelt.eid=STORE_FIRST_ELEMENT; rvalelt.vid=0;
 	val[16].set(rvalelt);val[16].setPropID(pm[16].uid);
-	//VT_ARRAY
+	//VT_COLLECTION (varray)
 	Value *cval = new Value[4];
 	cval[0].set("a");
 	cval[1].set("ac");
@@ -241,7 +246,7 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	epids[0] = pm[1].uid;
 	eargs[0].setVarRef(0,*epids);
 	eargs[1].set("lucas");
-	IExprTree *expr1 = session->expr(OP_EQ,2,eargs,CASE_INSENSITIVE_OP);
+	IExprNode *expr1 = session->expr(OP_EQ,2,eargs,CASE_INSENSITIVE_OP);
 	IExpr *compexpr = expr1->compile();
 	expr1->destroy(); expr1 = NULL;
 	val[24].set(compexpr);val[24].setPropID(pm[24].uid);
@@ -254,7 +259,9 @@ void TestPersistence::createPins(ISession *session,URIMap *pm,int npm)
 	id = session->storeIdentity("Princess Leah",NULL,0);
 	val[26].setIdentity(id);val[26].setPropID(pm[26].uid);
 
-	rc = session->createPINAndCommit(pid[0],val,27);
+	TVERIFYRC(session->createPIN(val,27,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid[0] = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 	delete[] cval;
 	compexpr->destroy();
 	query->destroy();
@@ -277,9 +284,9 @@ void TestPersistence::checkPeristence(ISession *session, PID *pid,URIMap *pm,int
 	//VT_BSTR
 	if(pin->getValue(pm[3].uid)->type != VT_BSTR)
 		logResult(pin->getValue(pm[3].uid)->type,"VT_BSTR");
-	//VT_URL
-	if(pin->getValue(pm[4].uid)->type != VT_URL)
-		logResult(pin->getValue(pm[4].uid)->type,"VT_URL");
+	//VT_STRING
+	if(pin->getValue(pm[4].uid)->type != VT_STRING)
+		logResult(pin->getValue(pm[4].uid)->type,"VT_STRING");
 	//VT_UINT
 	if(pin->getValue(pm[6].uid)->type != VT_UINT)
 		logResult(pin->getValue(pm[6].uid)->type,"VT_UINT");
@@ -324,11 +331,11 @@ void TestPersistence::checkPeristence(ISession *session, PID *pid,URIMap *pm,int
 	//VT_REFELT
 	if(pin->getValue(pm[16].uid)->type != VT_REFELT)
 		logResult(pin->getValue(pm[16].uid)->type,"VT_REFELT");
-	//VT_ARRAY
-	if(pin->getValue(pm[17].uid)->type != VT_ARRAY && pin->getValue(pm[17].uid)->type != VT_COLLECTION)
-		logResult(pin->getValue(pm[17].uid)->type,"VT_ARRAY");
 	//VT_COLLECTION
-	if(pin->getValue(pm[18].uid)->type != VT_COLLECTION && pin->getValue(pm[18].uid)->type != VT_ARRAY)
+	if(pin->getValue(pin->getValue(pm[17].uid)->type != VT_COLLECTION))
+		logResult(pin->getValue(pm[17].uid)->type,"VT_COLLECTION");
+	//VT_COLLECTION
+	if(pin->getValue(pm[18].uid)->type != VT_COLLECTION)				//REVIEW: change to VT_ARRAY later
 		logResult(pin->getValue(pm[18].uid)->type,"VT_COLLECTION");
 	//VT_BOOL
 	if(pin->getValue(pm[19].uid)->type != VT_BOOL)
@@ -399,8 +406,6 @@ void TestPersistence::logResult(uint8_t type,string str)
 			retVal = "VT_BSTR";break;
 		case VT_INT:
 			retVal = "VT_INT";break;
-		case VT_URL:
-			retVal = "VT_URL";break;
 		case VT_INT64:
 			retVal = "VT_INT64";break;
 		case VT_UINT64:
@@ -421,8 +426,6 @@ void TestPersistence::logResult(uint8_t type,string str)
 			retVal = "VT_REFPROP";break;
 		case VT_REFELT:
 			retVal = "VT_REFELT";break;
-		case VT_ARRAY:
-			retVal = "VT_ARRAY";break;
 		case VT_COLLECTION:
 			retVal = "VT_COLLECTION";break;
 		case VT_BOOL:
@@ -465,13 +468,13 @@ void TestPersistence::serial(ISession *session,PID *pid)
 
 	unsigned int const sMode = session->getInterfaceMode();
 	session->setInterfaceMode(sMode | ITF_REPLICATION);
-	IPIN *newp = session->createPIN();
+	IPIN *newp;
+	TVERIFYRC(session->createPIN(NULL,0,&newp,MODE_PERSISTENT));
 	in.open("serial.log");
 	MvStoreSerialization::ContextInRaw lSerCtxin(in, *session);
 	MvStoreSerialization::InRaw::pin(lSerCtxin, *newp);
 	session->setInterfaceMode(sMode);
 
-	TVERIFYRC(session->commitPINs(&newp,1));
 	pid[0] = newp->getPID();
 	checkPeristence(session,pid,pm,sizeof(pm)/sizeof(pm[0]));
 	in.close();

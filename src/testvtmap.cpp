@@ -89,23 +89,39 @@ class MyVTMap1 : public IMap {
         unsigned cnt;
         MapElt *elts;
     public:
-        MyVTMap1();
+        MyVTMap1(bool create=true);
         ~MyVTMap1();
-        RC getNext(const Value *&key,const Value *&val,bool fFirst=false);
+        RC getNext(const Value *&key,const Value *&val,unsigned mode=0);
         unsigned count() const{return cnt;}
         const Value *find(const Value &key);
-        IMap *clone() const {return NULL;}; // not implement yet
+        IMap *clone() const;
         void destroy();
+        void setElts(MapElt *pElts, unsigned pCnt){elts=pElts;cnt=pCnt;}
 };
 
-MyVTMap1::MyVTMap1():pos(0),cnt(ELEMENTS_NUM),elts(NULL){
-    elts = (MapElt *)malloc(sizeof(MapElt)*ELEMENTS_NUM);
-    memset(elts, 0, sizeof(MapElt)*ELEMENTS_NUM);
-    for (unsigned i = 0; i < ELEMENTS_NUM; i++) {
-        elts[i].key.set(i);
-        MVTApp::randomString(g_strings_c2[i], 1, MAX_STR_LEN);
-        elts[i].val.set(g_strings_c2[i].c_str());
+MyVTMap1::MyVTMap1(bool create):pos(0),cnt(0),elts(NULL){
+    if(create) {
+        elts = (MapElt *)malloc(sizeof(MapElt)*ELEMENTS_NUM);
+        memset(elts, 0, sizeof(MapElt)*ELEMENTS_NUM);
+        for (unsigned i = 0; i < ELEMENTS_NUM; i++) {
+            elts[i].key.set(i);
+            MVTApp::randomString(g_strings_c2[i], 1, MAX_STR_LEN);
+            elts[i].val.set(g_strings_c2[i].c_str());
+        }
+        cnt = ELEMENTS_NUM;
     }
+}
+
+IMap* MyVTMap1::clone() const{
+    MyVTMap1 *newMap = new MyVTMap1(false);
+    MapElt *newElts = (MapElt *)malloc(sizeof(MapElt)*cnt);
+    if(newElts==NULL) {
+        delete newMap;
+        return NULL;
+    }
+    memcpy(newElts, elts, sizeof(MapElt)*cnt);
+    newMap->setElts(newElts, cnt);
+    return newMap;
 }
 
 const Value* MyVTMap1::find(const Value &key) {
@@ -114,10 +130,10 @@ const Value* MyVTMap1::find(const Value &key) {
     return &elts[idx].val;
 }
 
-RC MyVTMap1::getNext(const Value *&key,const Value *&val,bool fFirst) {
-    if(fFirst) pos=0; if(pos>=cnt) return RC_EOF;
-    key = &elts[pos].key; val = &elts[pos].val; pos++;
-    return RC_OK;
+RC MyVTMap1::getNext(const Value *&key,const Value *&val,unsigned mode) {
+	if ((mode&IMAP_FIRST)!=0) pos=(mode&IMAP_REVERSE)!=0?cnt:0; unsigned i=pos;
+	if ((mode&IMAP_REVERSE)!=0) {if (pos==0) return RC_EOF; i=--pos;} else if (pos<cnt) pos++; else return RC_EOF;
+	key=&elts[i].key; val=&elts[i].val; return RC_OK;
 }
 
 void MyVTMap1::destroy(){
@@ -164,7 +180,7 @@ void TestVTMap::doCase2()
     TVERIFY(ret[0]->type == VT_MAP);
     IMap* vmap = ret[0]->map;
     
-    while((rc = vmap->getNext(key, value, false)) == RC_OK){
+    while((rc = vmap->getNext(key, value, 0)) == RC_OK){
         TVERIFY(i == key->ui);
         TVERIFY(strncmp(value->str, g_strings_c2[i].c_str(), strlen(value->str)) == 0);
         TVERIFY(strncmp(value->str,(map->find(*key))->str, strlen(value->str)) == 0);
@@ -203,7 +219,7 @@ void TestVTMap::doCase3(){
     TVERIFY(ret[0]->type == VT_MAP);
     IMap* vmap = ret[0]->map;
     
-    while((rc = vmap->getNext(key, value, false)) == RC_OK){
+    while((rc = vmap->getNext(key, value, 0)) == RC_OK){
         cout << key->i << endl;
         cout << value->str << endl;
         i++;
@@ -224,33 +240,49 @@ class MyVTMap2 : public IMap {
         unsigned cnt;
         MapElt *elts;
     public:
-        MyVTMap2();
+        MyVTMap2(bool create=true);
         ~MyVTMap2();
-        RC getNext(const Value *&key,const Value *&val,bool fFirst=false);
+        RC getNext(const Value *&key,const Value *&val,unsigned mode=0);
         unsigned count() const{return cnt;}
         const Value *find(const Value &key);
-        IMap *clone() const {return NULL;}; // not implement yet
+        IMap *clone() const;
         void destroy();
+        void setElts(MapElt *pElts, unsigned pCnt){elts=pElts;cnt=pCnt;}
 };
 
 static char g_strings_c4[ELEMENTS_NUM/2][10];
 /*
  * a VT_MAP with such elements:{0->'0','0'->0,1->'1','1'->1,2->'2','2'->2, ...}
  */
-MyVTMap2::MyVTMap2():pos(0),cnt(ELEMENTS_NUM),elts(NULL){
-    elts = (MapElt *)malloc(sizeof(MapElt)*ELEMENTS_NUM);
-    memset(elts, 0, sizeof(MapElt)*ELEMENTS_NUM);
-    for (unsigned i = 0; i < ELEMENTS_NUM; i++) {
-        if (i%2==0) {
-            elts[i].key.set(i/2);
-            sprintf(g_strings_c4[i/2], "%d", i/2);
-            elts[i].val.set(g_strings_c4[i/2]);
-        } else {
-            sprintf(g_strings_c4[i/2], "%d", i/2);
-            elts[i].key.set(g_strings_c4[i/2]);
-            elts[i].val.set(i/2);
+MyVTMap2::MyVTMap2(bool create):pos(0),cnt(0),elts(NULL){
+    if (create) {
+        elts = (MapElt *)malloc(sizeof(MapElt)*ELEMENTS_NUM);
+        memset(elts, 0, sizeof(MapElt)*ELEMENTS_NUM);
+        for (unsigned i = 0; i < ELEMENTS_NUM; i++) {
+            if (i%2==0) {
+                elts[i].key.set(i/2);
+                sprintf(g_strings_c4[i/2], "%d", i/2);
+                elts[i].val.set(g_strings_c4[i/2]);
+            } else {
+                sprintf(g_strings_c4[i/2], "%d", i/2);
+                elts[i].key.set(g_strings_c4[i/2]);
+                elts[i].val.set(i/2);
+            }
         }
+        cnt = ELEMENTS_NUM;
     }
+}
+
+IMap *MyVTMap2::clone() const{
+    MyVTMap2 *newMap = new MyVTMap2(false);
+    MapElt *newElts = (MapElt *)malloc(sizeof(MapElt)*cnt);
+    if (newElts == NULL) {
+        delete newMap;
+        return NULL;
+    }
+    memcpy(newElts, elts, sizeof(MapElt)*cnt);
+    newMap->setElts(newElts, cnt);
+    return newMap;
 }
 
 const Value* MyVTMap2::find(const Value &key) {
@@ -270,10 +302,10 @@ const Value* MyVTMap2::find(const Value &key) {
     }
 }
 
-RC MyVTMap2::getNext(const Value *&key,const Value *&val,bool fFirst) {
-    if(fFirst) pos=0; if(pos>=cnt) return RC_EOF;
-    key = &elts[pos].key; val = &elts[pos].val; pos++;
-    return RC_OK;
+RC MyVTMap2::getNext(const Value *&key,const Value *&val,unsigned mode) {
+	if ((mode&IMAP_FIRST)!=0) pos=(mode&IMAP_REVERSE)!=0?cnt:0; unsigned i=pos;
+	if ((mode&IMAP_REVERSE)!=0) {if (pos==0) return RC_EOF; i=--pos;} else if (pos<cnt) pos++; else return RC_EOF;
+	key=&elts[i].key; val=&elts[i].val; return RC_OK;
 }
 
 void MyVTMap2::destroy(){
@@ -317,7 +349,7 @@ void TestVTMap::doCase4(){
     TVERIFY(ret[0]->type == VT_MAP);
     IMap* vmap = ret[0]->map;
     
-    while((rc = vmap->getNext(key, value, false)) == RC_OK){
+    while((rc = vmap->getNext(key, value, 0)) == RC_OK){
         if(key->type == VT_UINT){
             val = map->find(*key);
             TVERIFY(val != NULL);
@@ -382,7 +414,7 @@ void TestVTMap::doCase5(){
     IMap* vmap = ret[0]->map;
 
     unsigned int i =0;
-    while((rc = vmap->getNext(key, value, false)) == RC_OK){
+    while((rc = vmap->getNext(key, value, 0)) == RC_OK){
         TVERIFY(key->type==VT_STRING);
         if (strncmp(key->str, "zero", key->length) == 0) {
             TVERIFY(value->type == VT_INT);
@@ -480,7 +512,7 @@ void TestVTMap::doTestEnumeration(){
     vmap = ret->map;
 
     unsigned int i =0;
-    while((rc = vmap->getNext(key, value, false)) == RC_OK){
+    while((rc = vmap->getNext(key, value, 0)) == RC_OK){
         TVERIFY(key->type==VT_INT);
         TVERIFY(value->type==VT_ENUM);
         i++;
@@ -504,7 +536,7 @@ void TestVTMap::doTestEnumeration(){
     vmap = ret->map;
 
     i = 0;
-    while((rc = vmap->getNext(key, value, false)) == RC_OK){
+    while((rc = vmap->getNext(key, value, 0)) == RC_OK){
         TVERIFY(key->type==VT_ENUM);
         TVERIFY(value->type==VT_INT);
         i++;

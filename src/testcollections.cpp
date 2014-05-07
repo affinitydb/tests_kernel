@@ -126,7 +126,7 @@ void TestCollections::populateStore(ISession *session,URIMap *pm,int npm, PID *p
 	SETVALUE(pvs[4], pm[7].uid, 61, OP_SET);
 	SETVALUE(pvs[5], pm[8].uid, "!@#$% World", OP_SET);
 	SETVALUE(pvs[6], pm[9].uid, 0, OP_SET);
-	pvs[7].setURL("http://www.dhkkan.org"); SETVATTR(pvs[7], pm[3].uid, OP_SET);
+	pvs[7].set("http://www.dhkkan.org"); SETVATTR(pvs[7], pm[3].uid, OP_SET);
 	SETVALUE(pvs[8], pm[10].uid, 250, OP_SET);
 	SETVALUE(pvs[9], pm[11].uid, 12, OP_SET);
 	session->createPIN(pvs,10,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
@@ -176,7 +176,7 @@ void TestCollections::simpleCollection(ISession *session,URIMap *pm,int npm, PID
 	//case OP_ADD
 	//case 1: modify a pin by adding a collection element at the end.
 	pin = session->getPIN(pid[0]);
-	pv.setURL("http://choo.org");
+	pv.set("http://choo.org");
 	SETVATTR_C(pv, pm[3].uid, OP_ADD, STORE_LAST_ELEMENT);
 
 	rc = pin->modify(&pv,1);
@@ -236,8 +236,6 @@ void TestCollections::uncommitedpinCollection(ISession *session,URIMap *pm,int n
 	mLogger.out() << "uncommitedpinCollection" << std::endl;
 
 	IPIN * pin;
-	session->createPIN(NULL,0,&pin);
-	pin->destroy();
 	RC rc;
 
 	Value pv;
@@ -528,7 +526,7 @@ void TestCollections::cnavigCollection(ISession *session)
 		finStr += buff;
 		delete[] buff;
 
-		pvs[i].setURL(finStr.c_str());
+		pvs[i].set(finStr.c_str());
 		SETVATTR_C(pvs[i], propID, OP_ADD, STORE_LAST_ELEMENT);
 	} 
 	rc = session->createPIN(pvs, 5,&pin, MODE_PERSISTENT|MODE_COPY_VALUES);
@@ -540,29 +538,32 @@ void TestCollections::cnavigCollection(ISession *session)
 	//use go_last, go_first, go_next, go_findbyid for edit operations.
 	pv = pin->getValue(propID);
 	if (pv->type == VT_COLLECTION) {
-		pvs[0].setURL("http://max.org");
-		SETVATTR_C(pvs[0], propID, OP_ADD, pv->nav->navigate(GO_LAST)->eid);
+		if (pv->isNav())
+		{
+			pvs[0].set("http://max.org");
+			SETVATTR_C(pvs[0], propID, OP_ADD, pv->nav->navigate(GO_LAST)->eid);
 
-		pvs[1].setURL("http://mark.org");
-		SETVATTR_C(pvs[1], propID, OP_ADD, pv->nav->navigate(GO_PREVIOUS)->eid);
+			pvs[1].set("http://mark.org");
+			SETVATTR_C(pvs[1], propID, OP_ADD, pv->nav->navigate(GO_PREVIOUS)->eid);
 
-		pvs[2].setURL("http://yasir.org");
-		SETVATTR_C(pvs[2], propID, OP_ADD, pv->nav->navigate(GO_NEXT)->eid);
+			pvs[2].set("http://yasir.org");
+			SETVATTR_C(pvs[2], propID, OP_ADD, pv->nav->navigate(GO_NEXT)->eid);
 
-		pvs[3].setURL("http://shivam.org");
-		SETVATTR_C(pvs[3], propID, OP_ADD, pv->nav->navigate(GO_FIRST)->eid);
-	} else if (pv->type == VT_ARRAY) {
-		pvs[0].setURL("http://max.org");
-		SETVATTR_C(pvs[0], propID, OP_ADD, pv->varray[pv->length-1].eid);
+			pvs[3].set("http://shivam.org");
+			SETVATTR_C(pvs[3], propID, OP_ADD, pv->nav->navigate(GO_FIRST)->eid);
+		} else {
+			pvs[0].set("http://max.org");
+			SETVATTR_C(pvs[0], propID, OP_ADD, pv->varray[pv->length-1].eid);
 
-		pvs[1].setURL("http://mark.org");
-		SETVATTR_C(pvs[1], propID, OP_ADD, pv->varray[pv->length-2].eid);
+			pvs[1].set("http://mark.org");
+			SETVATTR_C(pvs[1], propID, OP_ADD, pv->varray[pv->length-2].eid);
 
-		pvs[2].setURL("http://yasir.org");
-		SETVATTR_C(pvs[2], propID, OP_ADD, pv->varray[pv->length-1].eid);
+			pvs[2].set("http://yasir.org");
+			SETVATTR_C(pvs[2], propID, OP_ADD, pv->varray[pv->length-1].eid);
 
-		pvs[3].setURL("http://shivam.org");
-		SETVATTR_C(pvs[3], propID, OP_ADD, pv->varray[0].eid);
+			pvs[3].set("http://shivam.org");
+			SETVATTR_C(pvs[3], propID, OP_ADD, pv->varray[0].eid);
+		}
 	} else TVERIFYRC(RC_TYPE);
 
 	rc = pin->modify(pvs,4);
@@ -679,9 +680,11 @@ void TestCollections::inputcnavigCollection(ISession *session)
 	
 	pv = pin->getValue(propID);
 	if (pv->type==VT_COLLECTION) {
-		SETVALUE_C(pvs[0], propID, pv->nav, OP_ADD, STORE_LAST_ELEMENT);
-	} else if (pv->type==VT_ARRAY) {
-		pvs[0].set((Value*)pv->varray,pv->length); SETVATTR_C(pvs[0], propID, OP_ADD, STORE_LAST_ELEMENT);
+		if (pv->isNav()) {
+			SETVALUE_C(pvs[0], propID, pv->nav, OP_ADD, STORE_LAST_ELEMENT);
+		} else {
+			pvs[0].set((Value*)pv->varray,pv->length); SETVATTR_C(pvs[0], propID, OP_ADD, STORE_LAST_ELEMENT);
+		}
 	} else TVERIFYRC(RC_TYPE);
 
 	rc = session->createPIN(pvs,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES);
@@ -694,12 +697,14 @@ void TestCollections::inputcnavigCollection(ISession *session)
 	pv = pin->getValue(propID);
 	//modify using CNavig coll of a given element
 	if (pv->type==VT_COLLECTION) {
-		colnav = pv->nav;
-		colnav->navigate(GO_FINDBYID,2);
-		SETVALUE_C(pvs[0], propID, colnav, OP_ADD, STORE_LAST_ELEMENT);
-		rc = pin->modify(pvs,1);
-	} else if (pv->type==VT_ARRAY) {
-		// ??? 
+		if (pv->isNav()) {
+			colnav = pv->nav;
+			colnav->navigate(GO_FINDBYID,2);
+			SETVALUE_C(pvs[0], propID, colnav, OP_ADD, STORE_LAST_ELEMENT);
+			rc = pin->modify(pvs,1);
+		} else {
+			// ??? 
+		}
 	} else
 		TVERIFYRC(RC_TYPE);
 	
@@ -1028,7 +1033,7 @@ void TestCollections::testFullScanCollection(ISession *session,URIMap *pm,int np
 	pids[0]=pm[0].uid;
 	args[0].setVarRef(0,*pids);
 	args[1].set("eLement 3");
-	IExprTree *expr = session->expr(OP_EQ,2,args,CASE_INSENSITIVE_OP);
+	IExprNode *expr = session->expr(OP_EQ,2,args,CASE_INSENSITIVE_OP);
 	query->addCondition(var,expr);
 
 	ICursor *result = NULL;
@@ -1054,11 +1059,11 @@ void TestCollections::testFullScanCollection(ISession *session,URIMap *pm,int np
 	pids1[0]=pm[1].uid;
 	args1[0].setVarRef(0,*pids1);
 	args1[1].set("ELEMENT 6");
-	IExprTree *expr1 = session->expr(OP_EQ,2,args1,CASE_INSENSITIVE_OP);
+	IExprNode *expr1 = session->expr(OP_EQ,2,args1,CASE_INSENSITIVE_OP);
 	
 	argsfinal[0].set(expr);
 	argsfinal[1].set(expr1);
-	IExprTree *exprfinal = session->expr(OP_LAND,2,argsfinal);
+	IExprNode *exprfinal = session->expr(OP_LAND,2,argsfinal);
 
 	query->addCondition(var,exprfinal);
 	TVERIFYRC(query->execute(&result));

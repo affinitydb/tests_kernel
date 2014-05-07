@@ -90,7 +90,7 @@ int TestRefVal::execute()
 						lReference.mReferenced.pid = lPropReferenced->property;
 
 						// Choose a value to reference, if relevant.
-						if (lPropReferenced->type == VT_ARRAY)
+						if (lPropReferenced->type == VT_COLLECTION && !lPropReferenced->isNav())
 						{
 							int const lValueReferencedIndex = MVTRand::getRange(0, (int)lPropReferenced->length-1);
 							lReference.mReferenced.eid = lPropReferenced->varray[lValueReferencedIndex].eid;

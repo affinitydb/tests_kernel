@@ -102,8 +102,7 @@ void TestIndexRollback::doTest()
 		va[0].set(query); va[0].property = PROP_SPEC_PREDICATE; va[0].meta = META_PROP_INDEXED;
 		MVTRand::getString(st,10,0,true);
 		va[1].set(st.c_str()); va[1].property = PROP_SPEC_OBJID;
-		PID pid;
-		mSession->createPINAndCommit(pid,va,2);
+		mSession->createPIN(va,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 		std::cout << char('$'+i) << flush;
 	}
 	std::cout << "\n starting deletion" << endl;

@@ -32,40 +32,42 @@ static inline bool testResultingStreams(TestLogger & pLogger, Value const * pVal
 		lSuccess = false;
 		pLogger.out() << "Error: Could not retrieve property!" << std::endl;
 	}
-	else if (pVal->type == VT_ARRAY)
-	{
-		if (uint32_t(pCollectionSize) != pVal->length)
-		{
-			lSuccess = false;
-			pLogger.out() << "Error: Found " << pVal->length << " elements in a collection where " << pCollectionSize << " were expected!" << std::endl;
-		}
-		pLogger.out() << "eids: ";
-		for (i = 0; i < pVal->length; i++)
-		{
-			pLogger.out() << std::hex << pVal->varray[i].eid << " ";
-			if (!MyStream::checkStream(pLogger, pVal->varray[i], pLen, pStartChar, pVT))
-				lSuccess = false;
-		}
-		pLogger.out() << std::endl;
-	}
 	else if (pVal->type == VT_COLLECTION)
 	{
-		i = 0;
-		pLogger.out() << "eids: ";
-		Value const * lNext = pVal->nav->navigate(GO_FIRST);
-		while (lNext)
-		{
-			i++;
-			pLogger.out() << std::hex << lNext->eid << " ";
-			if (!MyStream::checkStream(pLogger, *lNext, pLen, pStartChar, pVT))
+		if (!pVal->isNav()) {
+			if (uint32_t(pCollectionSize) != pVal->length)
+			{
 				lSuccess = false;
-			lNext = pVal->nav->navigate(GO_NEXT);
+				pLogger.out() << "Error: Found " << pVal->length << " elements in a collection where " << pCollectionSize << " were expected!" << std::endl;
+			}
+			pLogger.out() << "eids: ";
+			for (i = 0; i < pVal->length; i++)
+			{
+				pLogger.out() << std::hex << pVal->varray[i].eid << " ";
+				if (!MyStream::checkStream(pLogger, pVal->varray[i], pLen, pStartChar, pVT))
+					lSuccess = false;
+			}
+			pLogger.out() << std::endl;
 		}
-		pLogger.out() << std::endl;
-		if (size_t(pCollectionSize) != i)
+		else
 		{
-			lSuccess = false;
-			pLogger.out() << "Error: Found " << (unsigned int)i << " elements in a collection where " << pCollectionSize << " were expected!" << std::endl;
+			i = 0;
+			pLogger.out() << "eids: ";
+			Value const * lNext = pVal->nav->navigate(GO_FIRST);
+			while (lNext)
+			{
+				i++;
+				pLogger.out() << std::hex << lNext->eid << " ";
+				if (!MyStream::checkStream(pLogger, *lNext, pLen, pStartChar, pVT))
+					lSuccess = false;
+				lNext = pVal->nav->navigate(GO_NEXT);
+			}
+			pLogger.out() << std::endl;
+			if (size_t(pCollectionSize) != i)
+			{
+				lSuccess = false;
+				pLogger.out() << "Error: Found " << (unsigned int)i << " elements in a collection where " << pCollectionSize << " were expected!" << std::endl;
+			}
 		}
 	}
 	else if (pVal->type == VT_STREAM || pVal->type == pVT)

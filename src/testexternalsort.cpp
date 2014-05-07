@@ -139,8 +139,7 @@ void TestExternalSort::doTest(int newpins)
 #endif
 			}
 
-			PID pid ;
-			TVERIFYRC(mSession->createPINAndCommit(pid,v,cntProps));
+			TVERIFYRC(mSession->createPIN(v,cntProps,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 		}
 		mSession->commit(true);
 	}

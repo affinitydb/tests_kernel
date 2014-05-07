@@ -284,8 +284,12 @@ static bool containsValue(Afy::Value const & pV, long pValue)
 	switch (pV.type)
 	{
 		case Afy::VT_INT: return (int32_t)pValue == pV.i;
-		case Afy::VT_ARRAY: { size_t i; for (i = 0; i < pV.length; i++) if (containsValue(pV.varray[i], pValue)) return true; } return false;
-		case Afy::VT_COLLECTION: if (pV.nav) { Value const * lNext; for (lNext = pV.nav->navigate(GO_FIRST); NULL != lNext; lNext = pV.nav->navigate(GO_NEXT)) { if (containsValue(*lNext, pValue)) return true; } } return false;
+		case Afy::VT_COLLECTION: 
+			if (pV.isNav()) {
+				if (pV.nav) { Value const * lNext; for (lNext = pV.nav->navigate(GO_FIRST); NULL != lNext; lNext = pV.nav->navigate(GO_NEXT)) { if (containsValue(*lNext, pValue)) return true; } } return false;
+			} else {
+				{ size_t i; for (i = 0; i < pV.length; i++) if (containsValue(pV.varray[i], pValue)) return true; } return false;
+			}
 		default: return false;
 	}
 }

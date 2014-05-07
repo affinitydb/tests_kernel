@@ -78,7 +78,7 @@ void TestFamilyOrder::createFamily(unsigned int flag)
 
 	ops[0].setVarRef(lVar, mPropIDs[0]);
 	ops[1].setParam(0);
-	IExprTree *lE = mSession->expr(OP_BEGINS, 2, ops, flag);
+	IExprNode *lE = mSession->expr(OP_BEGINS, 2, ops, flag);
 	lFamilyQ->addCondition( lVar, lE ) ;
 	Tstring randStr;
 	MVTApp::randomString(randStr,10,20);

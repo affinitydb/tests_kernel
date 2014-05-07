@@ -401,8 +401,7 @@ void TestRecoveryBase::addBasicContent()
 	PropertyID id = MVTApp::getProp(mSession,"DummyProp"); 
 
 	Value v ; v.set( "dummy property" ) ; v.property = id ;
-	PID pid ;
-	TVERIFYRC(mSession->createPINAndCommit(pid,&v,1,0));	
+	TVERIFYRC(mSession->createPIN(&v,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));	
 
 #if 1
 	// Forcing a class into the store will prevent recovery 
@@ -439,8 +438,7 @@ class TestRecoveryBasic : public TestRecoveryBase
 			for ( size_t i = 0 ; i < 100 ; i++ )
 			{
 				Value v ; v.set( 100 ) ; v.property = id ;
-				PID pid ;
-				TVERIFYRC(mSession->createPINAndCommit(pid,&v,1,0));
+				TVERIFYRC(mSession->createPIN(&v,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 			}
 		}
 };
@@ -539,11 +537,13 @@ class TestRecoveryTransaction : public TestRecoveryBase
 			lQ->destroy() ;
 
 			Value v ; 
-			PID pid ;
+			PID pid ;IPIN *pin;
 
 			mSession->startTransaction() ;
 			v.set( "should be there" ) ; v.property = idA ;
-			TVERIFYRC(mSession->createPINAndCommit(pid,&v,1,0));
+			TVERIFYRC(mSession->createPIN(&v,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+			pid = pin->getPID();
+			pin->destroy();
 
 			// Also add this pin as part of the "PinsWithPropC" index
 			v.set(99) ; v.property=idC ;
@@ -553,7 +553,7 @@ class TestRecoveryTransaction : public TestRecoveryBase
 
 			mSession->startTransaction() ;
 			v.set( "should not be there" ) ; v.property = idA ;
-			TVERIFYRC(mSession->createPINAndCommit(pid,&v,1,0));
+			TVERIFYRC(mSession->createPIN(&v,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 			mSession->rollback() ;
 
 			if ( !inReference )
@@ -572,13 +572,13 @@ class TestRecoveryTransaction : public TestRecoveryBase
 					IStream *stream = MVTApp::wrapClientStream(mSession,new TestStringStream(16000,VT_STRING));
 					vals[1].set( stream ) ; vals[1].property = idB ;
 				
-					TVERIFYRC(mSession->createPINAndCommit(pid,vals,2,0));
+					TVERIFYRC(mSession->createPIN(vals,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 					for ( int k = 0 ; k < 100 ; k++ )
 					{
 						vals[0].set(k) ; vals[0].property=idC ; vals[0].op = OP_ADD ;
 						vals[0].meta = META_PROP_SSTORAGE ;
-						TVERIFYRC(mSession->modifyPIN( pid, vals,1 )) ;
+						TVERIFYRC(pin->modify(vals,1)) ;
 					}
 				}
 			}

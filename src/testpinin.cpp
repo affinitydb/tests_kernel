@@ -161,7 +161,7 @@ void TestPINIn::createBasePINs(ISession *pSession){
 		// Approx half the pins will have property5, which either joins or
 		// kicks them out of the query
 		if(MVTRand::getBool()){
-			lVal[5].setURL("https://wiki.vmware.com");lVal[5].setPropID(mPropIds[5]);
+			lVal[5].set("https://wiki.vmware.com");lVal[5].setPropID(mPropIds[5]);
 			CREATEPIN(pSession, &mPIDs[i], lVal, 6);
 		}else{
 			CREATEPIN(pSession, &mPIDs[i], lVal, 5);		
@@ -173,7 +173,7 @@ void TestPINIn::createBasePINs(ISession *pSession){
 void TestPINIn::createClass(ISession *pSession, ClassID &pCLSID, const int pCase){
 	IStmt * lQ	= pSession->createStmt();
 	unsigned char const lVar = lQ->addVariable();
-	IExprTree *lE;
+	IExprNode *lE;
 	switch(pCase){
 		case 0:
 			{

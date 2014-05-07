@@ -73,22 +73,24 @@ void TestClassCreation::doTest()
 		va[4].set(int((double)MVTRand::getRange(1,RAND_MAX-2) / RAND_MAX * 999999)); va[4].property = ids[4];
 		mSession->createPIN(va,5,&pins[i],MODE_COPY_VALUES);
 	}
-	IPIN *cpins[650];
 	int counter1 = 0;
 	for (int i = 0; i < 2000000/3+1; i++)
 	{
+		IBatch *lBatch = mSession->createBatch();
+		TVERIFY(lBatch!=NULL);
 		for (int j = 0; j < 3; j++)
 		{
 			counter1++;
-			cpins[j] = pins[j]->clone();
+			TVERIFYRC(lBatch->clone(pins[j]));
 		}
-		mSession->commitPINs(cpins,3);
-		PID pid = cpins[0]->getPID();
+		TVERIFYRC(lBatch->process(false));
 		for (int j = 0; j < 3; j++)
 		{
-			pins_set->insert(cpins[j]->getPID());
-			cpins[j]->destroy();
+			PID pid;
+			TVERIFYRC(lBatch->getPID(j,pid));
+			pins_set->insert(pid);
 		}
+		if(lBatch != NULL) lBatch->destroy();
 		if (i % 10000==0) std::cout << "." << flush;
 	}
 

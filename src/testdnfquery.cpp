@@ -41,45 +41,45 @@ void TestDNFQuery::testDNFSimple()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			// (!a and b and !c)
 			lV[0].setVarRef(0,lPropIDs[0]);
-			IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
+			IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
 
 			lV[0].setVarRef(0,lPropIDs[1]);
-			IExprTree *lET2 = mSession->expr(OP_EXISTS, 1, lV);
+			IExprNode *lET2 = mSession->expr(OP_EXISTS, 1, lV);
 
 			lV[0].setVarRef(0,lPropIDs[2]);
-			IExprTree *lET3 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
+			IExprNode *lET3 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
 
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			IExprTree *lET4 = mSession->expr(OP_LAND, 2, lV);
+			IExprNode *lET4 = mSession->expr(OP_LAND, 2, lV);
 
 			lV[0].set(lET4);
 			lV[1].set(lET3);
-			IExprTree *lET5 = mSession->expr(OP_LAND, 2, lV);
+			IExprNode *lET5 = mSession->expr(OP_LAND, 2, lV);
 
 			// !a and !b and c)
 
 			lV[0].setVarRef(0,lPropIDs[0]);
-			IExprTree *lET6 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
+			IExprNode *lET6 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
 
 			lV[0].setVarRef(0,lPropIDs[1]);
-			IExprTree *lET7 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
+			IExprNode *lET7 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
 
 			lV[0].setVarRef(0,lPropIDs[2]);
-			IExprTree *lET8 = mSession->expr(OP_EXISTS, 1, lV);
+			IExprNode *lET8 = mSession->expr(OP_EXISTS, 1, lV);
 
 			lV[0].set(lET6);
 			lV[1].set(lET7);
-			IExprTree *lET9 = mSession->expr(OP_LAND, 2, lV);
+			IExprNode *lET9 = mSession->expr(OP_LAND, 2, lV);
 
 			lV[0].set(lET9);
 			lV[1].set(lET8);
-			IExprTree *lET10 = mSession->expr(OP_LAND, 2, lV);
+			IExprNode *lET10 = mSession->expr(OP_LAND, 2, lV);
 
 			lV[0].set(lET5);
 			lV[1].set(lET10);
@@ -94,31 +94,31 @@ void TestDNFQuery::testDNFSimple()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			// (!a or b)
 			lV[0].setVarRef(0,lPropIDs[0]);
-			IExprTree *lET1 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
+			IExprNode *lET1 = mSession->expr(OP_EXISTS, 1, lV, NOT_BOOLEAN_OP);
 
 			lV[0].setVarRef(0,lPropIDs[1]);
-			IExprTree *lET2 = mSession->expr(OP_EXISTS, 1, lV);
+			IExprNode *lET2 = mSession->expr(OP_EXISTS, 1, lV);
 
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			IExprTree *lET3 = mSession->expr(OP_LOR, 2, lV);
+			IExprNode *lET3 = mSession->expr(OP_LOR, 2, lV);
 
 			// (d or e)
 
 			lV[0].setVarRef(0,lPropIDs[3]);
-			IExprTree *lET4 = mSession->expr(OP_EXISTS, 1, lV);
+			IExprNode *lET4 = mSession->expr(OP_EXISTS, 1, lV);
 
 			lV[0].setVarRef(0,lPropIDs[4]);
-			IExprTree *lET5 = mSession->expr(OP_EXISTS, 1, lV);
+			IExprNode *lET5 = mSession->expr(OP_EXISTS, 1, lV);
 
 			lV[0].set(lET4);
 			lV[1].set(lET5);
-			IExprTree *lET6 = mSession->expr(OP_LOR, 2, lV);
+			IExprNode *lET6 = mSession->expr(OP_LOR, 2, lV);
 
 			lV[0].set(lET3);
 			lV[1].set(lET6);

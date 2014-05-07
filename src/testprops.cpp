@@ -171,8 +171,8 @@ int TestProps::execute()
 void TestProps::genValue(const IPIN * const *PINs,int nPINs,Value& val, PropertyID pid, bool fCElt, ISession *pSession)
 {
 	if (pid==STORE_INVALID_URIID) pid = mPropIDs[rand()%sNumPropInd]; unsigned char *ubuf; char *str;
-	val.type = (ValueType)(rand()%(VT_ARRAY+1)); val.eid=STORE_COLLECTION_ID;
-	if (fCElt && val.type==VT_ARRAY) val.type=VT_STRING;
+	val.type = (ValueType)(rand()%(VT_COLLECTION+1)); val.eid=STORE_COLLECTION_ID;
+	if (fCElt && val.type==VT_COLLECTION) val.type=VT_STRING;
 	char buf[200]; unsigned len = rand()%(sizeof(buf)-1),i; Value *vals;
 	switch (val.type) {
 	case VT_REFID: {
@@ -192,10 +192,6 @@ void TestProps::genValue(const IPIN * const *PINs,int nPINs,Value& val, Property
 		for (i=0; i<len; i++) buf[i] = (char)rand();
 		ubuf = (unsigned char*)pSession->malloc(len); memcpy(ubuf,buf,len);
 		val.set(ubuf,len); break;
-	case VT_URL:
-		for (i=0; i<len; i++) buf[i] = (char)(rand()%(0x7f-' ')+' ');
-		buf[len]=0; str = (char*)pSession->malloc(sizeof(char)*(len+1)); strcpy(str, buf); 
-		val.setURL(str); break;
 	case VT_INT: val.set((int)rand()); break;
 	case VT_UINT: val.set((unsigned)rand()); break;
 	case VT_INT64: val.setI64((int64_t)rand()); break;
@@ -205,7 +201,7 @@ void TestProps::genValue(const IPIN * const *PINs,int nPINs,Value& val, Property
 	case VT_BOOL: val.set((rand()&1)!=0); break;
 	case VT_DATETIME: val.setDateTime((uint64_t)rand()); break;
 	case VT_INTERVAL: val.setInterval((int64_t)rand()); break;
-	case VT_ARRAY:
+	case VT_COLLECTION:
 		len=rand()%30+2; vals=(Value*)pSession->malloc(len*sizeof(Value));
 		for (i=0; i<len; i++) {genValue(PINs,nPINs,val,pid,true,pSession); vals[i]=val;}
 		val.set(vals,len);
@@ -224,10 +220,10 @@ static void freeValue(ISession *pSes, Value& v)
 {
 	switch (v.type) {
 	default: break;
-	case VT_STRING: case VT_BSTR: case VT_URL:
+	case VT_STRING: case VT_BSTR:
 		pSes->free((void*)v.str); break;
-	case VT_ARRAY:
-		if (v.varray!=NULL) {
+	case VT_COLLECTION:
+		if (!v.isNav() && v.varray!=NULL) {
 			for (ulong i=0; i<v.length; i++) freeValue(pSes, const_cast<Value&>(v.varray[i]));
 			pSes->free(const_cast<Value*>(v.varray));
 		}
@@ -241,7 +237,7 @@ static bool findCollection(const IPIN * const *PINs,int nPINs,int &idx,unsigned 
 		const IPIN *pin = PINs[i]; unsigned nProps = pin->getNumberOfProperties();
 		if (nProps>0) for (unsigned k=rand()%nProps,l=0; l<nProps; ++l,k=(k+1)%nProps) {
 			const Value *val = pin->getValueByIndex(k);
-			if (val!=NULL && val->type==VT_ARRAY) {idx=i; propIdx=k; return true;}
+			if (val!=NULL && val->type==VT_COLLECTION && !val->isNav()) {idx=i; propIdx=k; return true;}
 		}
 	}
 	return false;
@@ -269,7 +265,7 @@ static THREAD_SIGNATURE threadProc(void * pInfo)
 	srand(seed);
 
 	// Each thread words on its own set of PINs
-	IPIN *PINs[1024]; int nPINs = 0; Value *values = (Value*)ses->malloc(20*sizeof(Value)); PID pid; const Value *val;
+	IPIN *PINs[1024]; int nPINs = 0; Value *values = (Value*)ses->malloc(20*sizeof(Value));const Value *val;
 
 	lInfo->lock->lock();
 	while (!lInfo->fStarted) lInfo->start->wait(*lInfo->lock,0);
@@ -290,7 +286,7 @@ static THREAD_SIGNATURE threadProc(void * pInfo)
 				//Attempt to force collection case
 				values[j].op = OP_ADD; values[j].eid=STORE_FIRST_ELEMENT; // In case same property was picked more than once
 			}
-			if (RC_OK == ses->createPINAndCommit(pid, values,idx) && (pin = ses->getPIN(pid))!=NULL){ 
+			if (RC_OK == ses->createPIN( values,idx, &pin, MODE_PERSISTENT|MODE_COPY_VALUES) ){ 
 			        /*
 			         * I'm planning to add 'TAG' string value to each CREATED PIN
 			         * Later, I will find all those PINS in order to delete them... 
@@ -314,7 +310,7 @@ static THREAD_SIGNATURE threadProc(void * pInfo)
 			break;
 		case POP_ADDCELT:
 			if (findCollection(PINs,nPINs,npin,idx) && (val=(pin=PINs[npin])->getValueByIndex(idx))!=NULL) {
-				assert(val->type==VT_ARRAY);
+				assert(val->type==VT_COLLECTION);
 				lInfo->pTest->genValue(PINs,nPINs,values[0],val->property,true,ses); 
 				values[0].setOp(OP_ADD_BEFORE); values[0].eid=STORE_FIRST_ELEMENT;
 				TVRC_R(pin->modify(&values[0],1),lInfo->pTest); freeValue(ses,values[0]); break;
@@ -326,7 +322,7 @@ static THREAD_SIGNATURE threadProc(void * pInfo)
 			break;
 		case POP_UPDCELT:
 			if (findCollection(PINs,nPINs,npin,idx) && (val=(pin=PINs[npin])->getValueByIndex(idx))!=NULL) {
-				assert(val->type==VT_ARRAY);
+				assert(val->type==VT_COLLECTION);
 				lInfo->pTest->genValue(PINs,nPINs,values[0],val->property,true,ses); 
 				values[0].setOp(OP_SET); values[0].eid=val->varray[rand()%val->length].eid;
 				TVRC_R(pin->modify(&values[0],1),lInfo->pTest); freeValue(ses,values[0]); break;
@@ -342,7 +338,7 @@ static THREAD_SIGNATURE threadProc(void * pInfo)
 						val=pin->getValueByIndex(idx);
 						if (val->property!=lInfo->pTest->mPropIDs[sNumPropInd]) break;
 					}
-					lInfo->pTest->genValue(PINs,nPINs,values[0],val->property,val->type==VT_ARRAY,ses);
+					lInfo->pTest->genValue(PINs,nPINs,values[0],val->property,val->type==VT_COLLECTION,ses);
 					values[0].setOp(OP_SET); values[0].eid=STORE_COLLECTION_ID;
 					TVRC_R(pin->modify(&values[0],1),lInfo->pTest); freeValue(ses, values[0]);
 				}
@@ -350,7 +346,7 @@ static THREAD_SIGNATURE threadProc(void * pInfo)
 			break;
 		case POP_DELCELT:
 			if (findCollection(PINs,nPINs,npin,idx) && (val=(pin=PINs[npin])->getValueByIndex(idx))!=NULL) {
-				assert(val->type==VT_ARRAY); 
+				assert(val->type==VT_COLLECTION); 
 				values[0].setDelete(val->property,val->varray[rand()%val->length].eid);
 				TVRC_R(pin->modify(&values[0],1),lInfo->pTest); break;
 			}

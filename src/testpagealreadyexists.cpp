@@ -89,7 +89,7 @@ THREAD_SIGNATURE TestPageAlreadyExists::threadReplicate(void * inTest)
 		unsigned char var = query->addVariable();
 		Value args[1];
 		args[0].setVarRef(var,test->lPropIDs[0]);
-		IExprTree *expr = session->expr(OP_EXISTS,1,args);
+		IExprNode *expr = session->expr(OP_EXISTS,1,args);
 		query->addCondition(var,expr);
 		ICursor *result = NULL;
 		query->execute(&result);

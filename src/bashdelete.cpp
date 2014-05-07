@@ -235,7 +235,7 @@ void TestBashPinDelete::deleteTestPins()
 	unsigned char var = lQ->addVariable(); 
 	Value args[1];
 	args[0].setVarRef(0,mPropForDelete);
-	CmvautoPtr<IExprTree> expr(mSession->expr(OP_EXISTS,1,args));
+	CmvautoPtr<IExprNode> expr(mSession->expr(OP_EXISTS,1,args));
 	lQ->addCondition(var,expr);
 
 	if ( mDeleteScenario == 1 )

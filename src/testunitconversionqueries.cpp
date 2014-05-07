@@ -20,7 +20,6 @@ public:
 public:
 	ISession * mySession ;
 	PropertyID	myProp[30] ;
-	IPIN *myIPIN;
 	SourceSpec lCS;
 	
 	struct TestUnits
@@ -183,8 +182,7 @@ void testunitconversionqueries::createUnitPins(void)
 		testvalue[1].set(d,units[i].pu);
 		testvalue[1].property=myProp[units[i].UnitType];
 
-		myIPIN = mySession->createPIN(testvalue,2);	
-		TVERIFYRC(mySession->commitPINs(&myIPIN,1)); 
+		TVERIFYRC(mySession->createPIN(testvalue,2,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 	}
 	
 	/* creating class and classSpec*/
@@ -208,7 +206,7 @@ void testunitconversionqueries::createUnitPins(void)
 		
 		lV[0].setVarRef(0,myProp[units[i].UnitType]);
 		lV[1].set(d,units[i].pu);
-		IExprTree * const lE = mySession->expr(OP_EQ, 2, lV);
+		IExprNode * const lE = mySession->expr(OP_EQ, 2, lV);
 		lQ->addCondition(lVar,lE);
 		lQ->count(lCount);
 		if(i==7||i==25||i==26||i==27) //These are different units with same convesrion ratio.
@@ -224,7 +222,7 @@ void testunitconversionqueries::verifyMulDiv(double d1,Units u1,ExprOp op,double
 	IStmt * const lQ1 =mySession->createStmt();
 	ICursor *myResult;
 	IPIN *pin;
-	IExprTree * lE1;
+	IExprNode * lE1;
 	unsigned lVar1;
 	Value lV[2];
 	const Value * rV;
@@ -330,7 +328,7 @@ void testunitconversionqueries::verifyMulDiv(double d1,Units u1,ExprOp op,double
 	lE1 = mySession->expr(op, 2, lV);
 	lV[0].set(lE1);
 	lV[1].setVarRef(0,myProp[units[expectedUnit-1].UnitType]);
-	IExprTree * const lE2 = mySession->expr(OP_EQ, 2, lV);
+	IExprNode * const lE2 = mySession->expr(OP_EQ, 2, lV);
 	lQ1->addCondition(lVar1,lE2);
 	lQ1->count(lCount);
 	TVERIFY(lCount==1);

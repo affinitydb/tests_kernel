@@ -46,7 +46,7 @@ int TestMergeCollections::execute()
 			Value lV[2]; 
 			lV[0].setVarRef(0,lPropIdVal);
 			lV[1].setParam(0);
-			IExprTree *expr=lSession->expr(OP_LT,2,lV);
+			IExprNode *expr=lSession->expr(OP_LT,2,lV);
 			IStmt *lQ = lSession->createStmt();
 			lQ->addVariable(NULL,0,expr);
 			TVERIFYRC(defineClass(lSession,lB,lQ,&lClassVal));
@@ -72,7 +72,7 @@ int TestMergeCollections::execute()
 			Value lVFoR[2];
 			lVFoR[0].setVarRef(0,lPropIdRef);
 			lVFoR[1].setParam(0);
-			IExprTree *expr=lSession->expr(OP_IN,2,lVFoR);
+			IExprNode *expr=lSession->expr(OP_IN,2,lVFoR);
 			IStmt *lQ = lSession->createStmt();
 			lQ->addVariable(NULL,0,expr);
 			TVERIFYRC(defineClass(lSession,lB,lQ,&lClassFamilyOnRef));
@@ -176,7 +176,7 @@ int TestMergeCollections::execute()
 
 		lV[0].setVarRef(lVar1,lPropIdRef);
 		lV[1].setVarRef(lVar2,lPropIdPinId);
-		IExprTree *expr = lSession->expr(OP_EQ,2,lV);
+		IExprNode *expr = lSession->expr(OP_EQ,2,lV);
 		lQ->join(lVar1,lVar2,expr);
 		OrderSeg ord={NULL,lPropIdRef,0,0,0};
 		lQ->setOrder(&ord,1);

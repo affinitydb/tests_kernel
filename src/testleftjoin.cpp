@@ -41,7 +41,7 @@ class TestLeftJoin : public ITest
 		void createMeta();
 		void createData();
 		ClassID getClassID(int pClassIndex);
-		void executeQuery(SourceSpec *pLHSCS, SourceSpec *pRHSCS, IExprTree *pET = NULL, unsigned pMode = 0);
+		void executeQuery(SourceSpec *pLHSCS, SourceSpec *pRHSCS, IExprNode *pET = NULL, unsigned pMode = 0);
 	protected:
 		void testLeftJoinEQ();
 		void testLeftJoinIN();
@@ -84,7 +84,7 @@ void TestLeftJoin::testLeftJoinEQ()
 	Value lV[2];
 	lV[1].setVarRef(lVar1,mRefPropID);
 	lV[0].setVarRef(lVar2,mPINPropID);
-	CmvautoPtr<IExprTree> lJoinET(mSession->expr(OP_EQ,2,lV));
+	CmvautoPtr<IExprNode> lJoinET(mSession->expr(OP_EQ,2,lV));
 
 	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFT_OUTER_JOIN);
 	uint64_t lCount = 0;
@@ -117,7 +117,7 @@ void TestLeftJoin::testLeftJoinIN()
 	Value lV[2];
 	lV[1].setVarRef(lVar1,mRefPropID);
 	lV[0].setVarRef(lVar2,mPINPropID);
-	CmvautoPtr<IExprTree> lJoinET(mSession->expr(OP_EQ,2,lV));
+	CmvautoPtr<IExprNode> lJoinET(mSession->expr(OP_EQ,2,lV));
 	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFT_OUTER_JOIN);
 	uint64_t lCount = 0;
 	TVERIFYRC(lQ->count(lCount, 0, 0, ~0));
@@ -211,7 +211,7 @@ void TestLeftJoin::createMeta()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mLHSPropID);
@@ -231,7 +231,7 @@ void TestLeftJoin::createMeta()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mRHSPropID);
@@ -251,7 +251,7 @@ void TestLeftJoin::createMeta()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mLHSPropID);
@@ -271,7 +271,7 @@ void TestLeftJoin::createMeta()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mRHSPropID);
@@ -291,7 +291,7 @@ void TestLeftJoin::createMeta()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mRefPropID);
@@ -391,7 +391,7 @@ int TestLeftJoin::execute()
 	return lSuccess ? 0 : 1;
 }
 
-void TestLeftJoin::executeQuery(SourceSpec *pLHSCS, SourceSpec *pRHSCS, IExprTree *pET, unsigned pMode)
+void TestLeftJoin::executeQuery(SourceSpec *pLHSCS, SourceSpec *pRHSCS, IExprNode *pET, unsigned pMode)
 {
 	IStmt * lQ = mSession->createStmt();		
 	unsigned char lVar1 = lQ->addVariable(pLHSCS, 1);
@@ -399,7 +399,7 @@ void TestLeftJoin::executeQuery(SourceSpec *pLHSCS, SourceSpec *pRHSCS, IExprTre
 	Value lV[2];
 	lV[1].setVarRef(lVar1,mRefPropID);
 	lV[0].setVarRef(lVar2,mPINPropID);
-	CmvautoPtr<IExprTree> lJoinET(mSession->expr(OP_EQ,2,lV));
+	CmvautoPtr<IExprNode> lJoinET(mSession->expr(OP_EQ,2,lV));
 
 	lQ->join(lVar1, lVar2, lJoinET, QRY_LEFT_OUTER_JOIN);
 	uint64_t lCount = 0;

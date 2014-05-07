@@ -596,26 +596,28 @@ void PINInfo::grabRights(eRight pRight, TestAcls & pContext, IPIN * pPIN, Tbitse
 	Value const * const lACL = pPIN ? pPIN->getValue(PROP_SPEC_ACL) : NULL;
 	if (lACL && VT_IDENTITY == lACL->type)
 		grabRights(pRight, pContext, *lACL, pOverrideAllow);
-	else if (lACL && VT_ARRAY == lACL->type)
-	{
-		size_t i;
-		for (i = 0; i < lACL->length; i++)
-			grabRights(pRight, pContext, lACL->varray[i], pOverrideAllow);
-	}
 	else if (lACL && VT_COLLECTION == lACL->type)
 	{
-		static bool lWarned = false;
-		if (!lWarned)
+		if (lACL->isNav())
 		{
-			pContext.getLogger().out() << "WARNING: nav returned, expected varray" << std::endl;
-			lWarned = true;
-		}
+			static bool lWarned = false;
+			if (!lWarned)
+			{
+				pContext.getLogger().out() << "WARNING: nav returned, expected varray" << std::endl;
+				lWarned = true;
+			}
 
-		Value const * lV = lACL->nav->navigate(GO_FIRST);
-		while (lV)
+			Value const * lV = lACL->nav->navigate(GO_FIRST);
+			while (lV)
+			{
+				grabRights(pRight, pContext, *lV, pOverrideAllow);
+				lV = lACL->nav->navigate(GO_NEXT);
+			}
+		} else
 		{
-			grabRights(pRight, pContext, *lV, pOverrideAllow);
-			lV = lACL->nav->navigate(GO_NEXT);
+			size_t i;
+			for (i = 0; i < lACL->length; i++)
+				grabRights(pRight, pContext, lACL->varray[i], pOverrideAllow);
 		}
 	}
 	else
@@ -630,18 +632,21 @@ Value const * PINInfo::findACL(IdentityID pIID, Value const * pV)
 	default: break;
 	case VT_IDENTITY:
 		return pIID == pV->iid ? pV : (const Value*)0;
-	case VT_ARRAY:
-		for (i = 0; i < pV->length; i++)
-			if (pV->varray[i].type==VT_IDENTITY && pV->varray[i].iid==pIID)
-				return &pV->varray[i];
-		break;
 	case VT_COLLECTION:
-		lVi = pV->nav->navigate(GO_FIRST);
-		while (lVi!=NULL)
+		if (pV->isNav())
 		{
-			if (lVi->type==VT_IDENTITY && lVi->iid==pIID)
-				return lVi;
-			lVi = pV->nav->navigate(GO_NEXT);
+			lVi = pV->nav->navigate(GO_FIRST);
+			while (lVi!=NULL)
+			{
+				if (lVi->type==VT_IDENTITY && lVi->iid==pIID)
+					return lVi;
+				lVi = pV->nav->navigate(GO_NEXT);
+			}
+		} else
+		{
+			for (i = 0; i < pV->length; i++)
+				if (pV->varray[i].type==VT_IDENTITY && pV->varray[i].iid==pIID)
+					return &pV->varray[i];
 		}
 		break;
 	}
@@ -652,7 +657,7 @@ bool PINInfo::tryRead(IPIN * pPIN)
 	Value const * const lPV = pPIN->getValue(PropertyID(mPropIDs[0]));
 	if (NULL == lPV)
 		return false;
-	if (VT_STRING != lPV->type && VT_ARRAY != lPV->type && VT_COLLECTION != lPV->type)
+	if (VT_STRING != lPV->type && VT_COLLECTION != lPV->type)
 		return false;
 	return true;
 }

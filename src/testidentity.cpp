@@ -166,12 +166,14 @@ void TestIdentity::testPinCreation( IdentityInfo & info, bool inExpectPinCreatio
 	{
 		// You can create a PIN, which belongs to the owner
 		// not the current identity
-		PID newPIN ;
-		TVERIFYRC( lSession->createPINAndCommit( newPIN, NULL, 0, 0 )) ;
+		PID newPIN ;IPIN *pin;
+		TVERIFYRC( lSession->createPIN(NULL, 0, &pin, MODE_PERSISTENT)) ;
+		newPIN = pin->getPID();
+		if(pin!=NULL) pin->destroy();
 		TVERIFY( newPIN.ident == STORE_OWNER ) ;
 
 		// But you can't look it up (because of normal ACL)
-		IPIN * pin = lSession->getPIN( newPIN ) ;
+		pin = lSession->getPIN( newPIN ) ;
 		TVERIFY( pin == NULL ) ;
 
 		// This way works also 

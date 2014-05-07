@@ -65,7 +65,7 @@ void TestNoCaseFamily::testNoCaseMeta(ISession *session)
 		Value args[2];
 		args[0].setVarRef(0,(mPropIDs[0]));
 		args[1].setParam(0);
-		IExprTree *expr = session->expr(OP_EQ,2,args,CASE_INSENSITIVE_OP);
+		IExprNode *expr = session->expr(OP_EQ,2,args,CASE_INSENSITIVE_OP);
 		query->addCondition(var,expr);		
 		TVERIFYRC(defineClass(session,mFamilyNames[0].c_str(), query, &cls));
 		query->destroy();
@@ -78,7 +78,7 @@ void TestNoCaseFamily::testNoCaseMeta(ISession *session)
 		Value args[2];
 		args[0].setVarRef(0,(mPropIDs[1]));
 		args[1].setParam(0);
-		IExprTree *expr = session->expr(OP_BEGINS,2,args,CASE_INSENSITIVE_OP);
+		IExprNode *expr = session->expr(OP_BEGINS,2,args,CASE_INSENSITIVE_OP);
 		query->addCondition(var,expr);		
 		TVERIFYRC(defineClass(session,mFamilyNames[1].c_str(),query,&cls));
 		query->destroy();

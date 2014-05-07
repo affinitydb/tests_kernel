@@ -82,7 +82,7 @@ void TestMiscOperators::testOPContains(ISession *session)
 	args[0].setVarRef(0,*pids);
 	str2=str1.substr(5,3);
 	args[1].set(str2.c_str());
-	IExprTree *expr = session->expr(OP_CONTAINS,2,args,CASE_INSENSITIVE_OP);
+	IExprNode *expr = session->expr(OP_CONTAINS,2,args,CASE_INSENSITIVE_OP);
 	query->addCondition(var,expr);
 	query->count(cnt);
 
@@ -200,7 +200,7 @@ void TestMiscOperators::testOPBegins(ISession *session)
 	args[0].setVarRef(0,*pids);
 	str2=str.substr(0,6);
 	args[1].set(str2.c_str());
-	IExprTree *expr = session->expr(OP_BEGINS,2,args);
+	IExprNode *expr = session->expr(OP_BEGINS,2,args);
 	query->addCondition(var,expr);
 	query->count(cnt);
 
@@ -244,7 +244,7 @@ void TestMiscOperators::testOPBegins(ISession *session)
 	args[0].setVarRef(0,*pids);
 	args[1].set("eupho");
 
-	IExprTree *clsexpr = session->expr(OP_BEGINS,2,args);
+	IExprNode *clsexpr = session->expr(OP_BEGINS,2,args);
 	classquery->addCondition(var1,clsexpr);
 	char lB[100];
 	Tstring lStr; MVTRand::getString(lStr,10,10,false,false);
@@ -298,7 +298,7 @@ void TestMiscOperators::testOPEnds(ISession *session)
 	args[0].setVarRef(0,*pids);
 	str2 = str.substr((str.length()-10),str.length());
 	args[1].set(str2.c_str());
-	IExprTree *expr = session->expr(OP_ENDS,2,args);
+	IExprNode *expr = session->expr(OP_ENDS,2,args);
 	query->addCondition(var,expr);
 	query->count(cnt);
 

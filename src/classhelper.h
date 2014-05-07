@@ -119,7 +119,7 @@ public:
 		if (inSession->getClassID(inClassName,cid)==RC_OK && inSession->getClassInfo(cid,cpin)==RC_OK) {
 			assert(cpin!=NULL);
 			const Value *cv = cpin->getValue(PROP_SPEC_INDEX_INFO);
-			if (cv!=NULL && cv->type==VT_ARRAY) fRange=cv->varray[0].iseg.op==OP_IN;
+			if (cv!=NULL && cv->type==VT_COLLECTION && !cv->isNav()) fRange=cv->varray[0].iseg.op==OP_IN;
 			cpin->destroy();
 		}
 		return fRange;
@@ -131,7 +131,7 @@ public:
 		if (inSession->getClassInfo(inClassID,cpin)==RC_OK) {
 			assert(cpin!=NULL);
 			const Value *cv = cpin->getValue(PROP_SPEC_INDEX_INFO);
-			if (cv!=NULL && cv->type==VT_ARRAY) fRange=cv->varray[0].iseg.op==OP_IN;
+			if (cv!=NULL && cv->type==VT_COLLECTION && !cv->isNav()) fRange=cv->varray[0].iseg.op==OP_IN;
 			cpin->destroy();
 		}
 		return fRange;
@@ -207,7 +207,7 @@ public:
 		if (inSession->getClassInfo(inClassID,cpin)==RC_OK) {
 			assert(cpin!=NULL);
 			const Value *cv=cpin->getValue(PROP_SPEC_INDEX_INFO);
-			if (cv!=NULL && cv->type==VT_ARRAY) cntParams = cv->length;
+			if (cv!=NULL && cv->type==VT_COLLECTION && !cv->isNav()) cntParams = cv->length;
 			cpin->destroy();
 		}
 

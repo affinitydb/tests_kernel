@@ -43,15 +43,15 @@ class TestQueries : public ITest
 		void runConversionOperators(ISession *session);
 		void runStringOperators(ISession *session);
 		void runFuncOperators(ISession *session);
-		IExprTree *createArithExpr(ISession *session,unsigned var,int Op, int type);
-		IExprTree *createCompExpr(ISession *session,unsigned var,int Op, int type);
-		IExprTree *createBitwiseExpr(ISession *session,unsigned var,int Op, int type);
-		IExprTree *createLogicalExpr(ISession *session,unsigned var,int Op,int Op1, int Op2,int type1, int type2=0,bool fake=false);
-		IExprTree *createConvExpr(ISession *session,unsigned var,int Op, int type);
-		IExprTree *createMinMaxExpr(ISession *session,unsigned var,int Op, int type);		
-		IExprTree *createOP_INExpr(ISession *session,unsigned var,int type);
-		IExprTree *createStringOpsExpr(ISession *session,unsigned var,int Op,int type,const int pVariant);
-		IExprTree *createFuncOpsExpr(ISession *session,unsigned var,int Op,int type,const int pVariant);
+		IExprNode *createArithExpr(ISession *session,unsigned var,int Op, int type);
+		IExprNode *createCompExpr(ISession *session,unsigned var,int Op, int type);
+		IExprNode *createBitwiseExpr(ISession *session,unsigned var,int Op, int type);
+		IExprNode *createLogicalExpr(ISession *session,unsigned var,int Op,int Op1, int Op2,int type1, int type2=0,bool fake=false);
+		IExprNode *createConvExpr(ISession *session,unsigned var,int Op, int type);
+		IExprNode *createMinMaxExpr(ISession *session,unsigned var,int Op, int type);		
+		IExprNode *createOP_INExpr(ISession *session,unsigned var,int type);
+		IExprNode *createStringOpsExpr(ISession *session,unsigned var,int Op,int type,const int pVariant);
+		IExprNode *createFuncOpsExpr(ISession *session,unsigned var,int Op,int type,const int pVariant);
 		void createOP_INWithNavigator(ISession *session);
 
 		void executeComplexQuery(ISession *session,int Op,int Op1,int type1,int Op2,int type2,int nExpResults,bool fake=false,const char *pClassName = NULL);
@@ -103,8 +103,8 @@ int TestQueries::execute()
 		pm[21].URI="testQueries.VT_USTR"; // VT_USTR
 		pm[22].URI="testQueries.VT_BSTR"; // VT_BSTR
 		pm[23].URI="testQueries.VT_UURL"; // VT_UURL
-		pm[24].URI="testQueries.VT_ARRAY"; // VT_ARRAY
-		pm[25].URI="testQueries.VT_COLLECTION"; // VT_COLLECTION
+		pm[24].URI="testQueries.VT_COLLECTION"; // VT_COLLECTION (varray)
+		pm[25].URI="testQueries.VT_COLLECTION"; // VT_COLLECTION (nav)
 		
 		for(size_t i = 0; i < (sizeof(pm)/sizeof(pm[0])); i++) {
 			pm[i].uid = STORE_INVALID_URIID; 
@@ -157,11 +157,11 @@ void TestQueries::testIssue1(ISession *session)
 	pids[0]=pm[10].uid;
 	val[0].setVarRef(0,*pids);
 #if 1
-	IExprTree *expr = session->expr(OP_EXISTS,1,val);
+	IExprNode *expr = session->expr(OP_EXISTS,1,val);
 	val[0].set(expr);
-	IExprTree *exprfinal = session->expr(OP_LNOT,1,val);
+	IExprNode *exprfinal = session->expr(OP_LNOT,1,val);
 #else
-	IExprTree *exprfinal = session->expr(OP_EXISTS,1,val,NOT_BOOLEAN_OP);
+	IExprNode *exprfinal = session->expr(OP_EXISTS,1,val,NOT_BOOLEAN_OP);
 #endif
 	query->addCondition(var,exprfinal);
 	ICursor * lR = NULL;
@@ -187,20 +187,20 @@ void TestQueries::testIssue(ISession *session)
 	PID otestPID = PinID[1]->getPID();
 	operands1[0].setVarRef(0,proppin);
 	operands1[1].set(otestPID);
-	IExprTree *expr1 = session->expr(OP_EQ,2,operands1);
+	IExprNode *expr1 = session->expr(OP_EQ,2,operands1);
 
 	PropertyID pids[1];
 	// Property ID  = 2
 	pids[0]=pm[2].uid;
 	Value operands2[1];
 	operands2[0].setVarRef(0,*pids);
-	IExprTree *expr2 = session->expr(OP_EXISTS,1,operands2);
+	IExprNode *expr2 = session->expr(OP_EXISTS,1,operands2);
 
 	Value operands[2];
 	operands[0].set(expr1);
 	operands[1].set(expr2);
 
-	IExprTree *expr = session->expr(OP_LAND,2,operands);
+	IExprNode *expr = session->expr(OP_LAND,2,operands);
 
 	query->addCondition(var,expr);
 	reportResult(query);
@@ -226,7 +226,7 @@ void TestQueries::testMemory(ISession *session)
 			const static PropertyID pin_id=PROP_SPEC_PINID;
 			oper[0].setVarRef(0,pin_id);
 			oper[1].set(mpin->getPID());
-			IExprTree *exp = session->expr(OP_EQ,2,oper);
+			IExprNode *exp = session->expr(OP_EQ,2,oper);
 			query1->addCondition(var1,exp);
 			exp->destroy();
 			ICursor *result1 = NULL;
@@ -258,15 +258,20 @@ void TestQueries::testQuery(ISession *session)
 	session->mapURIs(sizeof(propMap)/sizeof(propMap[0]),propMap);
 
 	Value val[3],pvs[2];	
-	PID pidVal,pidVal1,pidVal2;
+	PID pidVal1,pidVal2;
 	
 	pvs[0].set("Post1");pvs[0].setPropID(propMap[0].uid);
 	pvs[1].set("abc1");pvs[1].setPropID(propMap[1].uid);
-	session->createPINAndCommit(pidVal1,pvs,2);	
+	IPIN *pin;
+	TVERIFYRC(session->createPIN(pvs,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pidVal1 = pin->getPID();
+	pin->destroy();
 
 	pvs[0].set("Post2");pvs[0].setPropID(propMap[0].uid);
 	pvs[1].set("abc2");pvs[1].setPropID(propMap[1].uid);
-	session->createPINAndCommit(pidVal2,pvs,2);
+	TVERIFYRC(session->createPIN(pvs,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pidVal2 = pin->getPID();
+	pin->destroy();
 	
 	val[0].set(pidVal1);
 	val[1].set(pidVal2);
@@ -282,7 +287,7 @@ void TestQueries::testQuery(ISession *session)
 		pvs[1].set(val,2);pvs[1].setPropID(propMap[1].uid);
 	#endif
 
-	session->createPINAndCommit(pidVal,pvs,2);
+	TVERIFYRC(session->createPIN(pvs,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 #if 0		// obsolete
 	IStmt *qry = session->createStmt();	
@@ -294,7 +299,7 @@ void TestQueries::testQuery(ISession *session)
 	ids[0] = propMap[1].uid;
 	pv[0].setVarRef(0);
 	pv[1].setParam(0,1,ids);
-	IExprTree *expr = session->expr(OP_IN,2,pv);
+	IExprNode *expr = session->expr(OP_IN,2,pv);
 	qry->addCondition(var,expr);
 	
 	Value oparam;
@@ -320,54 +325,59 @@ void TestQueries::testFTIndexWithNativeQuery(ISession *session)
 	Value oval[4];
 
 	Value pvs1[2];
-	PID pidVal1;
+	PID pidVal1;IPIN *pin;
 	pvs1[0].set("Post1");pvs1[0].setPropID(pm[0].uid);
 	pvs1[1].set("abc1");pvs1[1].setPropID(pm[1].uid);
-	session->createPINAndCommit(pidVal1,pvs1,2);
+	TVERIFYRC(session->createPIN(pvs1,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pidVal1 = pin->getPID();
+	pin->destroy();
 	oval[0].set(pidVal1);
-
+	
 	Value pvs2[2];
 	PID pidVal2;
 	pvs2[0].set("Post2");pvs2[0].setPropID(pm[0].uid);
 	pvs2[1].set("abc2");pvs2[1].setPropID(pm[1].uid);
-	session->createPINAndCommit(pidVal2,pvs2,2);
-
+	TVERIFYRC(session->createPIN(pvs2,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pidVal2 = pin->getPID();
+	pin->destroy();
 	oval[1].set(pidVal2);
 
 	Value pvs3[2];
 	PID pidVal3;
 	pvs3[0].set("Post3");pvs3[0].setPropID(pm[0].uid);
 	pvs3[1].set("abc3");pvs3[1].setPropID(pm[1].uid);
-	session->createPINAndCommit(pidVal3,pvs3,2);
+	TVERIFYRC(session->createPIN(pvs3,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pidVal3 = pin->getPID();
+	pin->destroy();
 	oval[2].set(pidVal3);
 
 	Value pvs4[2];
 	PID pidVal4;
 	pvs4[0].set("Post4");pvs4[0].setPropID(pm[0].uid);
 	pvs4[1].set("abc4");pvs4[1].setPropID(pm[1].uid);
-	session->createPINAndCommit(pidVal4,pvs4,2);
+	TVERIFYRC(session->createPIN(pvs4,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pidVal4 = pin->getPID();
+	pin->destroy();
 	oval[3].set(pidVal4);
 
 	///pin which refrences the above pins
 
 	Value pvs[2];
-	PID pidVal;
 	pvs[0].set("Post");pvs[0].setPropID(pm[0].uid);
 	pvs[1].set(oval,4);pvs[1].setPropID(pm[1].uid);
-	session->createPINAndCommit(pidVal,pvs,2);
+	TVERIFYRC(session->createPIN(pvs,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
-	PID tmppidVal;
 	pvs[0].set("Post7");pvs[0].setPropID(pm[0].uid);
 	pvs[1].set("new property");pvs[1].setPropID(pm[2].uid);
-	session->createPINAndCommit(tmppidVal,pvs,2);
+	TVERIFYRC(session->createPIN(pvs,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	pvs[0].set("ABCD");pvs[0].setPropID(pm[0].uid);
 	pvs[1].set("new property1");pvs[1].setPropID(pm[2].uid);
-	session->createPINAndCommit(tmppidVal,pvs,2);
+	TVERIFYRC(session->createPIN(pvs,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	pvs[0].set("Post9");pvs[0].setPropID(pm[0].uid);
 	pvs[1].set("new ");pvs[1].setPropID(pm[1].uid);
-	session->createPINAndCommit(tmppidVal,pvs,2);
+	TVERIFYRC(session->createPIN(pvs,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	IStmt *qry = session->createStmt();
 
@@ -380,13 +390,13 @@ void TestQueries::testFTIndexWithNativeQuery(ISession *session)
 	Value val1[2];	
 	val1[0].setVarRef(0,*ids);
 	val1[1].set("Post27");     
-	IExprTree *expr1 = session->expr(OP_EQ,2,val1);
+	IExprNode *expr1 = session->expr(OP_EQ,2,val1);
 	val1[0].setVarRef(0,*ids);
 	val1[1].set("Post7");     
-	IExprTree *expr2 = session->expr(OP_EQ,2,val1);
+	IExprNode *expr2 = session->expr(OP_EQ,2,val1);
 	val1[0].set(expr1);
 	val1[1].set(expr2);
-	IExprTree *expr = session->expr(OP_LOR,2,val1);
+	IExprNode *expr = session->expr(OP_LOR,2,val1);
 	qry->addCondition(var,expr);
 	ICursor *result = NULL;
 	TVERIFYRC(qry->execute(&result));
@@ -563,8 +573,8 @@ void TestQueries::runArithmeticOperators(ISession *session)
 	logResult("OP_AVG with VT_DATETIME",RC_OTHER);
 	executeSimpleQuery(session,OP_AVG,VT_DATETIME,1,"OP_AVG__VT_DATETIME");
 
-	logResult("OP_AVG with VT_ARRAY",RC_OTHER);
-	executeSimpleQuery(session,OP_AVG,VT_ARRAY,1,"OP_AVG__VT_ARRAY");
+	//logResult("OP_AVG with VT_COLLECTION(varray)",RC_OTHER);
+	//executeSimpleQuery(session,OP_AVG,VT_COLLECTION,1,"OP_AVG__VT_COLLECTION");
 
 	//logResult("OP_AVG with VT_INTERVAL",RC_OTHER);
 	//executeSimpleQuery(session,OP_AVG,VT_INTERVAL,1,"OP_AVG__VT_INTERVAL");
@@ -578,9 +588,6 @@ void TestQueries::runComparisonOperators(ISession *session)
 	// --- OP_MIN --
 	logResult("OP_MIN with VT_STRING",RC_OTHER);
 	executeSimpleQuery(session,OP_MIN,VT_STRING,1,"OP_MIN__VT_STRING");
-
-	logResult("OP_MIN with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_MIN,VT_URL,1,"OP_MIN__VT_URL");
 
 	logResult("OP_MIN with VT_INT",RC_OTHER);
 	executeSimpleQuery(session,OP_MIN,VT_INT,1,"OP_MIN__VT_INT");
@@ -607,9 +614,6 @@ void TestQueries::runComparisonOperators(ISession *session)
 	logResult("OP_MAX with VT_STRING",RC_OTHER);
 	executeSimpleQuery(session,OP_MAX,VT_STRING,1,"OP_MAX__VT_STRING");
 
-	logResult("OP_MAX with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_MAX,VT_URL,1,"OP_MAX__VT_URL");
-
 	logResult("OP_MAX with VT_INT",RC_OTHER);
 	executeSimpleQuery(session,OP_MAX,VT_INT,1,"OP_MAX__VT_INT");
 
@@ -634,9 +638,6 @@ void TestQueries::runComparisonOperators(ISession *session)
 	// --- OP_EQ ---
 	logResult("OP_EQ with VT_STRING",RC_OTHER);
 	executeSimpleQuery(session,OP_EQ,VT_STRING,1,"OP_EQ__VT_STRING");
-
-	logResult("OP_EQ with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_EQ,VT_URL,1,"OP_EQ__VT_URL");
 
 	logResult("OP_EQ with VT_INT",RC_OTHER);
 	executeSimpleQuery(session,OP_EQ,VT_INT,1,"OP_EQ__VT_INT");
@@ -667,8 +668,6 @@ void TestQueries::runComparisonOperators(ISession *session)
 	logResult("OP_NE with VT_STRING",RC_OTHER);
 	executeSimpleQuery(session,OP_NE,VT_STRING,2,"OP_NE__VT_STRING");
 
-	logResult("OP_NE with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_NE,VT_URL,2,"OP_NE__VT_URL");
 	// With the fix for missing properties in logical expressions , following queries would fail.
 	/*
 	logResult("OP_NE with VT_INT",RC_OTHER);
@@ -700,9 +699,6 @@ void TestQueries::runComparisonOperators(ISession *session)
 	logResult("OP_LT with VT_STRING",RC_OTHER);
 	executeSimpleQuery(session,OP_LT,VT_STRING,1,"OP_LT__VT_STRING");
 
-	logResult("OP_LT with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_LT,VT_URL,1,"OP_LT__VT_URL");
-
 	logResult("OP_LT with VT_INT",RC_OTHER);
 	executeSimpleQuery(session,OP_LT,VT_INT,2,"OP_LT__VT_INT");
 
@@ -727,9 +723,6 @@ void TestQueries::runComparisonOperators(ISession *session)
 	// --- OP_LE ---
 	logResult("OP_LE with VT_STRING",RC_OTHER);
 	executeSimpleQuery(session,OP_LE,VT_STRING,1,"OP_LE__VT_STRING");
-
-	logResult("OP_LE with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_LE,VT_URL,1,"OP_LE__VT_URL");
 
 	logResult("OP_LE with VT_INT",RC_OTHER);
 	executeSimpleQuery(session,OP_LE,VT_INT,1,"OP_LE__VT_INT");
@@ -756,9 +749,6 @@ void TestQueries::runComparisonOperators(ISession *session)
 	logResult("OP_GT with VT_STRING",RC_OTHER);
 	executeSimpleQuery(session,OP_GT,VT_STRING,2,"OP_GT__VT_STRING");
 
-	logResult("OP_GT with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_GT,VT_URL,2,"OP_GT__VT_URL");
-
 	logResult("OP_GT with VT_INT",RC_OTHER);
 	executeSimpleQuery(session,OP_GT,VT_INT,1,"OP_GT__VT_INT");
 
@@ -783,9 +773,6 @@ void TestQueries::runComparisonOperators(ISession *session)
 	// --- OP_GE ---
 	logResult("OP_GE with VT_STRING",RC_OTHER);
 	executeSimpleQuery(session,OP_GE,VT_STRING,2,"OP_GE__VT_STRING");
-
-	logResult("OP_GE with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_GE,VT_URL,2,"OP_GE__VT_URL");
 
 	logResult("OP_GE with VT_INT",RC_OTHER);
 	executeSimpleQuery(session,OP_GE,VT_INT,1,"OP_GE__VT_INT");
@@ -812,8 +799,8 @@ void TestQueries::runComparisonOperators(ISession *session)
 	logResult("OP_IN with VT_RANGE",RC_OTHER);
 	executeSimpleQuery(session,OP_IN,VT_RANGE,1,"OP_IN__VT_RANGE");
 
-	logResult("OP_IN with VT_ARRAY",RC_OTHER);
-	executeSimpleQuery(session,OP_IN,VT_ARRAY,1,"OP_IN__VT_ARRAY");
+	//logResult("OP_IN with VT_COLLECTION(varray)",RC_OTHER);
+	//executeSimpleQuery(session,OP_IN,VT_COLLECTION,1,"OP_IN__VT_COLLECTION");
 
 	logResult("OP_IS_A with VT_URIID",RC_OTHER);
 	//executeSimpleQuery(session,OP_IN,VT_CLASS,-1,"OP_IN__VT_CLASS");
@@ -881,6 +868,9 @@ void TestQueries::runBitwiseOperators(ISession *session)
 	logResult("OP_NOT with VT_UINT64",RC_OTHER);
 	executeSimpleQuery(session,OP_NOT,VT_UINT64,1,"OP_NOT__VT_UINT64");
 
+	logResult("OP_NOT with VT_BSTR",RC_OTHER);
+	executeSimpleQuery(session,OP_NOT,VT_BSTR,1,"OP_NOT__VT_BSTR");
+
 	// --- OP_LSHIFT ---
 	logResult("OP_LSHIFT with VT_INT",RC_OTHER);
 	executeSimpleQuery(session,OP_LSHIFT,VT_INT,1,"OP_LSHIFT__VT_INT");
@@ -906,6 +896,61 @@ void TestQueries::runBitwiseOperators(ISession *session)
 
 	logResult("OP_RSHIFT with VT_UINT64",RC_OTHER);
 	executeSimpleQuery(session,OP_RSHIFT,VT_UINT64,1,"OP_RSHIFT__VT_UINT64");
+
+	// --- OP_SETBIT ---
+	logResult("OP_SETBIT with VT_INT",RC_OTHER);
+	executeSimpleQuery(session,OP_SETBIT,VT_INT,1,"OP_SETBIT__VT_INT");
+
+	logResult("OP_SETBIT with VT_UINT",RC_OTHER);
+	executeSimpleQuery(session,OP_SETBIT,VT_UINT,1,"OP_SETBIT__VT_UINT");    
+
+	logResult("OP_SETBIT with VT_INT64",RC_OTHER);
+	executeSimpleQuery(session,OP_SETBIT,VT_INT64,1,"OP_SETBIT__VT_INT64");    
+	
+	logResult("OP_SETBIT with VT_UINT64",RC_OTHER);
+	executeSimpleQuery(session,OP_SETBIT,VT_UINT64,0,"OP_SETBIT__VT_UINT64");    
+
+	logResult("OP_SETBIT with VT_BSTR",RC_OTHER);
+	executeSimpleQuery(session,OP_SETBIT,VT_BSTR,1,"OP_SETBIT__VT_BSTR");
+	
+	// --- OP_RESETBIT ---
+	logResult("OP_RESETBIT with VT_INT",RC_OTHER);
+	executeSimpleQuery(session,OP_RESETBIT,VT_INT,1,"OP_RESETBIT__VT_INT");
+
+	logResult("OP_RESETBIT with VT_UINT",RC_OTHER);
+	executeSimpleQuery(session,OP_RESETBIT,VT_UINT,1,"OP_RESETBIT__VT_UINT");    
+
+	logResult("OP_RESETBIT with VT_INT64",RC_OTHER);
+	executeSimpleQuery(session,OP_RESETBIT,VT_INT64,1,"OP_RESETBIT__VT_INT64");    
+	
+	logResult("OP_RESETBIT with VT_UINT64",RC_OTHER);
+	executeSimpleQuery(session,OP_RESETBIT,VT_UINT64,0,"OP_RESETBIT__VT_UINT64");
+
+	logResult("OP_RESETBIT with VT_BSTR",RC_OTHER);
+	executeSimpleQuery(session,OP_RESETBIT,VT_BSTR,1,"OP_RESETBIT__VT_BSTR");	
+
+	// --- OP_TESTBIT ---
+	logResult("OP_TESTBIT with VT_INT",RC_OTHER);
+	executeSimpleQuery(session,OP_TESTBIT,VT_INT,2,"OP_TESTBIT__VT_INT");
+
+	logResult("OP_TESTBIT with VT_UINT",RC_OTHER);
+	executeSimpleQuery(session,OP_TESTBIT,VT_UINT,1,"OP_TESTBIT__VT_UINT");    
+
+	logResult("OP_TESTBIT with VT_INT64",RC_OTHER);
+	executeSimpleQuery(session,OP_TESTBIT,VT_INT64,1,"OP_TESTBIT__VT_INT64");    
+	
+	logResult("OP_TESTBIT with VT_UINT64",RC_OTHER);
+	executeSimpleQuery(session,OP_TESTBIT,VT_UINT64,0,"OP_TESTBIT__VT_UINT64");
+
+	logResult("OP_TESTBIT with VT_BSTR",RC_OTHER);
+	executeSimpleQuery(session,OP_TESTBIT,VT_BSTR,1,"OP_TESTBIT__VT_BSTR");	
+
+	// --- OP_BITFIELD ---
+	logResult("OP_BITFIELD with VT_UINT",RC_OTHER);
+	executeSimpleQuery(session,OP_BITFIELD ,VT_UINT,1,"OP_BITFIELD__VT_UINT");
+	
+	logResult("OP_BITFIELD with VT_BSRT",RC_OTHER);
+	executeSimpleQuery(session,OP_BITFIELD ,VT_BSTR,1,"OP_BITFIELD__VT_BSRT");
 }
 
 void TestQueries::runLogicalOperators(ISession *session)
@@ -977,10 +1022,10 @@ void TestQueries::runLogicalOperators(ISession *session)
 			lClassName += "_VT_STRING__";
 			OpStr += Op2;
 			lClassName += Op2;
-			OpStr += "(VT_URL)";
-			lClassName +="_VT_URL";
+			OpStr += "(VT_STRING)";
+			lClassName +="_VT_STRING";
 			logResult(OpStr,RC_OTHER);
-			executeComplexQuery(session,OP_LAND,ExprOp(i),VT_STRING,ExprOp(j),VT_URL,nRes,false,lClassName.c_str());
+			executeComplexQuery(session,OP_LAND,ExprOp(i),VT_STRING,ExprOp(j),VT_STRING,nRes,false,lClassName.c_str());
 		}
 	}
 
@@ -1035,16 +1080,16 @@ void TestQueries::runLogicalOperators(ISession *session)
 			OpStr += Op2;
 			lClassName += Op2;
 			OpStr1 += Op2;
-			OpStr += "(VT_URL)";
-			OpStr1 += "(VT_URL)";
+			OpStr += "(VT_STRING)";
+			OpStr1 += "(VT_STRING)";
 			lClassName += "_VT_URL";
 			
 			logResult(OpStr,RC_OTHER);
-			executeComplexQuery(session,OP_LOR,ExprOp(i),VT_STRING,ExprOp(j),VT_URL,nRes,false,lClassName.c_str());
+			executeComplexQuery(session,OP_LOR,ExprOp(i),VT_STRING,ExprOp(j),VT_STRING,nRes,false,lClassName.c_str());
 			
 			lClassName += "_1_";
 			logResult(OpStr1,RC_OTHER);
-			executeComplexQuery(session,OP_LOR,ExprOp(i),VT_STRING,ExprOp(j),VT_URL,nRes1,true,lClassName.c_str());
+			executeComplexQuery(session,OP_LOR,ExprOp(i),VT_STRING,ExprOp(j),VT_STRING,nRes1,true,lClassName.c_str());
 		}
 	}
 	// --- OP_LNOT ---
@@ -1067,7 +1112,7 @@ void TestQueries::runLogicalOperators(ISession *session)
 		lClassName += "_VT_STRING";
 		
 		logResult(OpStr,RC_OTHER);
-		executeComplexQuery(session,OP_LNOT,ExprOp(i),VT_STRING,ExprOp(i),VT_URL,nRes,false,lClassName.c_str());
+		executeComplexQuery(session,OP_LNOT,ExprOp(i),VT_STRING,ExprOp(i),VT_STRING,nRes,false,lClassName.c_str());
 	}
 }
 
@@ -1119,27 +1164,6 @@ void TestQueries::runStringOperators(ISession *session)
 	logResult("OP_SUBSTR with VT_BSTR (6)",RC_OTHER);
 	executeSimpleQuery(session,OP_SUBSTR,VT_BSTR,1,"OP_SUBSTR__VT_BSTR6",6);
 
-	// OP_SUBSTR with VT_URL
-	logResult("OP_SUBSTR with VT_URL (0)",RC_OTHER);
-	executeSimpleQuery(session,OP_SUBSTR,VT_URL,3,"OP_SUBSTR__VT_URL0",0);
-
-	logResult("OP_SUBSTR with VT_URL (1)",RC_OTHER);
-	executeSimpleQuery(session,OP_SUBSTR,VT_URL,3,"OP_SUBSTR__VT_URL1",1);
-
-	logResult("OP_SUBSTR with VT_URL (2)",RC_OTHER);
-	executeSimpleQuery(session,OP_SUBSTR,VT_URL,1,"OP_SUBSTR__VT_URL2",2);
-
-	logResult("OP_SUBSTR with VT_URL (3)",RC_OTHER);
-	executeSimpleQuery(session,OP_SUBSTR,VT_URL,3,"OP_SUBSTR__VT_URL3",3);
-
-	logResult("OP_SUBSTR with VT_URL (4)",RC_OTHER);
-	executeSimpleQuery(session,OP_SUBSTR,VT_URL,3,"OP_SUBSTR__VT_URL4",4);
-
-	logResult("OP_SUBSTR with VT_URL (5)",RC_OTHER);
-	executeSimpleQuery(session,OP_SUBSTR,VT_URL,1,"OP_SUBSTR__VT_URL5",5);
-
-	logResult("OP_SUBSTR with VT_URL (6)",RC_OTHER);
-	executeSimpleQuery(session,OP_SUBSTR,VT_URL,1,"OP_SUBSTR__VT_URL6",6);
 	}
 
 	//OP_REPLACE
@@ -1191,12 +1215,6 @@ void TestQueries::runStringOperators(ISession *session)
 	logResult("OP_REPLACE with VT_BSTR (6)",RC_OTHER);
 	executeSimpleQuery(session,OP_REPLACE,VT_BSTR,1,"OP_REPLACE__VT_BSTR6",6);
 
-	// OP_REPLACE with VT_URL
-	logResult("OP_REPLACE with VT_URL (0)",RC_OTHER);
-	executeSimpleQuery(session,OP_REPLACE,VT_URL,1,"OP_REPLACE__VT_URL0",0);
-
-	logResult("OP_REPLACE with VT_URL (1)",RC_OTHER);
-	executeSimpleQuery(session,OP_REPLACE,VT_URL,1,"OP_REPLACE__VT_URL1",1);
 	}
 
 	// OP_PAD
@@ -1243,9 +1261,6 @@ void TestQueries::runStringOperators(ISession *session)
 	logResult("OP_UPPER with VT_STRING (2)",RC_OTHER);
 	executeSimpleQuery(session,OP_UPPER,VT_STRING,1,"OP_UPPER__VT_STRING2",2);
 
-	// OP_UPPER with VT_URL
-	logResult("OP_UPPER with VT_URL (0)",RC_OTHER);
-	executeSimpleQuery(session,OP_UPPER,VT_URL,1,"OP_UPPER__VT_URL0",0);
 	}
 
 	//OP_LOWER
@@ -1260,9 +1275,6 @@ void TestQueries::runStringOperators(ISession *session)
 	logResult("OP_LOWER with VT_STRING (2)",RC_OTHER);
 	executeSimpleQuery(session,OP_LOWER,VT_STRING,1,"OP_LOWER__VT_STRING2",2);
 
-	// OP_UPPER with VT_URL
-	logResult("OP_LOWER with VT_URL (0)",RC_OTHER);
-	executeSimpleQuery(session,OP_LOWER,VT_URL,1,"OP_LOWER__VT_URL0",0);
 	}
 
 	//OP_CONCAT
@@ -1277,10 +1289,6 @@ void TestQueries::runStringOperators(ISession *session)
 	// support OP_CONCAT on more than 2 values
 	logResult("OP_CONCAT with VT_STRING (2)",RC_OTHER);
 	executeSimpleQuery(session,OP_CONCAT,VT_STRING,1,"OP_CONCAT__VT_STRING2",2);
-
-	// OP_CONCAT with VT_URL
-	logResult("OP_CONCAT with VT_URL (0)",RC_OTHER);
-	executeSimpleQuery(session,OP_CONCAT,VT_URL,1,"OP_CONCAT__VT_URL0",0);
 
 	// OP_CONCAT with VT_BSTR
 	logResult("OP_CONCAT with VT_BSTR (0)",RC_OTHER);
@@ -1308,10 +1316,6 @@ void TestQueries::runFuncOperators(ISession *session)
 	logResult("OP_POSITION with VT_STRING (4)",RC_OTHER);
 	executeSimpleQuery(session,OP_POSITION,VT_STRING,3,"OP_POSITION__VT_STRING4",4);
 	
-	// OP_POSITION with VT_URL
-	logResult("OP_POSITION with VT_URL (0)",RC_OTHER);
-	executeSimpleQuery(session,OP_POSITION,VT_URL,1,"OP_POSITION__VT_URL0",0);
-
 	// OP_POSITION with VT_BSTR
 	logResult("OP_POSITION with VT_BSTR (0)",RC_OTHER);
 	executeSimpleQuery(session,OP_POSITION,VT_BSTR,1,"OP_POSITION__VT_BSTR0",0);
@@ -1328,22 +1332,22 @@ void TestQueries::runFuncOperators(ISession *session)
 	logResult("OP_POSITION with VT_BSTR (4)",RC_OTHER);
 	executeSimpleQuery(session,OP_POSITION,VT_BSTR,1,"OP_POSITION__VT_BSTR4",4);
 
-	// OP_POSITION with VT_ARRAY
+	// OP_POSITION with VT_COLLECTION
 	/*
-	logResult("OP_POSITION with VT_ARRAY (0)",RC_OTHER);
-	executeSimpleQuery(session,OP_POSITION,VT_ARRAY,1,"OP_POSITION__VT_ARRAY0",0);
+	logResult("OP_POSITION with VT_COLLECTION (0)",RC_OTHER);
+	executeSimpleQuery(session,OP_POSITION,VT_COLLECTION,1,"OP_POSITION__VT_ARRAY0",0);
 
-	logResult("OP_POSITION with VT_ARRAY (1)",RC_OTHER);
-	executeSimpleQuery(session,OP_POSITION,VT_ARRAY,1,"OP_POSITION__VT_ARRAY1",1);	
+	logResult("OP_POSITION with VT_COLLECTION (1)",RC_OTHER);
+	executeSimpleQuery(session,OP_POSITION,VT_COLLECTION,1,"OP_POSITION__VT_ARRAY1",1);	
 
-	logResult("OP_POSITION with VT_ARRAY (2)",RC_OTHER);
-	executeSimpleQuery(session,OP_POSITION,VT_ARRAY,1,"OP_POSITION__VT_ARRAY2",2);	
+	logResult("OP_POSITION with VT_COLLECTION (2)",RC_OTHER);
+	executeSimpleQuery(session,OP_POSITION,VT_COLLECTION,1,"OP_POSITION__VT_ARRAY2",2);	
 	
-	logResult("OP_POSITION with VT_ARRAY (3)",RC_OTHER);
-	executeSimpleQuery(session,OP_POSITION,VT_ARRAY,1,"OP_POSITION__VT_ARRAY3",3);
+	logResult("OP_POSITION with VT_COLLECTION (3)",RC_OTHER);
+	executeSimpleQuery(session,OP_POSITION,VT_COLLECTION,1,"OP_POSITION__VT_ARRAY3",3);
 	
-	logResult("OP_POSITION with VT_ARRAY (4)",RC_OTHER);
-	executeSimpleQuery(session,OP_POSITION,VT_ARRAY,0,"OP_POSITION__VT_ARRAY4",4);
+	logResult("OP_POSITION with VT_COLLECTION (4)",RC_OTHER);
+	executeSimpleQuery(session,OP_POSITION,VT_COLLECTION,0,"OP_POSITION__VT_ARRAY4",4);
 	*/
 	}
 }
@@ -1370,9 +1374,6 @@ void TestQueries::runConversionOperators(ISession *session)
 	executeSimpleQuery(session,OP_TOINUM,VT_FLOAT,1,"OP_TOINUM__VT_FLOAT");
 
 	// --- OP_CAST --- (to VT_STRING only)
-	logResult("OP_TOSTRING with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_CAST,VT_URL,1,"OP_TOSTRING__VT_URL");
-
 	logResult("OP_TOSTRING with VT_BOOL",RC_OTHER);
 	executeSimpleQuery(session,OP_CAST,VT_BOOL,2,"OP_TOSTRING__VT_BOOL");
 
@@ -1423,16 +1424,13 @@ void TestQueries::runConversionOperators(ISession *session)
 	logResult("OP_RANGE with VT_FLOAT",RC_OTHER);
 	executeSimpleQuery(session,OP_RANGE,VT_FLOAT,1,"OP_TORANGE__VT_FLOAT");
 
-	logResult("OP_RANGE with VT_URL",RC_OTHER);
-	executeSimpleQuery(session,OP_RANGE,VT_URL,1,"OP_TORANGE__VT_URL");
-
 	logResult("OP_RANGE with VT_DOUBLE",RC_OTHER);
 	executeSimpleQuery(session,OP_RANGE,VT_DOUBLE,1,"OP_TORANGE__VT_DOUBLE");
 }
 
-IExprTree * TestQueries::createArithExpr(ISession *session,unsigned var,int Op, int type)
+IExprNode * TestQueries::createArithExpr(ISession *session,unsigned var,int Op, int type)
 {
-	IExprTree *expr1 = NULL,*exprfinal = NULL;
+	IExprNode *expr1 = NULL,*exprfinal = NULL;
 	PropertyID pids[1];
 	Value val[2], vals[10], val1[1];
 	unsigned int ui32;
@@ -1949,7 +1947,7 @@ IExprTree * TestQueries::createArithExpr(ISession *session,unsigned var,int Op, 
 					val[0].set(expr1);
 					val[1].setDateTime(i64);
 					break;
-				case VT_ARRAY:
+				case VT_COLLECTION:
 					pids[0] = pm[7].uid;
 					vals[0].set(26);
 					vals[1].set(28);
@@ -1965,7 +1963,8 @@ IExprTree * TestQueries::createArithExpr(ISession *session,unsigned var,int Op, 
 					expr1 = session->expr(OP_AVG,1,val1);
 					val[0].setVarRef(0,*pids);
 					val[1].set(expr1);
-					break;					
+					break;
+#if 0
 				case VT_COLLECTION:
 					pids[0] = pm[25].uid; // (1,2,3,...,499,500)
 					val1[0].setVarRef(0,*pids);
@@ -1973,6 +1972,7 @@ IExprTree * TestQueries::createArithExpr(ISession *session,unsigned var,int Op, 
 					val[0].set(expr1);
 					val[1].set(250.5); 
 					break;
+#endif
 				case VT_INTERVAL:	
 				default:
 					mLogger.out()<<"DataType not supported"<<endl;
@@ -1986,9 +1986,9 @@ IExprTree * TestQueries::createArithExpr(ISession *session,unsigned var,int Op, 
 	return exprfinal;
 }
 
-IExprTree * TestQueries::createCompExpr(ISession *session,unsigned var,int Op, int type)
+IExprNode * TestQueries::createCompExpr(ISession *session,unsigned var,int Op, int type)
 {
-	IExprTree *exprfinal = NULL, *expr1 = NULL,*expr2 = NULL;
+	IExprNode *exprfinal = NULL, *expr1 = NULL,*expr2 = NULL;
 	PropertyID pids[1];
 	Value val[2], val1[1],val2[2];
 	const char *str = NULL,*url = NULL;
@@ -2076,11 +2076,6 @@ IExprTree * TestQueries::createCompExpr(ISession *session,unsigned var,int Op, i
 			val[0].setVarRef(0,*pids);
 			val[1].set(str);	
 			break;
-		case VT_URL:
-			pids[0] = pm[14].uid;
-			val[0].setVarRef(0,*pids);
-			val[1].setURL(url);	
-			break;
 		case VT_INT:
 			pids[0] = pm[7].uid;
 			val[0].setVarRef(0,*pids);
@@ -2133,8 +2128,6 @@ IExprTree * TestQueries::createCompExpr(ISession *session,unsigned var,int Op, i
        if (Op == OP_NE) {
 		if (type == VT_STRING)
 			val1[0].setVarRef(0,pm[0].uid);
-		else if(type == VT_URL)
-			val1[0].setVarRef(0,pm[14].uid);
 		else
 			assert(0);
 		expr1 = session->expr(OP_EXISTS,1,val1);
@@ -2142,19 +2135,21 @@ IExprTree * TestQueries::createCompExpr(ISession *session,unsigned var,int Op, i
 		val2[0].set(expr1); val2[1].set(expr2);
 		exprfinal =  session->expr(OP_LAND,2,val2);
        } else
-	exprfinal =  session->expr(ExprOp(Op),2,val,NULLS_NOT_INCLUDED_OP);
+		exprfinal =  session->expr(ExprOp(Op),2,val, NULLS_NOT_INCLUDED_OP);
 	return exprfinal;
 }
 
-IExprTree * TestQueries::createBitwiseExpr(ISession *session,unsigned var,int Op, int type)
+IExprNode * TestQueries::createBitwiseExpr(ISession *session,unsigned var,int Op, int type)
 {
-	IExprTree *expr1,*exprfinal;
+	IExprNode *expr1,*exprfinal;
 	PropertyID pids[1];
-	Value val[2],val1[2];
+	Value val[3],val1[2];
 	int i=0,ei=0;
 	unsigned int ui32=0,eui32=0;
 	int64_t i64=0,ei64=0;
 	uint64_t ui64=0,eui64=0; 
+	unsigned char bstr[] = {97,98,99,65,66,67}; // used for OP_SETBIT,OP_RESETBIT,OP_TESTBIT, OP_NOT on VT_BSTR
+	unsigned int bit=0;
 	switch(Op){
 		case OP_AND:
 			i = ei = 27;
@@ -2179,6 +2174,7 @@ IExprTree * TestQueries::createBitwiseExpr(ISession *session,unsigned var,int Op
 			eui32 = (unsigned int)-987654322; // Review - negative assigned to unisnged
 			ei64 = -123456790;
 			eui64 = (uint64_t) -123456790; // REVIEW: negative assigned to unisnged
+			for(i=0;i<sizeof(bstr);i++) bstr[i]=~bstr[i];
 			break;
 		case OP_LSHIFT:
 			i = 2; ei = 27<<2;
@@ -2192,6 +2188,34 @@ IExprTree * TestQueries::createBitwiseExpr(ISession *session,unsigned var,int Op
 			i64 = 0; ei64 = 123456789>>0;
 			ui64 = 10; eui64 = 123456789>>10;
 			break;
+		case OP_SETBIT:
+			i = 2; ei = (1<<2)|27;
+			ui32 = 1; eui32 =  (1<<1)|987654321;
+			i64 = 0; ei64 = (1<<0)|123456789;
+			// deliberately, pins satisfying SETBIT(123456789, 3) = eui64(the value is SETBIT(123456789, 2)) is none.
+			ui64 = 3; eui64 = (1<<2)|123456789; 
+			bit = 8, bstr[8/8]|=1<<(8%8);
+			break;  	
+		case OP_RESETBIT:
+			i = 1; ei =27&~(1<<1);
+			ui32 = 3; eui32 =  987654321&~(1<<3);
+			i64 = 0; ei64 = 123456789&~(1<<0);
+			// deliberately, pins satisfying RESETBIT(123456789, 2) = eui64(the value is RESETBIT(123456789, 0)) is none.
+			ui64 = 2; eui64 = 123456789&~(1<<0); 
+			bit = 24, bstr[24/8]&=~(1<<(24%8));
+			break; 
+		case OP_BITFIELD:
+			i=2; ui32=4; //BITFIELD(987654321,4,4)=11
+			eui32=11;
+			bit = 8; //BITFIELD(bstr,8,4)=10
+			break; 			
+		case OP_TESTBIT:
+			i = 4; //TESTBIT(27,4), two pins satisfy
+			ui32 = 5; //TESTBIT(987654321,5), one pin satisfies
+			i64 = 0;  //TESTBIT(123456789,0), one pin satisfies
+			ui64 = 1; //TESTBIT(123456789,1), none satisfies
+			bit = 33; //TESTBIT(bstr,33), one pin satisfies
+			break; 
 	}
 	switch(type){
 		case VT_INT:
@@ -2204,6 +2228,7 @@ IExprTree * TestQueries::createBitwiseExpr(ISession *session,unsigned var,int Op
 			pids[0] = pm[16].uid;
 			val[0].setVarRef(0,*pids);
 			if(Op != OP_NOT) val[1].set(ui32);
+			if(Op == OP_BITFIELD) val[2].set(ui32);
 			val1[1].set(eui32);
 			break;
 		case VT_INT64:
@@ -2218,22 +2243,39 @@ IExprTree * TestQueries::createBitwiseExpr(ISession *session,unsigned var,int Op
 			if(Op != OP_NOT) val[1].setU64(ui64);			
 			val1[1].setU64(eui64);
 			break;
+		case VT_BSTR:
+			TVERIFY(Op == OP_SETBIT || Op == OP_RESETBIT || Op == OP_TESTBIT
+				|| Op == OP_BITFIELD || Op == OP_NOT);
+			pids[0] = pm[22].uid;
+			val[0].setVarRef(0,*pids);	
+			val[1].set(bit);
+			if(Op == OP_BITFIELD) 
+			{
+				val[2].set(ui32);
+				ui32=2;
+				val1[1].set(ui32);//BITFIELD(bstr,8,4)=2
+			} 
+			else 
+				val1[1].set(bstr,6);
+			break;			
 		default:
 			logResult("Datetype not supported",RC_OTHER);
 	}
-	if(Op != OP_NOT)
-		expr1 = session->expr(ExprOp(Op),2,val);
-	else
+	if(Op == OP_NOT)
 		expr1 = session->expr(ExprOp(Op),1,val);
-
+	else if (Op == OP_BITFIELD)
+		expr1 = session->expr(ExprOp(Op),3,val);
+	else
+		expr1 = session->expr(ExprOp(Op),2,val);
 	val1[0].set(expr1);
+	if(Op == OP_TESTBIT) return expr1;
 	exprfinal = session->expr(OP_EQ,2,val1);
 	return exprfinal;
 }
 
-IExprTree * TestQueries::createLogicalExpr(ISession *session,unsigned var,int Op,int Op1, int Op2,int type1, int type2,bool fake)
+IExprNode * TestQueries::createLogicalExpr(ISession *session,unsigned var,int Op,int Op1, int Op2,int type1, int type2,bool fake)
 {
-	IExprTree *expr1 = NULL,*expr2 = NULL,*exprfinal = NULL, *expr3 = NULL, *expr4 = NULL;
+	IExprNode *expr1 = NULL,*expr2 = NULL,*exprfinal = NULL, *expr3 = NULL, *expr4 = NULL;
 	PropertyID pids[1];
 	Value val[2],val2[2],val3[1];
 	if(Op1 >= OP_EQ && Op1 <= OP_GE)
@@ -2258,7 +2300,7 @@ IExprTree * TestQueries::createLogicalExpr(ISession *session,unsigned var,int Op
 			val[1].set(expr2);
 			exprfinal = session->expr(ExprOp(Op),2,val);
 			break;
-		case OP_LNOT:	
+		case OP_LNOT:
 			if (Op1 == OP_EQ || Op1 == OP_NE){
 				// OP_LNOT and OP_EQ ==> OP_NE, add OP_EXISTS condition
 				// OP_LNOT and (OP_NE and OP_EXISTS)  ==> OP_EQ or prop is NULL, add OP_EXISTS condition
@@ -2269,17 +2311,17 @@ IExprTree * TestQueries::createLogicalExpr(ISession *session,unsigned var,int Op
 				val2[0].set(expr3);val2[1].set(expr4);
 				exprfinal = session->expr(OP_LAND,2,val2);
 			}else {
-			val[0].set(expr1);
-			exprfinal = session->expr(ExprOp(Op),1,val);
+				val[0].set(expr1);
+				exprfinal = session->expr(ExprOp(Op),1,val);
 			}
 			break;
 	}
 	return exprfinal;
 }
 
-IExprTree * TestQueries::createConvExpr(ISession *session,unsigned var,int Op, int type)
+IExprNode * TestQueries::createConvExpr(ISession *session,unsigned var,int Op, int type)
 {
-	IExprTree *expr1;
+	IExprNode *expr1;
 	PropertyID pids[1]={STORE_INVALID_URIID};
 	Value val[2],val1[2];
 	const char *str = NULL; //,*url;
@@ -2333,10 +2375,6 @@ IExprTree * TestQueries::createConvExpr(ISession *session,unsigned var,int Op, i
 			break;
 		case OP_CAST:
 			switch(type){
-				case VT_URL:
-					pids[0] = pm[14].uid;
-					str = "http://www.google.com";
-					break;
 				case VT_FLOAT: 
 					pids[0] = pm[10].uid;
 					str = "7.5";
@@ -2382,11 +2420,6 @@ IExprTree * TestQueries::createConvExpr(ISession *session,unsigned var,int Op, i
 					val[0].set("Indaa");
 					val[1].set("Indll");
 					pids[0] = pm[0].uid;
-					break;
-				case VT_URL:
-					val[0].setURL("http://www.googla.com");
-					val[1].setURL("http://www.googlf.com");
-					pids[0] = pm[14].uid;
 					break;
 				case VT_BSTR:
 				case VT_INT:
@@ -2463,9 +2496,9 @@ IExprTree * TestQueries::createConvExpr(ISession *session,unsigned var,int Op, i
 	return session->expr(OP_EQ,2,val1);
 }
 
-IExprTree * TestQueries::createMinMaxExpr(ISession *session,unsigned var,int Op, int type)
+IExprNode * TestQueries::createMinMaxExpr(ISession *session,unsigned var,int Op, int type)
 {
-	IExprTree *expr1=NULL,*exprfinal=NULL;
+	IExprNode *expr1=NULL,*exprfinal=NULL;
 	PropertyID pids[1];
 	Value val[127];
 	Value val1[2];
@@ -2499,20 +2532,6 @@ IExprTree * TestQueries::createMinMaxExpr(ISession *session,unsigned var,int Op,
 						val[1].set("India");
 						expr1 =  session->expr(ExprOp(Op),2,val);
 					#endif
-					break;
-				case VT_URL:
-					pids[0] = pm[14].uid;
-					val1[0].setVarRef(0,*pids);
-					val[0].setURL("http://www.hooasdlfsf.com");
-					val[1].setURL("http://www.paparazzi.com");
-					val[2].setURL("http://www.srilanka3ever.com");
-					val[3].setURL("http://www.googleme.com");
-					val[4].setURL("http://www.google.com");
-					val[5].setURL("http://www.nagaland.com");
-					val[6].setURL("http://www.srilanka4ever.com");
-					val[7].setURL("http://www.southafrica.com");
-					val[8].setURL("http://www.indiaincredible.com");	
-					expr1 =  session->expr(ExprOp(Op),9,val);
 					break;
 				case VT_INT:
 					j = 34;
@@ -2634,20 +2653,6 @@ IExprTree * TestQueries::createMinMaxExpr(ISession *session,unsigned var,int Op,
 						expr1 =  session->expr(ExprOp(Op),2,val);
 					#endif
 					break;
-				case VT_URL:
-					pids[0] = pm[14].uid;
-					val1[0].setVarRef(0,*pids);
-					val[0].setURL("http://www.hooasdlfsf.com");
-					val[1].setURL("http://www.paparazzi.com");
-					val[2].setURL("http://www.srilanka3ever.com");
-					val[3].setURL("http://www.googleme.com");
-					val[4].setURL("http://www.google.com");
-					val[5].setURL("http://www.nagaland.com");
-					val[6].setURL("http://www.srilanka4ever.com");
-					val[7].setURL("http://www.southafrica.com");
-					val[8].setURL("http://www.indiaincredible.com");
-					expr1 =  session->expr(ExprOp(Op),9,val);
-					break;
 				case VT_INT:
 					pids[0] = pm[7].uid;
 					val1[0].setVarRef(0,*pids);
@@ -2749,9 +2754,9 @@ IExprTree * TestQueries::createMinMaxExpr(ISession *session,unsigned var,int Op,
 	return exprfinal;
 }
 
-IExprTree * TestQueries::createStringOpsExpr(ISession *session,unsigned var,int Op, int type,const int pVariant)
+IExprNode * TestQueries::createStringOpsExpr(ISession *session,unsigned var,int Op, int type,const int pVariant)
 {
-	IExprTree *expr1 = NULL,*exprfinal = NULL;
+	IExprNode *expr1 = NULL,*exprfinal = NULL;
 	PropertyID pids[1];
 	Value val[3],val1[2];
 	int64_t i64 = 0;
@@ -2912,73 +2917,6 @@ IExprTree * TestQueries::createStringOpsExpr(ISession *session,unsigned var,int 
 								val1[1].set(bstr,4);
 								break;
 							}
-					}
-					break;
-				case VT_URL:
-					switch(pVariant){
-						case 0:
-								pids[0] = pm[14].uid;
-								val[0].setVarRef(0,*pids);
-								val[1].set(0);
-								val[2].set((float)5.0);
-								expr1 = session->expr(OP_SUBSTR,3,val);
-								val1[0].set(expr1);
-								val1[1].setURL("http:");
-								break;
-						case 1:
-								pids[0] = pm[14].uid;
-								val[0].setVarRef(0,*pids);
-								val[1].set((double)2.0);
-								val[2].set((unsigned int)5);
-								expr1 = session->expr(OP_SUBSTR,3,val);
-								val1[0].set(expr1);
-								val1[1].setURL("tp://");
-								break;
-						case 2:
-								pids[0] = pm[14].uid;
-								val[0].setVarRef(0,*pids);
-								i64 = 6;ui64 = 8;
-								val[1].setI64(i64);
-								val[2].setU64(ui64);
-								expr1 = session->expr(OP_SUBSTR,3,val);
-								val1[0].set(expr1);
-								val1[1].setURL("/www.sri");
-								break;
-						case 3:
-								pids[0] = pm[14].uid;
-								val[0].setVarRef(0,*pids);
-								val[1].set("-3");
-								val[2].set("6");
-								expr1 = session->expr(OP_SUBSTR,3,val);
-								val1[0].set(expr1);
-								val1[1].setURL("   htt");
-								break;
-						case 4:
-							    pids[0] = pm[14].uid;
-								val[0].setVarRef(0,*pids);
-								val[1].set(-5);
-								val[2].set(5);
-								expr1 = session->expr(OP_SUBSTR,3,val);
-								val1[0].set(expr1);
-								val1[1].setURL("     ");
-								break;
-						case 5:
-							    pids[0] = pm[14].uid;
-								val[0].setVarRef(0,*pids);
-								val[1].set(-5);
-								val[2].set(20);
-								expr1 = session->expr(OP_SUBSTR,3,val);
-								val1[0].set(expr1);
-								val1[1].setURL("     http://www.sril");
-								break;
-						case 6:
-							    pids[0] = pm[14].uid;
-								val[0].setVarRef(0,*pids);
-								val[1].set(19);
-								expr1 = session->expr(OP_SUBSTR,2,val);
-								val1[0].set(expr1);
-								val1[1].setURL("http://www.srilanka");
-								break;
 					}
 					break;
 			}
@@ -3164,29 +3102,6 @@ IExprTree * TestQueries::createStringOpsExpr(ISession *session,unsigned var,int 
 					}
 					exprfinal = session->expr(OP_EQ,2,val1);
 					break;
-				case VT_URL: //Not Required as code path is same as VT_STRING
-					switch(pVariant){
-						case 0: // Full word replacement
-								pids[0] = pm[14].uid;
-								val[0].setVarRef(0,*pids);
-								val[1].set("http://www.srilanka4ever.com");
-								val[2].set("http://www.changed.com");
-								expr1 = session->expr(OP_REPLACE,3,val);
-								val1[0].set(expr1);
-								val1[1].set("http://www.changed.com");
-								break;
-						case 1:// word replacement
-								pids[0] = pm[14].uid;
-								val[0].setVarRef(0,*pids);
-								val[1].set("srilanka");
-								val[2].set("india");
-								expr1 = session->expr(OP_REPLACE,3,val);
-								val1[0].set(expr1);
-								val1[1].set("http://www.india4ever.com");
-								break;
-					}
-					exprfinal = session->expr(OP_EQ,2,val1);
-					break;
 			}break;
 		case OP_PAD:
 			switch(type){
@@ -3298,9 +3213,6 @@ IExprTree * TestQueries::createStringOpsExpr(ISession *session,unsigned var,int 
 					}
 					exprfinal = session->expr(OP_EQ,2,val1);
 					break;
-				case VT_URL:
-					// Not required as the code path is same as VT_STRING
-					break;
 			}break;
 		case OP_UPPER:
 			switch(type){
@@ -3330,17 +3242,6 @@ IExprTree * TestQueries::createStringOpsExpr(ISession *session,unsigned var,int 
 					}
 					exprfinal = session->expr(OP_EQ,2,val1);
 					break;
-				case VT_URL:
-					switch(pVariant){
-						case 0:
-							pids[0] = pm[14].uid; // http://www.srilanka4ever.com
-							val[0].setVarRef(0,*pids);
-							expr1 = session->expr(OP_UPPER,1,val);
-							val1[0].set(expr1);
-							val1[1].set("HTTP://WWW.SRILANKA4EVER.COM");							break;
-					}
-					exprfinal = session->expr(OP_EQ,2,val1);
-					break;
 			}break;
 		case OP_LOWER:
 			switch(type){
@@ -3367,18 +3268,6 @@ IExprTree * TestQueries::createStringOpsExpr(ISession *session,unsigned var,int 
 							val1[0].set(expr1);
 							val1[1].set(" 500080");
 							break;	
-					}
-					exprfinal = session->expr(OP_EQ,2,val1);
-					break;
-				case VT_URL:
-					switch(pVariant){
-						case 0:
-							pids[0] = pm[23].uid; //http://www.unicodeURL.com
-							val[0].setVarRef(0,*pids);
-							expr1 = session->expr(OP_LOWER,1,val);
-							val1[0].set(expr1);
-							val1[1].set("http://www.unicodeurl.com");	
-							break;
 					}
 					exprfinal = session->expr(OP_EQ,2,val1);
 					break;
@@ -3432,27 +3321,14 @@ IExprTree * TestQueries::createStringOpsExpr(ISession *session,unsigned var,int 
 					}
 					exprfinal = session->expr(OP_EQ,2,val1);
 					break;
-				case VT_URL:
-					switch(pVariant){
-						case 0:
-							pids[0] = pm[23].uid; //http://www.unicodeURL.com
-							val[0].setVarRef(0,*pids);
-							val[1].set("/xyz");
-							expr1 = session->expr(OP_CONCAT,2,val);
-							val1[0].set(expr1);
-							val1[1].set("http://www.unicodeURL.com/xyz");	
-							break;
-					}
-					exprfinal = session->expr(OP_EQ,2,val1);
-					break;
 			}break;	
 	}
 	return exprfinal;
 }
 
-IExprTree * TestQueries::createFuncOpsExpr(ISession *session,unsigned var,int Op, int type,const int pVariant)
+IExprNode * TestQueries::createFuncOpsExpr(ISession *session,unsigned var,int Op, int type,const int pVariant)
 {
-	IExprTree *expr1 = NULL,*exprfinal = NULL;
+	IExprNode *expr1 = NULL,*exprfinal = NULL;
 	PropertyID pids[1];
 	Value val[3],val1[2];
 	switch(Op){
@@ -3501,19 +3377,6 @@ IExprTree * TestQueries::createFuncOpsExpr(ISession *session,unsigned var,int Op
 							expr1 = session->expr(OP_POSITION,2,val);
 							val1[0].set(expr1);
 							val1[1].set(-1); // should be -1 if there is no matching
-							break;
-					}
-					exprfinal = session->expr(OP_EQ,2,val1);
-					break;
-				case VT_URL:
-					switch(pVariant){
-						case 0:
-							pids[0] = pm[14].uid; // http://www.srilanka4ever.com
-							val[0].setVarRef(0,*pids);
-							val[1].set("srilanka4");
-							expr1 = session->expr(OP_POSITION,2,val);
-							val1[0].set(expr1);
-							val1[1].set(11);							
 							break;
 					}
 					exprfinal = session->expr(OP_EQ,2,val1);
@@ -3579,7 +3442,7 @@ IExprTree * TestQueries::createFuncOpsExpr(ISession *session,unsigned var,int Op
 					exprfinal = session->expr(OP_EQ,2,val1);
 					break;
 				/*
-				case VT_ARRAY:
+				case VT_COLLECTION:
 					switch(pVariant){
 						case 0:
 							pids[0] = pm[24].uid; // (1,2,3,4,5,6,7,8,9,10)
@@ -3633,13 +3496,12 @@ IExprTree * TestQueries::createFuncOpsExpr(ISession *session,unsigned var,int Op
 	return exprfinal;
 }
 
-IExprTree * TestQueries::createOP_INExpr(ISession *session,unsigned var,int type)
+IExprNode * TestQueries::createOP_INExpr(ISession *session,unsigned var,int type)
 {
-	IExprTree *expr1 = NULL,*exprfinal = NULL;
+	IExprNode *expr1 = NULL,*exprfinal = NULL;
 	PropertyID pids[1];
 	Value val[10];
 	Value val1[2];
-	Value pvs[3];
 	ClassID	pClassID = 0;
 	IStmt * pQuery = session->createStmt();
 	QVarID const var1 = pQuery->addVariable();
@@ -3652,7 +3514,7 @@ IExprTree * TestQueries::createOP_INExpr(ISession *session,unsigned var,int type
 			val1[1].setRange(val);
 			exprfinal = session->expr(OP_IN,2,val1,CASE_INSENSITIVE_OP);
 			break;
-		case VT_ARRAY:
+		case VT_COLLECTION:
 			pids[0] = pm[7].uid;
 			val[0].set(12);
 			val[1].set(24);
@@ -3686,6 +3548,7 @@ IExprTree * TestQueries::createOP_INExpr(ISession *session,unsigned var,int type
 			exprfinal = session->expr(OP_IN,2,val1);
 			//This should return all pins as the condition is true
 			break;
+#if 0
 		case VT_COLLECTION:	
 			{
 				pvs[0].set("SouthAfrica");
@@ -3699,6 +3562,7 @@ IExprTree * TestQueries::createOP_INExpr(ISession *session,unsigned var,int type
 				lCollNav->destroy();
 			}
 			break;
+#endif
 		default: 
 			logResult("Datatype not supported",RC_OTHER);
 		}
@@ -3720,7 +3584,7 @@ void TestQueries::createOP_INWithNavigator(ISession *session)
 	Value operands[2];
 	operands[0].setVarRef(0);
 	operands[1].set(nv);
-	IExprTree *expr = session->expr(OP_IN,2,operands);
+	IExprNode *expr = session->expr(OP_IN,2,operands);
 	if(NULL != expr)
 	{
 		pQuery->addCondition(var1,expr);		
@@ -3737,7 +3601,7 @@ void TestQueries::createOP_INWithNavigator(ISession *session)
 
 void TestQueries::executeSimpleQuery(ISession *session,int Op,int type,int nExpResults,const char *pClassName,const int pVariant)
 {
-	IExprTree *expr = NULL;
+	IExprNode *expr = NULL;
 	string lCLSName = "TestQueries." + mRandStr + ".";
 	//lCLSName.append(".");
 	ClassID	lCLSID = STORE_INVALID_CLASSID;
@@ -3748,7 +3612,7 @@ void TestQueries::executeSimpleQuery(ISession *session,int Op,int type,int nExpR
 			expr = createArithExpr(session,var,Op,type);
 		else if(Op >= OP_EQ && Op <= OP_GE)
 			expr = createCompExpr(session,var,Op,type);
-		else if(Op >= OP_NOT && Op <= OP_RSHIFT)
+		else if(Op >= OP_NOT && Op <= OP_RESETBIT || Op == OP_TESTBIT || Op == OP_BITFIELD)
 			expr = createBitwiseExpr(session,var,Op,type);
 		else if(Op >= OP_TONUM && Op<= OP_CAST || Op==OP_RANGE)
 			expr = createConvExpr(session,var,Op,type);
@@ -3816,7 +3680,7 @@ void TestQueries::executeSimpleQuery(ISession *session,int Op,int type,int nExpR
 
 void TestQueries::executeComplexQuery(ISession *session,int Op,int Op1,int type1,int Op2,int type2,int nExpResults,bool fake,const char *pClassName)
 {
-	IExprTree *expr = NULL;
+	IExprNode *expr = NULL;
 	string lCLSName = "TestQueries." + mRandStr + ".";
 	ClassID	lCLSID = STORE_INVALID_CLASSID;
 	{
@@ -3835,6 +3699,11 @@ void TestQueries::executeComplexQuery(ISession *session,int Op,int Op1,int type1
 	IStmt *query = session->createStmt();
 	QVarID var = query->addVariable();
 	query->addCondition(var,expr);
+	/*const char *lQStr = query->toString();
+	if(lQStr != NULL)
+		std::cout <<std::endl<<"The Query built :: " <<std::endl<< lQStr;
+	else
+		logResult("Failed to get the string of IStmt",RC_OTHER);	*/
 	uint64_t lCount = 0;
 	if(mRunFullScan || pClassName == NULL){
 		lCount = reportResult(query);
@@ -3872,14 +3741,13 @@ void TestQueries::executeComplexQuery(ISession *session,int Op,int Op1,int type1
 
 void TestQueries::populateStore(ISession *session)
 {
-	PID pid;
 	Value pvs[550];
 	
 	//Check whether PINs already exist
 	IStmt * lQ = session->createStmt();
 	unsigned char lVar = lQ->addVariable();
 	pvs[0].setVarRef(0,pm[0].uid);
-	IExprTree *lET = session->expr(OP_EXISTS,1,pvs);
+	IExprNode *lET = session->expr(OP_EXISTS,1,pvs);
 	lQ->addCondition(lVar,lET);
 	ICursor * lR = NULL;
 	TVERIFYRC(lQ->execute(&lR));
@@ -3902,7 +3770,7 @@ void TestQueries::populateStore(ISession *session)
 		SETVALUE(pvs[11], pm[11].uid, double(10000.50), OP_SET);
 		SETVALUE(pvs[12], pm[12].uid, 134343433, OP_SET);
 		SETVALUE(pvs[13], pm[13].uid, 01012005, OP_SET);
-		pvs[14].setURL("http://www.google.com"); SETVATTR(pvs[14], pm[14].uid, OP_SET);
+		pvs[14].set("http://www.google.com"); SETVATTR(pvs[14], pm[14].uid, OP_SET);
 		SETVALUE(pvs[15], pm[15].uid, "true", OP_SET);
 		unsigned int ui32 = 987654321;
 		SETVALUE(pvs[16], pm[16].uid, ui32, OP_SET);
@@ -3914,8 +3782,7 @@ void TestQueries::populateStore(ISession *session)
 		ui64 = 12753803254343750LL;
 		pvs[19].setDateTime(ui64); SETVATTR(pvs[19], pm[19].uid, OP_SET);
 		//pvs[20].setInterval(pm[20].uid,ui64);
-		RC rc = session->createPINAndCommit(pid,pvs,20);
-		PinID[0] = session->getPIN(pid);
+		TVERIFYRC(session->createPIN(pvs,20,&PinID[0],MODE_PERSISTENT|MODE_COPY_VALUES));
 
 		SETVALUE(pvs[0], pm[0].uid, "Nepal", OP_SET);
 		SETVALUE(pvs[1], pm[1].uid, "Kathmandu", OP_SET);
@@ -3928,8 +3795,7 @@ void TestQueries::populateStore(ISession *session)
 		SETVALUE(pvs[8], pm[9].uid, true, OP_SET);
 		SETVALUE(pvs[9], pm[10].uid, 5.5, OP_SET);
 		SETVALUE(pvs[10], pm[14].uid, "http://www.nepalfc.com", OP_SET);
-		rc = session->createPINAndCommit(pid,pvs,11);
-		PinID[1] = session->getPIN(pid);
+		TVERIFYRC(session->createPIN(pvs,11,&PinID[1],MODE_PERSISTENT|MODE_COPY_VALUES));
 
 		const static unsigned char bstr[] = {97,98,99,65,66,67};
 
@@ -3944,7 +3810,7 @@ void TestQueries::populateStore(ISession *session)
 		SETVALUE(pvs[8], pm[14].uid, "http://www.srilanka4ever.com", OP_SET);
 		SETVALUE(pvs[9], pm[21].uid, "This was unicode", OP_SET);
 		pvs[10].set(bstr,6); SETVATTR(pvs[10], pm[22].uid, OP_SET);
-		pvs[11].setURL("http://www.unicodeURL.com"); SETVATTR(pvs[11], pm[23].uid, OP_SET);
+		pvs[11].set("http://www.unicodeURL.com"); SETVATTR(pvs[11], pm[23].uid, OP_SET);
 
 		// pvs[12] ~ pvs[21] is a collection, (1,2,3,4,5,6,7,8,9,10)
 		for (int i = 1; i <= 10; i++)
@@ -3955,10 +3821,9 @@ void TestQueries::populateStore(ISession *session)
 		for (int i = 1; i <= 500; i++)
 			SETVALUE_C(pvs[21+i], pm[25].uid, i, OP_ADD, STORE_LAST_ELEMENT);
 		
-		rc = session->createPINAndCommit(pid,pvs,522);
-		PinID[2] = session->getPIN(pid);
+		TVERIFYRC(session->createPIN(pvs,522,&PinID[2],MODE_PERSISTENT|MODE_COPY_VALUES));
 	}else{
-		IExprTree *lET1 = session->expr(OP_EQ,2,pvs);
+		IExprNode *lET1 = session->expr(OP_EQ,2,pvs);
 
 		//PIN #1
 		IStmt *lQ1 = session->createStmt();

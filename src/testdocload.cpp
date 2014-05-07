@@ -265,25 +265,22 @@ public:
 		long lStart = getTimeInMs() ;
 	
 		// Time to commit
-		IPIN** newPINs = (IPIN**) malloc(mBatchSize * sizeof(IPIN*)) ;
 		size_t i  ;
+		IBatch *lBatch=mSession->createBatch();
+		assert(lBatch!=NULL);
 		for ( i = 0 ; i < mBatchSize ; i++ )
 		{	
-			Value * mMsgWrapper = (Value*) mSession->malloc( sizeof( Value ) ) ;
+			Value *mMsgWrapper = (Value*)lBatch->createValues(1) ;
 			mMsgWrapper->set( mMsgs[i] ) ; mMsgWrapper->property = mPropID ;		
 			mMsgWrapper->meta = mMeta ; 
 
-			newPINs[i] = mSession->createPIN( mMsgWrapper,1 ) ; 
+			assert(lBatch->createPIN( mMsgWrapper,1) == RC_OK) ; 
 		}
 
-		unsigned int mode = 0 ; /*MODE_SYNC_FTINDEX doesn't currently make a difference*/
-		if (RC_OK != mSession->commitPINs( newPINs, mBatchSize, mode)) { assert(false); }
+		if (RC_OK != lBatch->process()) { assert(false); }
 
-		for ( i = 0 ; i < mBatchSize ; i++ )
-		{
-			newPINs[i]->destroy() ;   // This also frees the string and Value that we have allocated
-		}
-		free( newPINs ) ;
+		//unsigned int mode = 0 ; /*MODE_SYNC_FTINDEX doesn't currently make a difference*/
+		//if (RC_OK != mSession->commitPINs( newPINs, mBatchSize, mode)) { assert(false); }
 
 		long lEndTime = getTimeInMs() ;
 		long lCommitTime = lEndTime - lStart ;

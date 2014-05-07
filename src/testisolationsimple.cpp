@@ -877,7 +877,10 @@ void TestIsolationSimple::testCreate1Pin(bool pTxNesting, bool pCommit)
 		Value lPVs[1];
 		SETVALUE(lPVs[0], mPropIDs[kBPInt], 1, OP_SET);
 		TVERIFYRC(lWS->startTransaction(TXT_READWRITE, (Afy::TXI_LEVEL)mCurrentTxiLevel));
-		TVERIFYRC(lWS->createPINAndCommit(lPID, lPVs, 1));
+		IPIN *pin;
+		TVERIFYRC(lWS->createPIN(lPVs, 1, &pin, MODE_COPY_VALUES|MODE_PERSISTENT));
+		lPID = pin->getPID();
+		if(pin!=NULL) pin->destroy();
 		TVERIFY(findPin_session(lWS.p(), lPID));
 		TVERIFY(findPin_fullscan(lWS.p(), mCLSID, lPID));
 		TVERIFY(findPin_class(lWS.p(), mCLSID, lPID));
@@ -1093,8 +1096,8 @@ void TestIsolationSimple::createPINAndCommit(ePid pPID, long pRequirements, bool
 				INITLOCALPID(mPIDs[kPNormal]);
 			}
 
-			TVERIFYRC(mSession1->createPINAndCommit(mPIDs[kPNormal], lPVs, 6));
-			lP = mSession1->getPIN(mPIDs[kPNormal]);
+			TVERIFYRC(mSession1->createPIN(lPVs, 6,&lP, MODE_PERSISTENT|MODE_COPY_VALUES));
+			mPIDs[kPNormal] = lP->getPID();
 			break;
 		}
 		case kPReplicated:

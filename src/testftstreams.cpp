@@ -191,7 +191,6 @@ void TestFTStreams::testFTStreams(ISession *session)
 	const bool bWords = false ; // No words in the search string, because FT search matches with each and short random words can appear anywhere
 
 	Value val[5];
-	PID pid;
 	unsigned long streamlen = 20 + rand() % 40;
 	Tstring serstr; // Random Search String
 	MVTRand::getString(serstr,5,0,bWords);
@@ -204,7 +203,7 @@ void TestFTStreams::testFTStreams(ISession *session)
 	val[0].set(MVTApp::wrapClientStream(session, new testStream(streamlen,97/*start character*/,VT_STRING,serstr,0)));
 	val[0].setPropID(lPropIDs[0]);
 	val[0].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->createPINAndCommit(pid,val,1,0));
+	TVERIFYRC(session->createPIN(val,1,NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 	testExpectedFT( session, lPropIDs[0], serstr.c_str(),"case 1: Short Stream and search string at the begining.(create) failed");
 
 	//case 2: Short stream collection and search string at the begining (create).
@@ -229,7 +228,7 @@ void TestFTStreams::testFTStreams(ISession *session)
 	val[2].setPropID(lPropIDs[1]);
 	val[2].op = OP_ADD; val[2].eid = STORE_LAST_ELEMENT;
 	val[0].meta = val[1].meta = val[2].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->createPINAndCommit(pid,val,3,0));
+	TVERIFYRC(session->createPIN(val,3,NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 	testExpectedFT( session, lPropIDs[1], serstr.c_str(),"case 2: Short stream collection and search string at the begining (create) failed");
 	
 	//case 3: large stream with search string somewhere in between
@@ -239,7 +238,7 @@ void TestFTStreams::testFTStreams(ISession *session)
 	val[0].set(MVTApp::wrapClientStream(session, new testStream(streamlen,97,VT_STRING,serstr,5612)));
 	val[0].setPropID(lPropIDs[1]);
 	val[0].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->createPINAndCommit(pid,val,1,0));
+	TVERIFYRC(session->createPIN(val,1,NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	testExpectedFT( session, lPropIDs[1], serstr.c_str(),"case 3: large stream with search string somewhere in between (create) failed");
 
@@ -266,7 +265,7 @@ void TestFTStreams::testFTStreams(ISession *session)
 	val[2].setPropID(lPropIDs[2]);
 	val[2].op = OP_ADD; val[2].eid = STORE_LAST_ELEMENT;
 	val[0].meta = val[1].meta = val[2].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->createPINAndCommit(pid,val,3,0));
+	TVERIFYRC(session->createPIN(val,3,NULL, MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	testExpectedFT( session, lPropIDs[2], serstr.c_str(),"case 4: big stream collection (create) failed");
 	
@@ -277,7 +276,8 @@ void TestFTStreams::testFTStreams(ISession *session)
 	val[0].set(MVTApp::wrapClientStream(session, new testStream(streamlen,97,VT_STRING,serstr,0)));
 	val[0].setPropID(lPropIDs[3]);
 	val[0].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->createPINAndCommit(pid,val,1,0));
+	IPIN *pin;
+	TVERIFYRC(session->createPIN(val,1,&pin, MODE_PERSISTENT|MODE_COPY_VALUES));
 	
 	streamlen = 40 + rand() % 200;
 	MVTRand::getString(serstr,4,0,bWords);
@@ -285,8 +285,8 @@ void TestFTStreams::testFTStreams(ISession *session)
 	val[0].set(MVTApp::wrapClientStream(session, new testStream(streamlen,97,VT_STRING,serstr,0)));
 	val[0].setPropID(lPropIDs[3]);
 	val[0].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->modifyPIN(pid,val,1,0));
-
+	TVERIFYRC(pin->modify(val,1,0));
+	pin->destroy();
 	testExpectedFT( session, lPropIDs[3], serstr.c_str(),"case 5: Modify pin with a short stream failed");
 	
 	//case 6: collection modify of short stream
@@ -300,10 +300,8 @@ void TestFTStreams::testFTStreams(ISession *session)
 	val[1].set(MVTApp::wrapClientStream(session, new testStream(streamlen,97,VT_STRING,serstr,0)));
 	val[1].setPropID(lPropIDs[5]);
 	val[0].meta = val[1].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->createPINAndCommit(pid,val,2,0));
+	TVERIFYRC(session->createPIN(val,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 
-
-	IPIN *pin = session->getPIN(pid);
 	streamlen = 40 + rand() % 60;
 	MVTRand::getString(serstr,5,0,bWords);
 	streamlen+=6;
@@ -325,18 +323,17 @@ void TestFTStreams::testFTStreams(ISession *session)
 	//case 7: modifypin with a long stream
 	val[0].set("this will converted to streams");val[0].setPropID(lPropIDs[7]);
 	val[1].set(123445);val[1].setPropID(lPropIDs[8]);
-	val[2].setURL("http://www.f1.com");val[2].setPropID(lPropIDs[9]);
+	val[2].set("http://www.f1.com");val[2].setPropID(lPropIDs[9]);
 	val[0].meta = val[2].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->createPINAndCommit(pid,val,3));
+	TVERIFYRC(session->createPIN(val,3,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 	
-	pin = session->getPIN(pid);
 	streamlen = 900000 + rand() % 30000;
 	MVTRand::getString(serstr,8,0,bWords);
 	streamlen+=9;
 	val[0].set(MVTApp::wrapClientStream(session, new testStream(streamlen,97,VT_STRING,serstr,0)));
 	val[0].setPropID(lPropIDs[7]);
 	val[0].meta = META_PROP_FTINDEX;
-	TVERIFYRC(session->modifyPIN(pid,val,1,0));
+	TVERIFYRC(session->modifyPIN(pin->getPID(),val,1,0));
 	testExpectedFT( session, lPropIDs[7], serstr.c_str(),"case 7: Modify pin with a long stream failed");
 	pin->destroy();
 

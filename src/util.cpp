@@ -1393,22 +1393,25 @@ size_t MVTUtil::getCollectionLength(Value const & pV)
 	}
 	else if (VT_COLLECTION == pV.type)
 	{
-		size_t i = 0;
-		Value const * lV = pV.nav->navigate(GO_FIRST);
-		while (lV)
+		if (pV.isNav())
 		{
-			i++;
-			lV = pV.nav->navigate(GO_NEXT);
-		}
+			size_t i = 0;
+			Value const * lV = pV.nav->navigate(GO_FIRST);
+			while (lV)
+			{
+				i++;
+				lV = pV.nav->navigate(GO_NEXT);
+			}
 
-		// Review: count() method is more convenient
-		// but doesn't hurt to also count the entries manually as well
-		assert( i == pV.nav->count() ) ; 
-		return i;
-	}
-	else if ( VT_ARRAY == pV.type )
-	{
-		return pV.length ;
+			// Review: count() method is more convenient
+			// but doesn't hurt to also count the entries manually as well
+			assert( i == pV.nav->count() ) ; 
+			return i;
+		}
+		else
+		{
+			return pV.length ;
+		}
 	}
 	else
  	{

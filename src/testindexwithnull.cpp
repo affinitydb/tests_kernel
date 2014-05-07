@@ -75,7 +75,7 @@ void TestIndexWithNull::doTest()
 		Value va[5];
 		va[0].setVarRef(0,ids[0]);
 		va[1].setParam(0);
-		IExprTree *expr = mSession->expr(OP_IN,2,va);
+		IExprNode *expr = mSession->expr(OP_IN,2,va);
 		QVarID qid = qry->addVariable(NULL,0,expr);
 		expr->destroy();
 
@@ -87,8 +87,7 @@ void TestIndexWithNull::doTest()
 
 		va[0].set("TestIndexWithNull.class1"); va[0].property = PROP_SPEC_OBJID;
 		va[1].set(qry); va[1].property = PROP_SPEC_PREDICATE; va[1].meta = META_PROP_INDEXED;
-		PID pid;
-		mSession->createPINAndCommit(pid,va,2);
+		mSession->createPIN(va,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 		std::cout << qry->toString() << std::endl;
 		
@@ -96,18 +95,18 @@ void TestIndexWithNull::doTest()
 	
 		va[0].set(20); va[1].set(30);
 		va[0].property = ids[0]; va[1].property = ids[1];
-		mSession->createPINAndCommit(pid,va,1);
+		mSession->createPIN(va,1,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 		va[0].set(30); va[1].set(30);
 		va[0].property = ids[0]; va[1].property = ids[1];
-		mSession->createPINAndCommit(pid,va,2);
+		mSession->createPIN(va,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 		qry = mSession->createStmt("select where $0 in :0 ( INT, NULLS FIRST )",&ids[1],1);
 
 		va[0].set("TestIndexWithNull.class2"); va[0].property = PROP_SPEC_OBJID;
 		va[1].set(qry); va[1].property = PROP_SPEC_PREDICATE; va[1].meta = META_PROP_INDEXED;
 
-		mSession->createPINAndCommit(pid,va,2);
+		mSession->createPIN(va,2,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 
 		std::cout << qry->toString() << std::endl;
 		

@@ -318,7 +318,7 @@ void TestIndexRebuild::createFamilies()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIDs[0]);
@@ -337,7 +337,7 @@ void TestIndexRebuild::createFamilies()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIDs[0]);
@@ -356,21 +356,21 @@ void TestIndexRebuild::createFamilies()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIDs[0]);
 			lV[1].set(30);
-			IExprTree *lET1 = mSession->expr(OP_GT, 2, lV);
+			IExprNode *lET1 = mSession->expr(OP_GT, 2, lV);
 			lV[0].setVarRef(0,mPropIDs[0]);
 			lV[1].set(40);
-			IExprTree *lET2 = mSession->expr(OP_LT, 2, lV);
+			IExprNode *lET2 = mSession->expr(OP_LT, 2, lV);
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			IExprTree *lET3 = mSession->expr(OP_LAND, 2, lV);
+			IExprNode *lET3 = mSession->expr(OP_LAND, 2, lV);
 			lV[0].setVarRef(0,mPropIDs[1]);
 			lV[1].setParam(0);
-			IExprTree *lET4 = mSession->expr(OP_IN, 2, lV);
+			IExprNode *lET4 = mSession->expr(OP_IN, 2, lV);
 			lV[0].set(lET3);
 			lV[1].set(lET4);
 			lET = mSession->expr(OP_LAND, 2, lV);
@@ -392,7 +392,7 @@ void TestIndexRebuild::createClasses()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIDs[0]);
@@ -422,14 +422,14 @@ void TestIndexRebuild::createClasses()
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIDs[0]);
 			lV[1].set(50);
-			IExprTree *lET1 = mSession->expr(OP_GE, 2, lV);
+			IExprNode *lET1 = mSession->expr(OP_GE, 2, lV);
 			lV[0].setVarRef(0,mPropIDs[1]);
-			IExprTree *lET2 = mSession->expr(OP_EXISTS, 1, lV);
+			IExprNode *lET2 = mSession->expr(OP_EXISTS, 1, lV);
 			lV[0].set(lET1);
 			lV[1].set(lET2);
 			lET = mSession->expr(OP_LAND, 2, lV);

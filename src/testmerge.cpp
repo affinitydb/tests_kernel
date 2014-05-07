@@ -43,7 +43,7 @@ int	TestMerge::execute()
 		Value lV[4]; ClassID lClassVal = STORE_INVALID_CLASSID;
 		lV[0].setVarRef(0,lPropIdVal);
 		lV[1].setParam(0);
-		IExprTree *expr=lSession->expr(OP_LT,2,lV);
+		IExprNode *expr=lSession->expr(OP_LT,2,lV);
 		IStmt *lQ = lSession->createStmt();
 		lQ->addVariable(NULL,0,expr);
 		TVERIFYRC(defineClass(lSession,lB,lQ,&lClassVal));

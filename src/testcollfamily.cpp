@@ -101,16 +101,16 @@ void TestCollFamily::defineFamilies(ISession *session)
 		// Class Query is : "prop0 contains "image" AND prop1=parameter 0
 		args[0].setVarRef(0,(mPropIDs[0]));
 		args[1].set("image");
-		IExprTree *expr = session->expr(OP_CONTAINS,2,args,CASE_INSENSITIVE_OP);
+		IExprNode *expr = session->expr(OP_CONTAINS,2,args,CASE_INSENSITIVE_OP);
 
 		args1[0].setVarRef(0,(mPropIDs[1]));
 		args1[1].setParam(0);  // This is what makes it a "family" query. The 
 							   // string to match will be provided at query time
-		IExprTree *expr1 = session->expr(OP_EQ,2,args1);
+		IExprNode *expr1 = session->expr(OP_EQ,2,args1);
 
 		argsfinal[0].set(expr);
 		argsfinal[1].set(expr1);
-		IExprTree *exprfinal = session->expr(OP_LAND,2,argsfinal);
+		IExprNode *exprfinal = session->expr(OP_LAND,2,argsfinal);
 		query->addCondition(var,exprfinal);		
 		TVERIFYRC(defineClass(session,mFamilyNames[0].c_str(), query));
 
@@ -125,7 +125,7 @@ void TestCollFamily::defineFamilies(ISession *session)
 		// Class query "prop2 begins with Parameter 0"
 		args[0].setVarRef(0,(mPropIDs[2]));
 		args[1].setParam(0);
-		IExprTree *expr = session->expr(OP_BEGINS,2,args);
+		IExprNode *expr = session->expr(OP_BEGINS,2,args);
 		query->addCondition(var,expr);
 
 #ifdef TEST_QUERY_TO_STRING_PROBLEM
@@ -211,19 +211,21 @@ PID TestCollFamily::testPIN( ISession *session, PropertyID collPropID, int i /*p
 			Value dval = *pin->getValue(collPropID);
 			size_t len = MVTApp::getCollectionLength(*pin->getValue(collPropID));		
 			if (dval.type == VT_COLLECTION) {
-				eid = dval.nav->navigate(GO_FIRST)->eid ;
+				if (dval.isNav()) {
+					eid = dval.nav->navigate(GO_FIRST)->eid ;
 
-				// Get the eid of a random element
-				size_t targetIndex = (size_t)MVTRand::getRange(0,(int)len-1);
-				for (size_t x=0; x < targetIndex; x++)
-					eid = dval.nav->navigate(GO_NEXT)->eid;
+					// Get the eid of a random element
+					size_t targetIndex = (size_t)MVTRand::getRange(0,(int)len-1);
+					for (size_t x=0; x < targetIndex; x++)
+						eid = dval.nav->navigate(GO_NEXT)->eid;
 
-				// Retreive the value of the same random element again via the navigator GO_FINDBYID
-				qstr = dval.nav->navigate(GO_FINDBYID,eid)->str;
-			} else if (dval.type == VT_ARRAY) {
-				size_t targetIndex = (size_t)MVTRand::getRange(0,(int)len-1);
-				eid = dval.varray[targetIndex].eid;
-				qstr = dval.varray[targetIndex].str;
+					// Retreive the value of the same random element again via the navigator GO_FINDBYID
+					qstr = dval.nav->navigate(GO_FINDBYID,eid)->str;
+				} else {
+					size_t targetIndex = (size_t)MVTRand::getRange(0,(int)len-1);
+					eid = dval.varray[targetIndex].eid;
+					qstr = dval.varray[targetIndex].str;
+				}
 			} else TVERIFYRC(RC_TYPE);
 
 			// Look for the string in the map of all the strings we added and
@@ -306,19 +308,21 @@ void TestCollFamily::testGenDataAndRun(ISession *session,int op)
 		Value dval = *pin->getValue(propid);
 		size_t len = MVTApp::getCollectionLength(dval);
 		if (dval.type==VT_COLLECTION) {
-			dval.nav->navigate(GO_FIRST);
-			size_t targetIndex = (1 + rand()%len);
-			targetIndex = targetIndex==len?len-1:targetIndex;
-			for (size_t x=0; x < targetIndex; x++)
-				eid = dval.nav->navigate(GO_NEXT)->eid;
+			if (dval.isNav()) {
+				dval.nav->navigate(GO_FIRST);
+				size_t targetIndex = (1 + rand()%len);
+				targetIndex = targetIndex==len?len-1:targetIndex;
+				for (size_t x=0; x < targetIndex; x++)
+					eid = dval.nav->navigate(GO_NEXT)->eid;
 
-		// Note: this string is still be in the string map,
-			deletedStr = dval.nav->navigate(GO_FINDBYID,eid)->str;
-		} else if (dval.type == VT_ARRAY) {
-			size_t targetIndex = (1 + rand()%len);
-			targetIndex = targetIndex==len?len-1:targetIndex;
-			eid = dval.varray[targetIndex].eid;
-			deletedStr = dval.varray[targetIndex].str;
+			// Note: this string is still be in the string map,
+				deletedStr = dval.nav->navigate(GO_FINDBYID,eid)->str;
+			} else {
+				size_t targetIndex = (1 + rand()%len);
+				targetIndex = targetIndex==len?len-1:targetIndex;
+				eid = dval.varray[targetIndex].eid;
+				deletedStr = dval.varray[targetIndex].str;
+			}
 		} else TVERIFYRC(RC_TYPE);
 
 		Value val ;

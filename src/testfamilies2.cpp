@@ -143,17 +143,13 @@ THREAD_SIGNATURE TestFamilies2::createPINsAsync(void * pInfo)
 		SETVALUE(lV[1],lInfo->mPropIds[1], lRand?lInfo->mRandSubStr.c_str():lInfo->mRandStr.c_str(),OP_SET);
 		lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 		lV[2].setDateTime(ui64); lV[2].setPropID(lInfo->mPropIds[2]);
-		IPIN *lPIN = lSession->createPIN(lV,3,MODE_COPY_VALUES);
-		TV_R(lPIN!=NULL,lInfo->mTest);
 		RC rc;
 		lInfo->mLock->lock();
-		if(RC_OK!=(rc=lSession->commitPINs(&lPIN,1))) 
+		if(RC_OK!=(rc=lSession->createPIN(lV,3,NULL,MODE_PERSISTENT|MODE_COPY_VALUES))) 
 		{
 			TV_R(!"ERROR(createPINsAsync): CommitPINs failed", lInfo->mTest ) ;
 			lInfo->mTest->getLogger().out() << "Pin " << i << "RC " << rc << " value0: " << lV[0].str << " value1: " << lV[1].str << " value2: " << lV[2].ui64 << endl ;
 		}
-		else
-			lPIN->destroy();	
 		lInfo->mLock->unlock();
 	}	
 	return 0;
@@ -283,7 +279,7 @@ int	TestFamilies2::execute(){
 				mNumPINsImportTestWStr[i] = 0;
 			}
             
-			// Family with VT_ARRAY and VT_COLLECTION as params
+			// Family with VT_COLLECTION (varray and nav) as params
 			TVERIFY(testArrayFamily(lSession));
 			
 			/*	#1
@@ -394,21 +390,26 @@ bool TestFamilies2::createPINs(ISession *pSession, const int pNumPINs){
 	bool lSuccess = true;
 	IPIN * lPIN = NULL;
 	PID lPID; INITLOCALPID(lPID); lPID.pid = STORE_INVALID_PID;
-	bool lCluster = false;
+	bool lCluster = false;bool finishBatch = false;
 	std::vector<IPIN *> lClusterPINs;
 	int lClusterSize = (int) pNumPINs/10 ;
 	static int const sMaxVals = 100;
 	Value lPVs[sMaxVals * mNumProps];
+	IBatch *lBatch=NULL;
 	int i, j, iV, k;
 	mLogger.out() << "Creating " << pNumPINs << " pins ";
 	for (i = 0,k = 1; i < pNumPINs; i++, k++)
 	{
 		if (0 == i % 100)
 			mLogger.out() << ".";
-		lPIN = pSession->createPIN();
+		//lPIN = pSession->createPIN();
 		RefVID *lRef = (RefVID *)pSession->malloc(1*sizeof(RefVID));
 		int lNumProps = (int)((float)(mNumProps + 1) * rand() / RAND_MAX); // 1 or more properties.
 		lNumProps = lNumProps == 0?1:lNumProps;
+		if (lCluster && (finishBatch||i==0)) {
+			lBatch=pSession->createBatch();
+			TVERIFY(lBatch!=NULL);
+		}
 		for (j = 0, iV = 0; j < lNumProps; j++)
 		{
 			switch(j){
@@ -466,41 +467,41 @@ bool TestFamilies2::createPINs(ISession *pSession, const int pNumPINs){
 					}
 					break;	
 			}
-		}	
-		if(RC_OK != lPIN->modify(lPVs,iV)){
-			mLogger.out() << "ERROR (TestFamilies2::createPINs): Failed to modify uncommitted pin " << std::endl;
-			lSuccess = false;
 		}
-		pSession->free(lRef);
-		if(lCluster){
-			lClusterPINs.push_back(lPIN);
-		}else{
-			RC lRC;
-			if(RC_OK != (lRC=pSession->commitPINs(&lPIN,1))){
-				mLogger.out() << "ERROR (TestFamilies2::createPINs): Failed to commit the pin  with RC = " << lRC << std::endl;
+
+		if(lCluster) {
+			if (RC_OK != lBatch->createPIN(lPVs,iV,MODE_COPY_VALUES)){
+				mLogger.out() << "ERROR (TestFamilies2::lBatch::createPINs): Failed to create pin " << std::endl;
 				lSuccess = false;
 			}
-			else
-			{
+			finishBatch = false;
+			if (k == lClusterSize) {
+				if(RC_OK != lBatch->process(false)){
+					mLogger.out() << "ERROR (TestFamilies2::lBatch::process): Failed to commit cluster of pins " << std::endl;
+					lSuccess = false;
+				} else {
+					assert(lBatch->getNumberOfPINs() ==lClusterSize );
+					PID *pids = (PID *)pSession->malloc(lClusterSize*sizeof(PID));
+					unsigned int num = lClusterSize;
+					TVERIFYRC(lBatch->getPIDs(pids,num,0));
+					for (i=0;i<lClusterSize;i++)
+						mPIDs.push_back(pids[i]);
+					if(pids!=NULL) pSession->free(pids);
+					finishBatch = true;
+					lBatch->destroy();
+				}
+			}	
+		}else {
+			if (RC_OK != pSession->createPIN(lPVs,iV,&lPIN,MODE_COPY_VALUES|MODE_PERSISTENT)) {
+				mLogger.out() << "ERROR (TestFamilies2::createPINs): Failed to create committed pin " << std::endl;
+				lSuccess = false;
+			} else {
 				if(i > 0) lPID = lPIN->getPID();
 				mPIDs.push_back(lPIN->getPID());
 				lPIN->destroy();
 			}
 		}
-		if(lCluster && k == lClusterSize){
-			if(RC_OK != pSession->commitPINs(&lClusterPINs[0],lClusterSize)){
-				mLogger.out() << "ERROR (TestFamilies2::createPINs): Failed to commit cluster of pins " << std::endl;
-				lSuccess = false;
-			}
-			else
-			{
-				for(k = 0; k < lClusterSize; k++){
-					mPIDs.push_back(lClusterPINs[k]->getPID());
-					lClusterPINs[k]->destroy();
-				}
-				k = 1;
-			}
-		}
+		pSession->free(lRef);
 	}	
 	mLogger.out() << " DONE" << std::endl;
 	return lSuccess;
@@ -726,7 +727,7 @@ bool TestFamilies2::testImportFamily1(ISession *pSession){
 
 	IStmt *lQ = pSession->createStmt();
 	unsigned const char lVar = lQ->addVariable();
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		Value lV[2];
 		lV[0].setVarRef(0,mPropIds[0]);
@@ -830,7 +831,7 @@ bool TestFamilies2::testImportFamily1(ISession *pSession){
 				// Just to confirm, run a Full Scan and check
 				IStmt * lQ = pSession->createStmt();
 				unsigned char lVar = lQ->addVariable();
-				IExprTree *lET;
+				IExprNode *lET;
 				{
 					Value lV[2];
 					lV[0].setVarRef(0,mPropIds[0]);
@@ -886,7 +887,7 @@ bool TestFamilies2::testImportFamily1(ISession *pSession){
 				// Just to confirm, run a Full Scan and check
 				IStmt * lQ = pSession->createStmt();
 				unsigned char lVar = lQ->addVariable();
-				IExprTree *lET;
+				IExprNode *lET;
 				{
 					Value lV[2];
 					lV[0].setVarRef(0,mPropIds[0]);
@@ -920,7 +921,7 @@ bool TestFamilies2::testImportFamily3(ISession *pSession){
 
 	IStmt *lQ = pSession->createStmt();
 	unsigned const char lVar = lQ->addVariable();
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		Value lV[2];
 		lV[0].setVarRef(0,mPropIds[2]);
@@ -961,7 +962,7 @@ bool TestFamilies2::testImportFamily3(ISession *pSession){
 			// Just to confirm, run a Full Scan and check
 			IStmt * lQ = pSession->createStmt();
 			unsigned char lVar = lQ->addVariable();
-			IExprTree *lET;
+			IExprNode *lET;
 			{
 				Value lV1[2];
 				lV1[0].setVarRef(0,mPropIds[2]);
@@ -996,17 +997,17 @@ bool TestFamilies2::testHistogramFamily(ISession *pSession, bool pBoundaryInclud
 	static const int lNumPINsToCreate = 5000;	
 	IStmt *lQ = pSession->createStmt();
 	unsigned const char lVar = lQ->addVariable();
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		if(pBoundaryIncluded)
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[2]);
 			lV[1].setParam(0);
-			IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);
+			IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);
 			lV[0].setVarRef(0,mPropIds[2]);
 			lV[1].setParam(1);
-			IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
+			IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
 			lV[0].set(lET1);
 			lV[1].set(lET2);
 			lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV, 0);
@@ -1016,10 +1017,10 @@ bool TestFamilies2::testHistogramFamily(ISession *pSession, bool pBoundaryInclud
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[2]);
 			lV[1].setParam(0);
-			IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_GE, 2, lV, 0);
+			IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_GE, 2, lV, 0);
 			lV[0].setVarRef(0,mPropIds[2]);
 			lV[1].setParam(1);
-			IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_LE, 2, lV, 0);
+			IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_LE, 2, lV, 0);
 			lV[0].set(lET1);
 			lV[1].set(lET2);
 			lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV, 0);
@@ -1113,15 +1114,15 @@ bool TestFamilies2::testHistogramDateFamily(ISession *pSession){
 	*/
 	IStmt *lQ = pSession->createStmt();
 	unsigned const char lVar = lQ->addVariable();
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[1]);
 		lV[1].setParam(0);
-		IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);
+		IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);
 		lV[0].setVarRef(0,lPropIDs[1]);
 		lV[1].setParam(1);
-		IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
+		IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
 		lV[0].set(lET1);
 		lV[1].set(lET2);
 		lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV, 0);
@@ -1149,12 +1150,7 @@ bool TestFamilies2::testHistogramDateFamily(ISession *pSession){
 			Value lV[2];
 			SETVALUE(lV[0],lPropIDs[0], i, OP_SET);
 			lV[1].setDateTime(ui64); lV[1].setPropID(lPropIDs[1]);
-			IPIN *lPIN = pSession->createPIN(lV,2,MODE_COPY_VALUES);
-			TVERIFY(lPIN!=NULL);
-			if (lPIN!=NULL) {
-				TVERIFYRC(pSession->commitPINs(&lPIN,1));
-				lPIN->destroy();
-			}
+			TVERIFYRC( pSession->createPIN(lV,2,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 	}
 	mLogger.out() << std::endl;
 	
@@ -1177,15 +1173,15 @@ bool TestFamilies2::testHistogramDateFamily(ISession *pSession){
 				//Confirm with a FULL SCAN
 				IStmt *lQ = pSession->createStmt();
 				unsigned const char lVar = lQ->addVariable();
-				IExprTree *lET;
+				IExprNode *lET;
 				{
 					Value lV[2];
 					lV[0].setVarRef(0,lPropIDs[1]);
 					lV[1].setParam(0);
-					IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);
+					IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);
 					lV[0].setVarRef(0,lPropIDs[1]);
 					lV[1].setParam(1);
-					IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
+					IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
 					lV[0].set(lET1);
 					lV[1].set(lET2);
 					lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV, 0);
@@ -1247,12 +1243,7 @@ bool TestFamilies2::testHistogramDateFamily2(ISession *pSession){
 		Value lV[2];
 		SETVALUE(lV[0],lPropIDs[0], i, OP_SET);
 		lV[1].setDateTime(ui64); lV[1].setPropID(lPropIDs[1]);
-		IPIN *lPIN = pSession->createPIN(lV,2,MODE_COPY_VALUES);
-		TVERIFY(lPIN!=NULL);
-		if (lPIN!=NULL) {
-			TVERIFYRC(pSession->commitPINs(&lPIN,1));
-			lPIN->destroy();
-		}
+		TVERIFYRC(pSession->createPIN(lV,2,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 	}
 
 	//mLogger.out() << "Number of PINs created " << lNumPINsToCreate << " StartDate = " << mStartDate << " EndDate = " << mEndDate << std::endl;
@@ -1261,16 +1252,16 @@ bool TestFamilies2::testHistogramDateFamily2(ISession *pSession){
 
 	#define DONT_USE_OP_IN 0
 
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		#if DONT_USE_OP_IN
 			Value lV[2];
 			lV[0].setVarRef(0,lPropIDs[1]);
 			lV[1].setParam(0);
-			IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);		
+			IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);		
 			lV[0].setVarRef(0,lPropIDs[1]);
 			lV[1].setParam(1);
-			IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
+			IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
 			lV[0].set(lET1);
 			lV[1].set(lET2);
 			lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV, 0);
@@ -1358,16 +1349,16 @@ bool TestFamilies2::testHistogramDateFamily2(ISession *pSession){
 				//Confirm with a FULL SCAN
 				IStmt *lQ = pSession->createStmt();
 				unsigned const char lVar = lQ->addVariable();
-				IExprTree *lET;
+				IExprNode *lET;
 				{
 					#if DONT_USE_OP_IN
 						Value lV[2];
 						lV[0].setVarRef(0,lPropIDs[1]);
 						lV[1].setParam(0);
-						IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);		
+						IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_GT, 2, lV, 0);		
 						lV[0].setVarRef(0,lPropIDs[1]);
 						lV[1].setParam(1);
-						IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
+						IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_LT, 2, lV, 0);
 						lV[0].set(lET1);
 						lV[1].set(lET2);
 						lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV, 0);
@@ -1464,12 +1455,7 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 			SETVALUE(lV[1],lPropIDs[1], lRand?lRandSubStr.c_str():lRandStr.c_str(),OP_SET);
 			lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 			lV[2].setDateTime(ui64); lV[2].setPropID(lPropIDs[2]);
-			IPIN *lPIN = pSession->createPIN(lV,3,MODE_COPY_VALUES);
-			TVERIFY(lPIN!=NULL);
-			if (lPIN!=NULL) {
-				TVERIFYRC(pSession->commitPINs(&lPIN,1));
-				lPIN->destroy();
-			}
+			TVERIFYRC(pSession->createPIN(lV,3,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 		}
 		mLogger.out() << std::endl;
 	}
@@ -1485,7 +1471,7 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 			Value lV[2];
 			lV[0].setVarRef(0,lPropIDs[0]);
 			lV[1].set(lImageSubStr.c_str());
-			IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
+			IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
 			lQ->addCondition(lVar,lET1);
 			char lB[100];			
 			sprintf(lB, "TestFamilies2.image%s.%d", lImageSubStr.c_str(), mRunTimes);
@@ -1513,16 +1499,16 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 		lVar = lQ->addVariable();
 	}
 
-	IExprTree *lET;
+	IExprNode *lET;
 	if(pUseStaticValue)
 	{
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[1]);
 		lV[1].set(lRandSubStr.c_str());
-		IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_EQ, 2, lV, 0);
+		IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_EQ, 2, lV, 0);
 		lV[0].setVarRef(0,lPropIDs[2]);
 		lV[1].setParam(0);
-		IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_IN, 2, lV, 0);
+		IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_IN, 2, lV, 0);
 		lV[0].set(lET1);
 		lV[1].set(lET2);
 		lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV, 0);		
@@ -1557,11 +1543,7 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 			SETVALUE(lV[1],lPropIDs[1], lRand?lRandSubStr.c_str():lRandStr.c_str(),OP_SET);
 			lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 			lV[2].setDateTime(ui64); lV[2].setPropID(lPropIDs[2]);
-			IPIN *lPIN = pSession->createPIN(lV,3,MODE_COPY_VALUES);
-			if(RC_OK!=pSession->commitPINs(&lPIN,1)) 
-				mLogger.out() << "Hit 1730 assert ";
-			else
-				lPIN->destroy();
+			TVERIFYRC(pSession->createPIN(lV,3,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 		}
 		mLogger.out() << std::endl;
 	}
@@ -1652,7 +1634,7 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 			Value lV[2];
 			lV[0].setVarRef(0,lPropIDs[0]);
 			lV[1].set(lImageSubStr.c_str());
-			IExprTree *lET = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
+			IExprNode *lET = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
 			lQ->addCondition(lVar,lET);
 			char lB[100];			
 			sprintf(lB, "TestFamilies2.testAsyncPINCreationWithFamily%s.%d", lImageSubStr.c_str(), mRunTimes);
@@ -1681,7 +1663,7 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 			Value lV[2];
 			lV[0].setVarRef(0,lPropIDs[0]);
 			lV[1].set(lImageSubStr.c_str());
-			IExprTree *lET = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
+			IExprNode *lET = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
 			lQ->addCondition(lVar,lET);
 			char lB[100];			
 			sprintf(lB, "TestFamilies2.testAsyncPINCreationWithFamily%s.%d", lImageSubStr.c_str(), mRunTimes);
@@ -1703,7 +1685,7 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 	lRange[0].params = NULL;
 	unsigned char lVar = lQ->addVariable(lRange,1);
 	
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[2]);
@@ -1795,7 +1777,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[0]);
 		lV[1].set(lImageSubStr.c_str());
-		IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
+		IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
 		lQ->addCondition(lVar,lET1);
 		char lB[100];			
 		sprintf(lB, "TestFamilies2.testClassInClassImage%s.%d", lImageSubStr.c_str(), mRunTimes);
@@ -1829,7 +1811,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		Value lV[2];		
 		lV[0].setVarRef(0,lPropIDs[1]);
 		lV[1].set(lRandSubStr.c_str());
-		IExprTree *lET = EXPRTREEGEN(pSession)(OP_EQ, 2, lV);		
+		IExprNode *lET = EXPRTREEGEN(pSession)(OP_EQ, 2, lV);		
 		lQ->addCondition(lVar,lET);
 		char lB[100];			
 		sprintf(lB, "TestFamilies2.testClassInClassBelong%s.%d", lRandSubStr.c_str(), mRunTimes);
@@ -1862,12 +1844,12 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[1]);
 		lV[1].set(lRandSubStr.c_str());
-		IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_NE, 2, lV);
+		IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_NE, 2, lV);
 		lV[0].set(lET1);
 		lV[1].setVarRef(0,lPropIDs[1]);
-		IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, &lV[1]);
+		IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, &lV[1]);
 		lV[1].set(lET2);
-		IExprTree *lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
+		IExprNode *lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
 		lQ->addCondition(lVar,lET);
 		char lB[100];			
 		sprintf(lB, "TestFamilies2.testClassInClassNotBelong%s.%d", lRandSubStr.c_str(), mRunTimes);
@@ -1891,7 +1873,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		lRange[0].params = NULL;
 		unsigned const char lVar = lQ->addVariable(lRange,1);		
 
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,lPropIDs[2]);
@@ -1919,7 +1901,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		lRange[0].params = NULL;
 		unsigned const char lVar = lQ->addVariable(lRange,1);		
 
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,lPropIDs[2]);
@@ -1945,10 +1927,9 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		SETVALUE(lV[1],lPropIDs[1], lRand?lRandSubStr.c_str():lRandStr.c_str(),OP_SET);
 		lV[0].meta = lV[1].meta = META_PROP_FTINDEX;
 		lV[2].setDateTime(ui64); lV[2].setPropID(lPropIDs[2]);
-		IPIN *lPIN = pSession->createPIN(lV,3,MODE_COPY_VALUES);
-		TVERIFY(lPIN!=NULL);
+		IPIN *lPIN;
+		TVERIFYRC(pSession->createPIN(lV,3,&lPIN,MODE_COPY_VALUES|MODE_PERSISTENT));
 		if (lPIN!=NULL) {
-			TVERIFYRC(pSession->commitPINs(&lPIN,1));
 			if(ui64 >= lStartDate && ui64 <= lEndDate && lRand) lNumPINsBelonging++;
 			if(ui64 >= lStartDate && ui64 <= lEndDate && !lRand) lNumPINsNotBelonging++;
 			lPIDs.push_back(lPIN->getPID());
@@ -2053,18 +2034,18 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		{
 			IStmt *lQ = pSession->createStmt();
 			unsigned char lVar = lQ->addVariable();
-			IExprTree *lET;
+			IExprNode *lET;
 			{
 				Value lV[2];		
 				lV[0].setVarRef(0,lPropIDs[1]);
 				lV[1].set(lRandSubStr.c_str());
-				IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_EQ, 2, lV);
+				IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_EQ, 2, lV);
 				lV[0].setVarRef(0,lPropIDs[2]);
 				Value lR[2];
 				lR[0].setDateTime(lStartDate);
 				lR[1].setDateTime(lEndDate);
 				lV[1].setRange(lR);
-				IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_IN, 2, lV);
+				IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_IN, 2, lV);
 				lV[0].set(lET1);
 				lV[1].set(lET2);
 				lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
@@ -2135,7 +2116,7 @@ bool TestFamilies2::testFamilyWithOrderBy(ISession *pSession, int pOrderBy)
 	
 	IStmt *lQ = pSession->createStmt();
 	unsigned const char lVar = lQ->addVariable();
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[1]);
@@ -2168,10 +2149,8 @@ bool TestFamilies2::testFamilyWithOrderBy(ISession *pSession, int pOrderBy)
 		IStream *lStream1 = MVTApp::wrapClientStream(pSession, new MyFamilyStream(lSize > 0? lSize:2000));
 		lV[4].set(lStream1);lV[4].setPropID(lPropIDs[4]);lV[4].setMeta(META_PROP_SSTORAGE);
 
-		IPIN *lPIN = pSession->createPIN(lV,5,MODE_COPY_VALUES);
-		TVERIFYRC(pSession->commitPINs(&lPIN,1));
+		TVERIFYRC(pSession->createPIN(lV,5,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 		if(lRand) lNumExpPINs++;
-		lPIN->destroy();
 	}
 	mLogger.out() << std::endl;
 	uint64_t lCount = 0;
@@ -2272,7 +2251,7 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[0]);
 		lV[1].set(lImageSubStr.c_str());
-		IExprTree *lET = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
+		IExprNode *lET = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
 		TVERIFYRC(lQ->addCondition(lVar,lET));
 
 		char lB[100];			
@@ -2296,23 +2275,23 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 		// class imagetag() = pin[pin is image()and ((pin has prop1 and prop1 != 'xyz') or !(pin has prop1))]
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[1]);
-		IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, lV);
+		IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, lV);
         lV[0].setVarRef(0,lPropIDs[1]);
 		lV[1].set(lRandStr.c_str());
-		IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_NE, 2, lV);		
+		IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_NE, 2, lV);		
 		lV[0].set(lET1);
 		lV[1].set(lET2);
-		IExprTree *lET;
+		IExprNode *lET;
 		if(!pMore)
 			lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
 		else
 		{
-			IExprTree *lET3 = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
+			IExprNode *lET3 = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
 
 			lV[0].setVarRef(0,lPropIDs[1]);
-			IExprTree *lET4 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, lV);
+			IExprNode *lET4 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, lV);
 			lV[0].set(lET4);
-			IExprTree *lET5 = EXPRTREEGEN(pSession)(OP_LNOT, 1, lV);
+			IExprNode *lET5 = EXPRTREEGEN(pSession)(OP_LNOT, 1, lV);
 
 			lV[0].set(lET3);
 			lV[1].set(lET5);
@@ -2341,7 +2320,7 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 		lRange[0].params = NULL;
 		unsigned const char lVar = lQ->addVariable(lRange,1);		
 
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,lPropIDs[2]);
@@ -2381,8 +2360,8 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 		IStream *lStream = MVTApp::wrapClientStream(pSession,new MyFamilyStream(1000));
 		SETVALUE(lV[3],lPropIDs[3], lStream, OP_SET); lV[3].meta = META_PROP_SSTORAGE;		
 
-		IPIN *lPIN = pSession->createPIN(lV,4,MODE_COPY_VALUES);
-		TVERIFYRC(pSession->commitPINs(&lPIN,1)); 
+		IPIN *lPIN;
+		TVERIFYRC(pSession->createPIN(lV,4,&lPIN, MODE_COPY_VALUES|MODE_PERSISTENT)); 
 		if(ui64 >= lStartDate && ui64 <= lEndDate && bNoMatchOnExcludeString) ++lExpNumPINs;
 		lPIDList.push_back(lPIN->getPID());
 		lPIN->destroy();
@@ -2489,7 +2468,7 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	{
 		IStmt *lQ = pSession->createStmt();
 		unsigned const char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[2]);
@@ -2511,7 +2490,7 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	{
 		IStmt *lQ = pSession->createStmt();
 		unsigned const char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[0]);
@@ -2534,7 +2513,7 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	{
 		IStmt *lQ = pSession->createStmt();
 		unsigned const char lVar = lQ->addVariable();
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[1]);
@@ -2554,7 +2533,7 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 
 	if(!createPINs(pSession, lNumPINsToCreate)) return false;	
 
-	// Create the VT_ARRAY and VT_COLLECTION Value structures
+	// Create the VT_COLLECTION Value structures
 	int i = 0, lINT = 0, lSTRING = 0, lUSTR = 0;
 	int lExpNumPINsWithINT = mNumPINsWithINT + mBoundaryHistogram;
 
@@ -2583,11 +2562,11 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 		lQ->addVariable(&lCS, 1);		
 		lQ->count(lCount);
 		lQ->destroy();	
-		TVERIFY((int)lCount == lExpNumPINsWithINT && "ERROR(testArrayFamily): NOT all PINs were returned for VT_ARRAY on VT_INT");		
+		TVERIFY((int)lCount == lExpNumPINsWithINT && "ERROR(testArrayFamily): NOT all PINs were returned for VT_COLLECTION on VT_INT");		
 	}
 	mLogger.out() << "DONE" << std::endl;
 
-	mLogger.out() << "Executing Family " << lB1 << " with OP_IN of VT_ARRAY params on VT_STRING... ";
+	mLogger.out() << "Executing Family " << lB1 << " with OP_IN of VT_COLLECTION params on VT_STRING... ";
 	{
 		Value lParam[1];
 		lParam[0].set(lVArrayString, lSTRING);
@@ -2599,11 +2578,11 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 		lQ->addVariable(&lCS, 1);		
 		lQ->count(lCount);
 		lQ->destroy();	
-		TVERIFY((int)lCount == mNumPINsWithStr && "ERROR(testArrayFamily): NOT all PINs were returned for VT_ARRAY on VT_STRING");		
+		TVERIFY((int)lCount == mNumPINsWithStr && "ERROR(testArrayFamily): NOT all PINs were returned for VT_COLLECTION on VT_STRING");		
 	}
 	mLogger.out() << "DONE" << std::endl;
 
-	mLogger.out() << "Executing Family " << lB2 << " with OP_BEGINS of VT_ARRAY params on VT_STRING... ";
+	mLogger.out() << "Executing Family " << lB2 << " with OP_BEGINS of VT_COLLECTION params on VT_STRING... ";
 	{
 		Value lParam[1];
 		lParam[0].set(lVArrayUString, lUSTR);
@@ -2615,7 +2594,7 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 		lQ->addVariable(&lCS, 1);		
 		lQ->count(lCount);
 		lQ->destroy();	
-		TVERIFY((int)lCount == mNumPINsWithUStr && "ERROR(testArrayFamily): NOT all PINs were returned for VT_ARRAY on VT_STRING");		
+		TVERIFY((int)lCount == mNumPINsWithUStr && "ERROR(testArrayFamily): NOT all PINs were returned for VT_COLLECTION on VT_STRING");		
 	}
 	mLogger.out() << "DONE" << std::endl;
 
@@ -2783,7 +2762,7 @@ bool TestFamilies2::testImageImportPerf(ISession *pSession){
 	
 	IStmt *lQ = pSession->createStmt();
 	unsigned const char lVar = lQ->addVariable();
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		Value lV[2];
 		lV[0].setVarRef(0,mImagePropIds[18]);
@@ -2873,7 +2852,7 @@ bool TestFamilies2::testImageImportPerf(ISession *pSession){
 		{
 			IStmt *lQ = pSession->createStmt();
 			unsigned const char lVar = lQ->addVariable();
-			IExprTree *lET;
+			IExprNode *lET;
 			{
 				Value lV[2];
 				lV[0].setVarRef(0,mImagePropIds[18]);
@@ -2909,8 +2888,8 @@ bool TestFamilies2::testImageImportPerf(ISession *pSession){
 bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint64_t pTime){
 	bool lSuccess = true;
 	bool lCluster = true;
-	std::vector<IPIN *> lClusterPINs;
-	int lClusterSize = 125;//(int) pNumPINs/10 ;	
+	int lClusterSize = 125;//(int) pNumPINs/10 ;
+	IBatch *lBatch = NULL;
 
 	IPIN * lPIN = NULL;
 	Tstring lNullCheck; bool fNull = false;
@@ -2924,10 +2903,14 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 	int i, k;
 	for(i = 0, k = 0;i < pNumPINs && lSuccess; i++, k++){
 		if (0 == i % 100)
-			mLogger.out() << ".";		
-		//lPIN = pSession->createPIN(0,0,MODE_COPY_VALUES);
-
-				// 'fs_path_index' property
+			mLogger.out() << ".";
+		
+		if(lCluster && k==0) {
+			lBatch=pSession->createBatch();
+			TVERIFY(lBatch!=NULL);		
+		}
+		
+		// 'fs_path_index' property
 		#if USE_LESS_STRINGS
 			int lStrIndex = (int)((float)mImageNumStr * rand()/RAND_MAX);
 			lStrIndex = lStrIndex == mImageNumStr?(int)mImageNumStr/2:lStrIndex;
@@ -3009,7 +2992,7 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 		// 'refresh-node-id' property
 		SETVALUE(lPVs[17],mImagePropIds[2],"007-pinode.mvstore.org",OP_SET);
 		lPVs[17].meta = META_PROP_FTINDEX;
-
+		
 		// 'exif_width' property
 		SETVALUE(lPVs[18],mImagePropIds[19],665,OP_SET);
 
@@ -3031,12 +3014,13 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 			lSuccess = false;
 		}
 		*/
-		lPIN = pSession->createPIN(lPVs,mImageNumProps+2,MODE_COPY_VALUES);
+		
 		if(lCluster){
-			lClusterPINs.push_back(lPIN);
+			// using IBatch to create a PIN
+			TVERIFYRC(lBatch->createPIN(lPVs,mImageNumProps+2));
 		}else{
 			RC lRC = RC_OK;
-			if(RC_OK != (lRC = pSession->commitPINs(&lPIN,1))){
+			if(RC_OK != (lRC =  pSession->createPIN(lPVs,mImageNumProps+2,&lPIN,MODE_COPY_VALUES|MODE_PERSISTENT))){
 				mLogger.out() << "ERROR (TestFamilies2::createImagePINs): Failed to commit the pin. RC returned = " << lRC << std::endl;
 				lSuccess = false;
 			}else{
@@ -3045,18 +3029,19 @@ bool TestFamilies2::createImagePINs(ISession *pSession, const int pNumPINs, uint
 			}
 		}
 		if(lCluster && k == lClusterSize){
-			if(RC_OK != pSession->commitPINs(&lClusterPINs[0],lClusterSize)){
+			if(RC_OK != lBatch->process(false)){
 				mLogger.out() << "ERROR (TestFamilies2::createPINs): Failed to commit cluster of pins " << std::endl;
 				lSuccess = false;
 			}
 			else
 			{
 				for(k = 0; k < lClusterSize; k++){
-					mPIDs.push_back(lClusterPINs[k]->getPID());
-					lClusterPINs[k]->destroy();
+					PID pid;
+					TVERIFYRC(lBatch->getPID(k,pid));
+					mPIDs.push_back(pid);
 				}
 				k = 0;
-				lClusterPINs.clear();
+				if(lBatch!=NULL) lBatch->destroy();
 			}
 		}
 	}
@@ -3102,7 +3087,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[0]);
 		lV[1].set(lImageSubStr.c_str());
-		IExprTree *lET = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
+		IExprNode *lET = EXPRTREEGEN(pSession)(OP_CONTAINS, 2, lV, CASE_INSENSITIVE_OP);		
 		lQ->addCondition(lVar,lET);
 		char lB[100];			
 		sprintf(lB, "TestFamilies2.testCountPerfImage.%s.%d", lImageSubStr.c_str(), 0);
@@ -3129,24 +3114,24 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		// class imagetag() = pin[pin is image()and ((pin has prop1 and prop1 != 'xyz') or !(pin has prop1))]
 		Value lV[2];
 		lV[0].setVarRef(0,lPropIDs[1]);
-		IExprTree *lET1 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, lV);
+		IExprNode *lET1 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, lV);
         lV[0].setVarRef(0,lPropIDs[1]);
 		lV[1].set(lRandStr.c_str());
-		IExprTree *lET2 = EXPRTREEGEN(pSession)(OP_NE, 2, lV);		
+		IExprNode *lET2 = EXPRTREEGEN(pSession)(OP_NE, 2, lV);		
 		lV[0].set(lET1);
 		lV[1].set(lET2);
-		//IExprTree *lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
+		//IExprNode *lET = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
 		
-		IExprTree *lET3 = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
+		IExprNode *lET3 = EXPRTREEGEN(pSession)(OP_LAND, 2, lV);
 
 		lV[0].setVarRef(0,lPropIDs[1]);
-		IExprTree *lET4 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, lV);
+		IExprNode *lET4 = EXPRTREEGEN(pSession)(OP_EXISTS, 1, lV);
         lV[0].set(lET4);
-		IExprTree *lET5 = EXPRTREEGEN(pSession)(OP_LNOT, 1, lV);
+		IExprNode *lET5 = EXPRTREEGEN(pSession)(OP_LNOT, 1, lV);
 
 		lV[0].set(lET3);
 		lV[1].set(lET5);
-		IExprTree *lET = EXPRTREEGEN(pSession)(OP_LOR, 2, lV);
+		IExprNode *lET = EXPRTREEGEN(pSession)(OP_LOR, 2, lV);
 		
 		lQ->addCondition(lVar,lET);
 		char lB[100];			
@@ -3172,7 +3157,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		lRange[0].params = NULL;
 		unsigned const char lVar = lQ->addVariable(lRange,1);		
 
-		IExprTree *lET;
+		IExprNode *lET;
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,lPropIDs[2]);
@@ -3199,7 +3184,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		SETVALUE(lV[lIndex],lPropIDs[0], lImageStr.c_str(), OP_SET);lV[lIndex].meta=META_PROP_FTINDEX;lIndex++;
 		SETVALUE(lV[lIndex],lPropIDs[1], lRand?lRandSubStr.c_str():lRandStr.c_str(),OP_SET);lV[lIndex].meta=META_PROP_FTINDEX;lIndex++;
 		lV[lIndex].setDateTime(ui64); lV[lIndex].setPropID(lPropIDs[2]);lIndex++;
-		SETVALUE(lV[lIndex],lPropIDs[lIndex], "Life is a bitch, FUCK it!", OP_SET);lV[lIndex].meta=META_PROP_FTINDEX;lIndex++;
+		SETVALUE(lV[lIndex],lPropIDs[lIndex], "Life is a candy, EAT it!", OP_SET);lV[lIndex].meta=META_PROP_FTINDEX;lIndex++;
 		std::vector<Tstring> lStrList; Tstring lStr;
 		if(pCollWithCommit)
 		{
@@ -3217,8 +3202,8 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 				lV[lIndex].meta=META_PROP_FTINDEX;
 			}
 		}
-		IPIN *lPIN = pSession->createPIN(lV,lIndex,MODE_COPY_VALUES);
-		TVERIFYRC(pSession->commitPINs(&lPIN,1));
+		IPIN *lPIN;
+		TVERIFYRC(pSession->createPIN(lV,lIndex,&lPIN,MODE_COPY_VALUES|MODE_PERSISTENT));
 		if(ui64 >= lStartDate && ui64 <= lEndDate && lRand) ++lExpNumPINs;
 		lPIDList.push_back(lPIN->getPID());
 		lPIN->destroy();
@@ -3245,7 +3230,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 			for(j = 0; j < lNumElements; j++)
 			{			
 				SETVALUE_C(lV[j],lPropIDs[1], lStrList[j].c_str(),OP_ADD, STORE_LAST_ELEMENT);
-				lV[j].meta=META_PROP_FTINDEX
+				lV[j].meta=META_PROP_FTINDEX;
 			}
 			IPIN *lPIN = pSession->getPIN(lPIDList[i]); TVERIFY(lPIN!=NULL);
 			if (lPIN!=NULL) {

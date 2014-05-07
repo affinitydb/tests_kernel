@@ -5,7 +5,7 @@ using namespace std;
 
 
 #define NUM_PROPS 4
-#define NUM_PINS 50000 // presently 'selectComm' works fine with 30, but freezes with 300 (bug #422-c9).
+#define NUM_PINS 30000 // presently 'selectComm' works fine with 30, but freezes with 300 (bug #422-c9).
 #define MAX_STR_LEN 200
 #define MAX_COL_SIZE 100
 #define MAX_MAP_SIZE 10
@@ -58,12 +58,7 @@ void TestServicePerf::doTest()
 }
 
 void TestServicePerf::populate(){
-    Value values[NUM_PROPS], *elts=NULL;
-    //MapElt *vals=NULL;
-    TPID pids;int i;
-    //IMap *map=NULL;
-    IPIN *pin=NULL; PID pid={0,0};
-   
+    int i;
     
     /* map property URIs */
     URIMap pmaps[NUM_PROPS];
@@ -71,17 +66,25 @@ void TestServicePerf::populate(){
     for (i = 0; i < NUM_PROPS; i++)
         ids[i] = pmaps[i].uid;
 
-    ValueType types[4] = {VT_INT, VT_DOUBLE, VT_STRING,/* VT_MAP,*/VT_COLLECTION};
+    static const ValueType types[4] = {VT_INT, VT_DOUBLE, VT_STRING,/* VT_MAP,*/VT_COLLECTION};
+
+	IBatch *batch=NULL;
+
     for (i = 0; i < NUM_PINS; i++) {
 
         if ((i % 10) == 0)
             mLogger.out() << "." << std::flush;
-        
-        CREATEPIN(mSession, &pid, NULL, 0);
-        TVERIFY((pin = mSession->getPIN(pid))!=NULL);    
+
+		if (batch==NULL) {
+			batch=mSession->createBatch();
+			TVERIFY(batch!=NULL);
+		}
         
         // create pin with random number of properties, with random value 
         int nProps = MVTRand::getRange(1, NUM_PROPS);
+		Value *values = batch->createValues(nProps);
+		TVERIFY(values!=NULL);
+
         for (int j = 0; j < nProps; j++) {
             ValueType type = types[j];
             switch(type)
@@ -89,20 +92,20 @@ void TestServicePerf::populate(){
                 case VT_INT: 
                     {
                         SETVALUE(values[j], ids[j], i, OP_SET);
-                        TVERIFYRC(pin->modify(&values[j], 1));
                         break;
                     }
                 case VT_DOUBLE: 
                     {
                         SETVALUE(values[j], ids[j], MVTRand::getDoubleRange(-1000, 1000), OP_SET);
-                        TVERIFYRC(pin->modify(&values[j], 1));
                         break;
                     }                
                 case VT_STRING:
                     {
                         std::string str = MVTRand::getString2(1, MAX_STR_LEN, false);
-                        SETVALUE(values[j], ids[j], str.c_str(), OP_SET);
-                        TVERIFYRC(pin->modify(&values[j], 1));
+						char *p=(char*)batch->malloc(str.size()+1);
+						TVERIFY(p!=NULL);
+						strcpy(p,str.c_str());
+                        SETVALUE(values[j], ids[j], p, OP_SET);
                         break;
                     }
                 #if 0 // comment out due to kernel bug of modify VT_MAP
@@ -118,8 +121,7 @@ void TestServicePerf::populate(){
                             vals[c].val.set(strings[c].c_str());
                         }
                         TVERIFYRC(mSession->createMap(vals, nElt, map));
-                        values[j].set(map); values[j].property = ids[j];
-                        TVERIFYRC(pin->modify(&values[j], 1));
+                        values[j].set(map); values[j].setPropID(ids[j]);
                         break;
                     }
                 #endif
@@ -127,13 +129,15 @@ void TestServicePerf::populate(){
                     {
                         // random collection size, random string elements
                         int nElt = MVTRand::getRange(1, MAX_COL_SIZE);
-                        elts =  (Value *)mSession->malloc(nElt * sizeof(Value));
-                        vector<string> strings(nElt) ;
+						Value *elts =  batch->createValues(nElt);
                         for (int c=0; c<nElt; c++){
-                            MVTRand::getString(strings[c], 1, MAX_STR_LEN, false);
-                            SETVALUE_C(elts[c], ids[j], strings[c].c_str(), OP_ADD, STORE_LAST_ELEMENT);
+                            std::string str = MVTRand::getString2(1, MAX_STR_LEN, false);
+							char *p=(char*)batch->malloc(str.size()+1);
+							TVERIFY(p!=NULL);
+							strcpy(p,str.c_str());
+                            SETVALUE_C(elts[c], ids[j], p, OP_SET, STORE_LAST_ELEMENT);
                         }
-                        TVERIFYRC(pin->modify(&elts[0], nElt));
+						values[j].set(elts,nElt); values[j].setPropID(ids[j]);
                         break;
                     }
                 default:
@@ -141,13 +145,18 @@ void TestServicePerf::populate(){
                     break;
             }
         }
-        if(pid.pid != STORE_INVALID_PID) pids.push_back(pid);
-        //if(vals != NULL) {mSession->free(vals); vals = NULL;}
-        if(elts != NULL) {mSession->free(elts); elts = NULL;}
-        //if(map != NULL) {map->destroy(); map = NULL;}
+		TVERIFYRC(batch->createPIN(values,nProps));
+		if (batch->getSize()>=0xA00000) {
+			TVERIFYRC(batch->process()); batch=NULL;
+		}
     }
 
+	if (batch!=NULL) {
+		TVERIFYRC(batch->process());
+	}
+
     // define classes
+    mLogger.out() << "selectComm: define class... " << endl;
     IStmt* stmt = mSession->createStmt("CREATE CLASS testserviceperf_all AS SELECT * WHERE EXISTS($0)", ids, 1);
     TVERIFY(stmt!=NULL);
     TVERIFYRC(stmt->execute());
@@ -228,11 +237,9 @@ afy:request=${SELECT * FROM testserviceperf_all ORDER BY afy:pinID}, testservice
             MVTApp::outputComparisonFailure(lDirect->getPID(), *lDirect.Get(), *pin2, mLogger.out());
             TVERIFY(false && "Detected difference between 'remotely' & 'locally' fetched PIN");
           }
-          else{
-            if (NUM_PINS<=1000000) mLogger.out() << "PIN comparison for PID=" << std::hex << lDirect->getPID().pid << std::dec << " passed" << std::endl;
+          else
+            if (NUM_PINS<=10000) mLogger.out() << "PIN comparison for PID=" << std::hex << lDirect->getPID().pid << std::dec << " passed" << std::endl;
 			else if ((i%1000)==0) mLogger.out() << i << " pins passed correctly" << std::endl;
-			//Sleep(100);
-		  }
         }
         else
           TVERIFY(false && "Failed to retrieve local PIN");

@@ -70,7 +70,7 @@ int TestFamilyBasic::execute()
 		Value ops[2] ; 
 		ops[0].setVarRef(0, mPropX ) ;
 		ops[1].set( 10 ) ;
-		CmvautoPtr<IExprTree> lE( mSession->expr( OP_GE /* >= */, 2, ops ) ) ;
+		CmvautoPtr<IExprNode> lE( mSession->expr( OP_GE /* >= */, 2, ops ) ) ;
 		lFullScanQ->addCondition( lVar, lE ) ;
 
 		runQuery( "Full Scan PropX >= 10", lFullScanQ ) ;
@@ -113,7 +113,7 @@ int TestFamilyBasic::execute()
 		Value ops[2] ; 
 		ops[0].setVarRef(0, mPropY ) ;
 		ops[1].set( 'A' ) ;
-		CmvautoPtr<IExprTree> lE( mSession->expr( OP_EQ, 2, ops ) ) ;
+		CmvautoPtr<IExprNode> lE( mSession->expr( OP_EQ, 2, ops ) ) ;
 		lQUsingClass->addCondition( lVar, lE ) ;
 
 		runQuery( "All Pins in Class 1 and PropY == 'A'", lQUsingClass ) ;
@@ -128,7 +128,7 @@ int TestFamilyBasic::execute()
 		Value ops[2] ; 
 		ops[0].setVarRef(0, mPropY ) ;
 		ops[1].setParam(0);
-		CmvautoPtr<IExprTree> lE( mSession->expr( OP_EQ, 2, ops ) ) ;
+		CmvautoPtr<IExprNode> lE( mSession->expr( OP_EQ, 2, ops ) ) ;
 		lFamilyQ->addCondition( lVar, lE ) ;
 
 		Value paramVal ; paramVal.set( 'A' ) ;
@@ -173,7 +173,7 @@ int TestFamilyBasic::execute()
 		Value ops[2] ; 
 		ops[0].setVarRef(0, mPropX ) ;
 		ops[1].set( 1 ) ;
-		CmvautoPtr<IExprTree> lE( mSession->expr( OP_GT, 2, ops ) ) ;
+		CmvautoPtr<IExprNode> lE( mSession->expr( OP_GT, 2, ops ) ) ;
 		lQFamilySorted->addCondition( lVar, lE ) ;
 
 		// Sort by PropX (Ascending is default)
@@ -193,15 +193,15 @@ int TestFamilyBasic::execute()
 		Value ops[2] ; 
 		ops[0].setVarRef(0, mPropX ) ;
 		ops[1].setParam(0);
-		IExprTree* lE1 = mSession->expr( OP_GT, 2, ops ) ;
+		IExprNode* lE1 = mSession->expr( OP_GT, 2, ops ) ;
 
 		ops[0].setVarRef(0, mPropY ) ;
 		ops[1].setParam(1);
-		IExprTree* lE2 = mSession->expr( OP_EQ, 2, ops ) ;
+		IExprNode* lE2 = mSession->expr( OP_EQ, 2, ops ) ;
 
 		ops[0].set( lE1 ) ;
 		ops[1].set( lE2 );
-		CmvautoPtr<IExprTree> lE( mSession->expr( OP_LAND, 2, ops ) ) ;
+		CmvautoPtr<IExprNode> lE( mSession->expr( OP_LAND, 2, ops ) ) ;
 
 		lFamilyQ->addCondition( lVar, lE ) ;
 
@@ -253,7 +253,7 @@ int TestFamilyBasic::execute()
 		Value ops[2] ; 
 		ops[0].setVarRef(0, mPropY ) ;
 		ops[1].setParam( 0 ) ;
-		CmvautoPtr<IExprTree> lE( mSession->expr( OP_EQ, 2, ops ) ) ;
+		CmvautoPtr<IExprNode> lE( mSession->expr( OP_EQ, 2, ops ) ) ;
 		lQFamilyBasedOnClass->addCondition( lVar, lE ) ;
 
 		string strFamily4 = "Family4." + strRand ;
@@ -288,13 +288,14 @@ int TestFamilyBasic::execute()
 
 void TestFamilyBasic::addPIN( int propXVal, char propYVal )
 {
-	PID pid; 
+	IPIN *pin; 
 	Value vals[3] ;
 	vals[0].set( (int)(1+mPINs.size()) ) ; vals[0].property = mPropIndex ; 
 	vals[1].set( propXVal ) ; vals[1].property = mPropX ; 
 	vals[2].set( propYVal ) ; vals[2].property = mPropY ; 
-	TVERIFYRC(mSession->createPINAndCommit( pid, vals, 3 ) );	
-	mPINs.push_back( pid ) ;
+	TVERIFYRC(mSession->createPIN(vals, 3,&pin, MODE_PERSISTENT|MODE_COPY_VALUES) );	
+	mPINs.push_back( pin->getPID() ) ;
+	pin->destroy();
 }
 
 void TestFamilyBasic::runQuery( const char * desc, IStmt * inQ, const Value * params, unsigned int nParams )

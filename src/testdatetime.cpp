@@ -87,7 +87,7 @@ void TestDateTime::printDateTime(DateTime pDTS)
 	v.setDateTime(0) ;
 	TVERIFYRC(mSession->convDateTime(pDTS,v.ui64));
 
-	CmvautoPtr<IExprTree> et( mSession->expr( OP_TOSTRING, 1, &v, 0 ) );
+	CmvautoPtr<IExprNode> et( mSession->expr( OP_TOSTRING, 1, &v, 0 ) );
 	CmvautoPtr<IExpr> e(et->compile()) ;
 
 	Value resAsString ;
@@ -134,14 +134,14 @@ void TestDateTime::queryDTPart()
 		IStmt *lQ = mSession->createStmt();
 		unsigned const char lVar = lQ->addVariable();
 		Value lV[2];
-		IExprTree *lE = NULL;
+		IExprNode *lE = NULL;
 		switch(i)
 		{
 			case 0: //OP_YEAR
 				{
 					lV[0].setVarRef(0,lPropId);
 					lV[1].set(EY_YEAR);
-					IExprTree *lE1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lE1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lE1); lUI = lDT.year;
 					lV[1].set(lUI);
 					lE = mSession->expr(OP_EQ,2,lV);
@@ -152,7 +152,7 @@ void TestDateTime::queryDTPart()
 				{
 					lV[0].setVarRef(0,lPropId);
 					lV[1].set(EY_MONTH);
-					IExprTree *lE1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lE1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lE1); lUI = lDT.month;
 					lV[1].set(lUI);
 					lE = mSession->expr(OP_EQ,2,lV);
@@ -163,7 +163,7 @@ void TestDateTime::queryDTPart()
 				{
 					lV[0].setVarRef(0,lPropId);
 					lV[1].set(EY_WDAY);
-					IExprTree *lE1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lE1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lE1); lUI = lDT.dayOfWeek;
 					lV[1].set(lUI);
 					lE = mSession->expr(OP_EQ,2,lV);
@@ -174,7 +174,7 @@ void TestDateTime::queryDTPart()
 				{
 					lV[0].setVarRef(0,lPropId);
 					lV[1].set(EY_DAY);
-					IExprTree *lE1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lE1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lE1); lUI = lDT.day;
 					lV[1].set(lUI);
 					lE = mSession->expr(OP_EQ,2,lV);
@@ -185,7 +185,7 @@ void TestDateTime::queryDTPart()
 				{
 					lV[0].setVarRef(0,lPropId);
 					lV[1].set(EY_HOUR);
-					IExprTree *lE1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lE1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lE1); lUI = lDT.hour;
 					lV[1].set(lUI);
 					lE = mSession->expr(OP_EQ,2,lV);
@@ -196,7 +196,7 @@ void TestDateTime::queryDTPart()
 				{
 					lV[0].setVarRef(0,lPropId);
 					lV[1].set(EY_MINUTE);
-					IExprTree *lE1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lE1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lE1); lUI = lDT.minute;
 					lV[1].set(lUI);
 					lE = mSession->expr(OP_EQ,2,lV);
@@ -207,7 +207,7 @@ void TestDateTime::queryDTPart()
 				{
 					lV[0].setVarRef(0,lPropId);
 					lV[1].set(EY_SECOND);
-					IExprTree *lE1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lE1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lE1); lUI = lDT.second;
 					lV[1].set(lUI);
 					lE = mSession->expr(OP_EQ,2,lV);
@@ -234,13 +234,13 @@ void TestDateTime::exprDTPart()
 	{
 		unsigned int lUI = 0, lExpUI = 0;
 		Value lV[2];
-		IExprTree *lET = NULL;
+		IExprNode *lET = NULL;
 		switch(i){
 			case 0: //OP_YEAR
 				{
 					lV[0].setDateTime(lTS);
 					lV[1].set(EY_YEAR);
-					IExprTree *lET1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lET1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lET1); lUI = lDT.year;
 					lV[1].set(lUI);
 					lET = mSession->expr(OP_PLUS,2,lV);
@@ -252,7 +252,7 @@ void TestDateTime::exprDTPart()
 				{
 					lV[0].setDateTime(lTS);
 					lV[1].set(EY_MONTH);
-					IExprTree *lET1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lET1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lET1); lUI = 12;
 					lV[1].set(lUI);
 					lET = mSession->expr(OP_MINUS,2,lV);
@@ -264,7 +264,7 @@ void TestDateTime::exprDTPart()
 				{
 					lV[0].setDateTime(lTS);
 					lV[1].set(EY_WDAY);
-					IExprTree *lET1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lET1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lET1); lUI = lDT.dayOfWeek > 0?lDT.dayOfWeek:1;
 					lV[1].set(lUI);
 					lET = mSession->expr(OP_MOD,2,lV);
@@ -276,7 +276,7 @@ void TestDateTime::exprDTPart()
 				{
 					lV[0].setDateTime(lTS);
 					lV[1].set(EY_DAY);
-					IExprTree *lET1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lET1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lET1); lUI = lDT.day;
 					lV[1].set(lUI);
 					lET = mSession->expr(OP_PLUS,2,lV);
@@ -288,7 +288,7 @@ void TestDateTime::exprDTPart()
 				{
 					lV[0].setDateTime(lTS);
 					lV[1].set(EY_HOUR);
-					IExprTree *lET1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lET1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lET1); lUI = lDT.hour;
 					lV[1].set(lUI);
 					lET = mSession->expr(OP_PLUS,2,lV);
@@ -300,7 +300,7 @@ void TestDateTime::exprDTPart()
 				{
 					lV[0].setDateTime(lTS);
 					lV[1].set(EY_MINUTE);
-					IExprTree *lET1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lET1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lET1); lUI = lDT.minute;
 					lV[1].set(lUI);
 					lET = mSession->expr(OP_PLUS,2,lV);
@@ -312,7 +312,7 @@ void TestDateTime::exprDTPart()
 				{
 					lV[0].setDateTime(lTS);
 					lV[1].set(EY_SECOND);
-					IExprTree *lET1 = mSession->expr(OP_EXTRACT,2,lV);
+					IExprNode *lET1 = mSession->expr(OP_EXTRACT,2,lV);
 					lV[0].set(lET1); lUI = lDT.second;
 					lV[1].set(lUI);
 					lET = mSession->expr(OP_PLUS,2,lV);
@@ -340,7 +340,7 @@ void TestDateTime::conversionExpressions()
 
 //	MVTApp::output( vNow, mLogger.out(), mSession ) ;
 
-	CmvautoPtr<IExprTree> et0( mSession->expr( OP_CAST, 2, vNow, 0 ) );
+	CmvautoPtr<IExprNode> et0( mSession->expr( OP_CAST, 2, vNow, 0 ) );
 	CmvautoPtr<IExpr> e0(et0->compile()) ; 
 
 	Value vNowDT ;
@@ -352,7 +352,7 @@ void TestDateTime::conversionExpressions()
 
 	//VT_NOW to VT_STRING
 	vNow[1].set((unsigned)VT_STRING);
-	CmvautoPtr<IExprTree> et1( mSession->expr( OP_CAST, 2, vNow, 0 ) );
+	CmvautoPtr<IExprNode> et1( mSession->expr( OP_CAST, 2, vNow, 0 ) );
 	CmvautoPtr<IExpr> e1(et1->compile()) ; 
 	Value vNowStr ;
 	TVERIFYRC(e1->execute( vNowStr, NULL, 0 )) ;	
@@ -368,7 +368,7 @@ void TestDateTime::conversionExpressions()
 	//(Same IExpr could be used for multiple operations)
 	Value vParam[2] ;
 	vParam[0].setParam(0) ; vParam[1].set((unsigned)VT_STRING);
-	CmvautoPtr<IExprTree> etParameterized( mSession->expr( OP_CAST, 2, vParam, 0 ) );
+	CmvautoPtr<IExprNode> etParameterized( mSession->expr( OP_CAST, 2, vParam, 0 ) );
 	CmvautoPtr<IExpr> eParameterized(etParameterized->compile()) ; 
 
 	// Use it to convert VT_NOW to VT_STRING
@@ -387,7 +387,7 @@ void TestDateTime::conversionExpressions()
 
 	//VT_DATETIME to VT_STRING
 #if TEST_DATETIME_TO_STR_CONV
-	CmvautoPtr<IExprTree> et3( mSession->expr( OP_TOSTRING, 1, &vNowDT, 0 ) );
+	CmvautoPtr<IExprNode> et3( mSession->expr( OP_TOSTRING, 1, &vNowDT, 0 ) );
 	CmvautoPtr<IExpr> e3(et3->compile()) ; 
 	Value vNowStr4 ;
 	TVERIFYRC(e3->execute( vNowStr4, NULL, 0 )) ;	

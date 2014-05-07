@@ -48,7 +48,7 @@ void TestDropBaseClass::createMeta()
 		{
 			Value lV[1];
 			lV[0].setVarRef(0,mPropIds[0]);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_EXISTS, 1, lV));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_EXISTS, 1, lV));
 			TVERIFYRC(lQ->addCondition(lVar,lET));			
 		}
 		
@@ -61,7 +61,7 @@ void TestDropBaseClass::createMeta()
 		{
 			Value lV[1];
 			lV[0].setVarRef(0,mPropIds[1]);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_EXISTS, 1, lV));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_EXISTS, 1, lV));
 			TVERIFYRC(lQ->addCondition(lVar,lET));			
 		}
 		
@@ -76,7 +76,7 @@ void TestDropBaseClass::createMeta()
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[2]);
 			lV[1].set(0);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_GE, 2, lV));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_GE, 2, lV));
 			TVERIFYRC(lQ->addCondition(lVar,lET));			
 		}
 		TVERIFYRC(defineClass(mSession,mDerivedClassName.c_str(), lQ, &mDerivedClassID));
@@ -91,14 +91,14 @@ void TestDropBaseClass::createMeta()
 		{
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[2]);
-			IExprTree  *lET1 = mSession->expr(OP_EXISTS, 1, lV);
+			IExprNode  *lET1 = mSession->expr(OP_EXISTS, 1, lV);
 
 			lV[0].setVarRef(0,mPropIds[3]);
-			IExprTree  *lET2 = mSession->expr(OP_EXISTS, 1, lV);
+			IExprNode  *lET2 = mSession->expr(OP_EXISTS, 1, lV);
 
 			lV[0].set(lET1);
 			lV[1].set(lET2);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_LAND, 2, lV));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_LAND, 2, lV));
 			TVERIFYRC(lQ->addCondition(lVar,lET));			
 		}
 		TVERIFYRC(defineClass(mSession,mDerived2ClassName.c_str(), lQ, &mDerived2ClassID));
@@ -112,7 +112,7 @@ void TestDropBaseClass::createMeta()
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[3]);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_IN, 2, lV));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_IN, 2, lV));
 			TVERIFYRC(lQ->addCondition(lVar,lET));			
 		}
 		TVERIFYRC(defineClass(mSession,mDerivedFamilyName.c_str(), lQ, &mDerivedFamilyID));

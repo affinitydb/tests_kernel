@@ -65,7 +65,7 @@ void TestCount::testcount(ISession *session)
 	Value args[3];
 	IStmt *query;
 	unsigned char var;
-	IExprTree *expr;
+	IExprNode *expr;
 	ICursor *result;
 	mLogger.out() << "Creating " <<  NUMBERPINS << " PINs...";
 	for (i=0; i < NUMBERPINS; i++)
@@ -133,7 +133,7 @@ void TestCount::testcount(ISession *session)
 	
 	args[0].setVarRef(0,pids[0]);
 	args[1].set(str.c_str());
-	IExprTree *clsexpr = session->expr(OP_EQ,2,args);	
+	IExprNode *clsexpr = session->expr(OP_EQ,2,args);	
 	clsquery->addCondition(var,clsexpr);
 	defineClass(session,"counttest",clsquery,&cls);
 	session->enableClassNotifications(cls,lAllClassNotifs); 

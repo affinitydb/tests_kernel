@@ -136,7 +136,7 @@ public:
 			Value lV[2];
 			lV[0].setVarRef(lVar,(prop->id));
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET( mSession->expr(prop->indexOp, 2, lV, 0));
+			CmvautoPtr<IExprNode> lET( mSession->expr(prop->indexOp, 2, lV, 0));
 
 			rc = lClassQ->addCondition(lVar,lET);	assert( rc == RC_OK ) ;
 			rc = ITest::defineClass(mSession,className.c_str(), lClassQ, &prop->cid);  assert( rc == RC_OK ) ;
@@ -352,7 +352,6 @@ protected:
 		{
 		case( VT_STRING ):
 		case( VT_BSTR ):
-		case( VT_URL ):
 			return true ;
 		default: break ;
 		}
@@ -384,8 +383,13 @@ protected:
 		uint8_t valType = inVal->type ;
 		uint8_t expectedType = inInfo->type ;
 
-		if ( valType == VT_ARRAY )
+		if ( valType == VT_COLLECTION )
 		{
+			if (inVal->isNav()) 
+			{
+				assert( !"Not implemented yet" ) ;
+				return true ;
+			}
 			if ( inVal->length == 0 ) { assert( false ) ; return false ; }
 
 			if ( 0 == ( inInfo->schemaFlags & SF_COLLECTION ) )
@@ -396,11 +400,6 @@ protected:
 			}
 
 			valType = inVal->varray[0].type ;
-		}
-		else if ( valType == VT_COLLECTION )
-		{
-			assert( !"Not implemented yet" ) ;
-			return true ;
 		}
 
 		if ( isString( expectedType ) )

@@ -224,10 +224,10 @@ namespace PSSER_NAMESPACE
 		public:
 			inline static bool testType(Value const & pValue, ValueType pVT) { return pValue.type == pVT; }
 			inline static bool testProperty(Value const & pValue, PropertyID pPropID) { return pValue.property == pPropID; }
-			inline static bool isPointerType(Value const & pValue) { return (Afy::VT_STRUCT == pValue.type) || (Afy::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type) || (VT_RANGE == pValue.type) || (Afy::VT_STREAM == pValue.type) || (VT_STRING == pValue.type) || (VT_URL == pValue.type) || (Afy::VT_BSTR == pValue.type) || (VT_VARREF == pValue.type && pValue.length > 1) || (VT_STMT == pValue.type) || (VT_EXPR == pValue.type) || (VT_EXPRTREE == pValue.type); }
+			inline static bool isPointerType(Value const & pValue) { return (Afy::VT_STRUCT == pValue.type) || (VT_COLLECTION == pValue.type) || (VT_RANGE == pValue.type) || (Afy::VT_STREAM == pValue.type) || (VT_STRING == pValue.type) || (Afy::VT_BSTR == pValue.type) || (VT_VARREF == pValue.type && pValue.length > 1) || (VT_STMT == pValue.type) || (VT_EXPR == pValue.type) || (VT_EXPRTREE == pValue.type); }
 			inline static bool isRefType(Value const & pValue) { return (VT_REF == pValue.type || VT_REFID == pValue.type || VT_REFPROP == pValue.type || VT_REFIDPROP == pValue.type || VT_REFELT == pValue.type || VT_REFIDELT == pValue.type); }
 			inline static bool isRefPtrType(Value const & pValue) { return (VT_REF == pValue.type || VT_REFPROP == pValue.type || VT_REFELT == pValue.type); }
-			inline static bool isCollectionType(Value const & pValue) { return (Afy::VT_ARRAY == pValue.type) || (VT_COLLECTION == pValue.type); }
+			inline static bool isCollectionType(Value const & pValue) { return (VT_COLLECTION == pValue.type); }
 			inline static bool isAddOp(ExprOp pOp) { return (OP_ADD == pOp || OP_ADD_BEFORE == pOp); }
 			inline static bool isMoveOp(ExprOp pOp) { return (OP_MOVE == pOp || OP_MOVE_BEFORE == pOp); }
 			template <class TTest, class TContent> inline static bool contains(Value const & pValue, TTest const & pTest, TContent const & pContent);
@@ -377,7 +377,6 @@ namespace PSSER_NAMESPACE
 			inline static uint32_t inCvtString(ContextIn & pCtx, wchar_t *& pString, uint32_t pLenInB);
 			template <class T> inline static uint32_t inCvtString(ContextIn & pCtx, T *& pString, uint32_t pLen);
 			template <class T> inline static void inString(ContextIn & pCtx, Value & pValue, T *);
-			template <class T> inline static void inURL(ContextIn & pCtx, Value & pValue, T *);
 			inline static void inQuery(ContextIn & pCtx, Value & pValue);
 			inline static void inExpr(ContextIn & pCtx, Value & pValue);
 			inline static void inIID(ContextIn & pCtx, IdentityID & pIID);
@@ -425,28 +424,29 @@ namespace PSSER_NAMESPACE
 					property(pCtx, pValue.varray[i]);
 				break;
 			}
-			case Afy::VT_ARRAY:
-			{
-				unsigned long i;
-				for (i = 0; i < pValue.length; i++)
-					value(pCtx, pValue.varray[i]);
-				break;
-			}
 			case VT_COLLECTION:
-			{
-				size_t iV;
-				Value const * lNext;
-				assert(pValue.nav->count() == pPersistedLen && "Unhealthy collection [bug #5599]");
-				for (lNext = pValue.nav->navigate(GO_FIRST), iV = 0; NULL != lNext && iV < pPersistedLen; lNext = pValue.nav->navigate(GO_NEXT), iV++)
-					value(pCtx, *lNext);
-				if (iV < pPersistedLen) // Note: Robustness for #5599 and potential similar issues (e.g. tx isolation issues).
+				if (pValue.isNav())
 				{
-					Value lEmpty; lEmpty.setError(STORE_INVALID_URIID);
-					for (; iV < pPersistedLen; iV++)
-						value(pCtx, lEmpty);
+					size_t iV;
+					Value const * lNext;
+					assert(pValue.nav->count() == pPersistedLen && "Unhealthy collection [bug #5599]");
+					for (lNext = pValue.nav->navigate(GO_FIRST), iV = 0; NULL != lNext && iV < pPersistedLen; lNext = pValue.nav->navigate(GO_NEXT), iV++)
+						value(pCtx, *lNext);
+					if (iV < pPersistedLen) // Note: Robustness for #5599 and potential similar issues (e.g. tx isolation issues).
+					{
+						Value lEmpty; lEmpty.setError(STORE_INVALID_URIID);
+						for (; iV < pPersistedLen; iV++)
+							value(pCtx, lEmpty);
+					}
+				} 
+				else 
+				{
+					unsigned long i;
+					for (i = 0; i < pValue.length; i++)
+						value(pCtx, pValue.varray[i]);
+					break;
 				}
 				break;
-			}
 			case VT_RANGE:
 			{
 				unsigned long i;
@@ -473,7 +473,7 @@ namespace PSSER_NAMESPACE
 			}
 
 			// Variable-length.
-			case VT_STRING: case VT_URL: TContextOut::TPrimitives::outString(pCtx, pValue.str, pValue.length); break;
+			case VT_STRING: TContextOut::TPrimitives::outString(pCtx, pValue.str, pValue.length); break;
 			case Afy::VT_BSTR: TContextOut::TPrimitives::outString(pCtx, pValue.bstr, pValue.length); break;
 			case VT_VARREF:
 			{
@@ -679,9 +679,8 @@ namespace PSSER_NAMESPACE
 				break;
 			}
 
-			// Collections (both types are stored as VT_ARRAY, hence the pValue.length-independent mechanics for reload).
-			case VT_COLLECTION: assert(false);
-			case Afy::VT_ARRAY:
+			// Collections (both types are stored as VT_COLLECTION, hence the pValue.length-independent mechanics for reload).
+			case VT_COLLECTION:
 			{
 				if (pValue.length == 0)
 					pValue.varray = NULL;
@@ -723,7 +722,6 @@ namespace PSSER_NAMESPACE
 			case Afy::VT_STREAM: assert(false);
 			case VT_STRING: TContextIn::TPrimitives::inString(pCtx, pValue, (char *)0); break;
 			case Afy::VT_BSTR: TContextIn::TPrimitives::inString(pCtx, pValue, (unsigned char *)0); break;
-			case VT_URL: TContextIn::TPrimitives::inURL(pCtx, pValue, (char *)0); break;
 			case VT_VARREF:
 			{
 				int lRefN, lType;
@@ -840,7 +838,7 @@ namespace PSSER_NAMESPACE
 				;
 			else if (pOverwrite && PROP_SPEC_UPDATED == lV.property && pPIN.getValue(lV.property))
 				;
-			else if (Afy::VT_ARRAY == lV.type)
+			else if (Afy::VT_COLLECTION == lV.type && !lV.isNav())
 			{
 				// Review with Mark: Should I need to do this?
 				size_t i;
@@ -904,6 +902,8 @@ namespace PSSER_NAMESPACE
 		{
 			case VT_COLLECTION:
 			{
+				if (!pValue.isNav())
+					return pValue.length;
 				if (!pValue.nav)
 					return 0;
 				if (!pValue.nav->navigate(GO_FIRST)) // Note: Workaround for #5599 (i.e. inconsistent collections sent in notifications); assumes that nobody calls evaluateLength while enumerating...
@@ -927,9 +927,13 @@ namespace PSSER_NAMESPACE
 			return true;
 		switch (pValue.type)
 		{
+			case Afy::VT_COLLECTION:
+				if (pValue.isNav())
+				{
+					if (pValue.nav) { Value const * lNext; for (lNext = pValue.nav->navigate(GO_FIRST); NULL != lNext; lNext = pValue.nav->navigate(GO_NEXT)) { if (contains(*lNext, pTest, pContent)) return true; } } return false;
+				}
 			case Afy::VT_STRUCT:
-			case Afy::VT_ARRAY: { size_t i; for (i = 0; i < pValue.length; i++) if (contains(pValue.varray[i], pTest, pContent)) return true; } return false;
-			case Afy::VT_COLLECTION: if (pValue.nav) { Value const * lNext; for (lNext = pValue.nav->navigate(GO_FIRST); NULL != lNext; lNext = pValue.nav->navigate(GO_NEXT)) { if (contains(*lNext, pTest, pContent)) return true; } } return false;
+				{ size_t i; for (i = 0; i < pValue.length; i++) if (contains(pValue.varray[i], pTest, pContent)) return true; } return false;
 			default: break;
 		}
 		return false;
@@ -980,17 +984,20 @@ namespace PSSER_NAMESPACE
 	{
 		reset();
 		Value const * lV;
-		switch (mCollection.type)
+		if (mCollection.type==Afy::VT_COLLECTION || mCollection.type==Afy::VT_STRUCT)
 		{
-			case Afy::VT_ARRAY:
+			if (mCollection.type==Afy::VT_STRUCT || !mCollection.isNav())
+			{
 				for (mI = 0; mI < pIndex && mI < mCollection.length; mI++);
 				mCurr = (mI < mCollection.length) ? mCollection.varray[mI].eid : 0;
 				return (mI < mCollection.length) ? &mCollection.varray[mI] : NULL;
-			case Afy::VT_COLLECTION:
+			}
+			else
+			{
 				for (lV = mCollection.nav->navigate(GO_FIRST), mI = 0; mI < pIndex && lV; lV = mCollection.nav->navigate(GO_NEXT), mI++);
 				mCurr = lV ? lV->eid : 0;
 				return lV;
-			default: break;
+			}
 		}
 		if (0 == pIndex)
 			{ mI = 0; mCurr = mCollection.eid; return &mCollection; }
@@ -1012,18 +1019,21 @@ namespace PSSER_NAMESPACE
 		if ((unsigned long)-1 == mI || 0 == mCurr)
 			return NULL; // Iteration not started.
 		Value const * lV;
-		switch (mCollection.type)
+		if (mCollection.type==Afy::VT_COLLECTION || mCollection.type==Afy::VT_STRUCT)
 		{
-			case Afy::VT_ARRAY:
+			if (mCollection.type==Afy::VT_STRUCT || !mCollection.isNav())
+			{
 				mI++;
 				if (mI < mCollection.length)
 					{ mCurr = mCollection.varray[mI].eid; return &mCollection.varray[mI]; }
 				return NULL;
-			case Afy::VT_COLLECTION:
+			}
+			else
+			{
 				lV = mCollection.nav->navigate(GO_NEXT);
 				mCurr = lV ? lV->eid : 0;
 				return lV;
-			default: break;
+			}
 		}
 		return NULL;
 	}
@@ -1033,17 +1043,20 @@ namespace PSSER_NAMESPACE
 		if ((unsigned long)-1 == mI || 0 == mCurr)
 			return NULL; // Iteration not started.
 		Value const * lV;
-		switch (mCollection.type)
+		if (mCollection.type==Afy::VT_COLLECTION || mCollection.type==Afy::VT_STRUCT)
 		{
-			case Afy::VT_ARRAY:
+			if (mCollection.type==Afy::VT_STRUCT || !mCollection.isNav())
+			{
 				if (mI > 0)
 					{--mI; mCurr = mCollection.varray[mI].eid; return &mCollection.varray[mI]; }
 				return NULL;
-			case Afy::VT_COLLECTION:
+			}
+			else
+			{
 				lV = mCollection.nav->navigate(GO_PREVIOUS);
 				mCurr = lV ? lV->eid : 0;
 				return lV;
-			default: break;
+			}
 		}
 		return NULL;
 	}
@@ -1061,9 +1074,10 @@ namespace PSSER_NAMESPACE
 		if (pIt)
 			*pIt = (unsigned long)-1;
 		unsigned long i;
-		switch (pCollection.type)
+		if (pCollection.type==Afy::VT_COLLECTION || pCollection.type==Afy::VT_STRUCT)
 		{
-			case Afy::VT_ARRAY:
+			if (pCollection.type==Afy::VT_STRUCT || !pCollection.isNav())
+			{
 				if(pEid == STORE_FIRST_ELEMENT)
 					i = 0;
 				else if(pEid == STORE_LAST_ELEMENT)
@@ -1073,9 +1087,10 @@ namespace PSSER_NAMESPACE
 				if (pIt)
 					*pIt = i;
 				return (i < pCollection.length) ? &pCollection.varray[i] : NULL;
-			case Afy::VT_COLLECTION:
+			} else
+			{
 				return pCollection.nav->navigate(Afy::GO_FINDBYID, pEid);
-			default: break;
+			}
 		}
 		return (pCollection.eid == pEid || STORE_FIRST_ELEMENT == pEid || STORE_LAST_ELEMENT == pEid) ? &pCollection : NULL;
 	}
@@ -1318,7 +1333,7 @@ namespace PSSER_NAMESPACE
 	{
 		switch (pValue.type)
 		{
-			case VT_COLLECTION: return pValue.nav ? Afy::VT_ARRAY : Afy::VT_ERROR;
+			case VT_COLLECTION: return !pValue.isNav() || pValue.nav ? Afy::VT_COLLECTION : Afy::VT_ERROR;
 			case Afy::VT_STREAM: return pValue.stream.is ? pValue.stream.is->dataType() : Afy::VT_ERROR;
 			case VT_EXPR: return pValue.expr ? VT_EXPR : Afy::VT_ERROR;
 			case VT_STMT: return pValue.stmt ? VT_STMT : Afy::VT_ERROR;
@@ -1386,15 +1401,6 @@ namespace PSSER_NAMESPACE
 		pValue.set(lBuf, lLenInC);
 	}
 	
-
-	template <class T>
-	inline void PrimitivesInRaw::inURL(ContextIn & pCtx, Value & pValue, T *)
-	{
-		T * lBuf;
-		uint32_t const lLenInC = inCvtString(pCtx, lBuf, pValue.length);
-		pValue.setURL(lBuf, lLenInC);
-	}
-
 	inline void PrimitivesInRaw::inQuery(ContextIn & pCtx, Value & pValue)
 	{
 		uint32_t const lSerLen = pValue.length;
@@ -1589,8 +1595,15 @@ namespace PSSER_NAMESPACE
 		switch (pValue.type)
 		{
 			// Collections.
+			case Afy::VT_COLLECTION: 
+			{
+				if (pValue.isNav())
+				{
+					if (pValue.nav) pValue.nav->destroy(); pValue.nav = NULL;
+					break;
+				}
+			}
 			case Afy::VT_STRUCT:
-			case Afy::VT_ARRAY: 
 			{
 				unsigned int i;
 				for (i = 0; i < pValue.length && pValue.varray; i++)
@@ -1598,7 +1611,6 @@ namespace PSSER_NAMESPACE
 				freeArray(pValue.varray, pSession); pValue.varray = NULL; pValue.length = 0;
 				break;
 			}
-			case Afy::VT_COLLECTION: if (pValue.nav) pValue.nav->destroy(); pValue.nav = NULL; break;
 			case VT_RANGE:
 			if(pValue.range)
 			{
@@ -1612,7 +1624,7 @@ namespace PSSER_NAMESPACE
 			case Afy::VT_STREAM: if (pValue.stream.is) pValue.stream.is->destroy(); pValue.stream.is = NULL; break;
 
 			// Variable-length.
-			case VT_STRING: case VT_URL: if (0 != pValue.length && NULL != pValue.str) { freeArray(pValue.str, pSession); } pValue.str = NULL; pValue.length = 0; break;
+			case VT_STRING: if (0 != pValue.length && NULL != pValue.str) { freeArray(pValue.str, pSession); } pValue.str = NULL; pValue.length = 0; break;
 			case Afy::VT_BSTR: if (0 != pValue.length && NULL != pValue.bstr) { freeArray(pValue.bstr, pSession); } pValue.bstr = NULL; pValue.length = 0; break;
 			case VT_STMT: break; // Review (XXX): What if not consumed?
 			case VT_EXPR: break; // Review (XXX): What if not consumed?
@@ -2122,7 +2134,7 @@ namespace PSSER_NAMESPACE
 				}
 				break;
 			}
-			case Afy::VT_STRING: case Afy::VT_URL: case Afy::VT_BSTR:
+			case Afy::VT_STRING: case Afy::VT_BSTR:
 			{
 				size_t iChunk;
 				size_t const lLastAvailableChunk = (pValue.length - 1) / pHSFact.getChunkSizeInB();
@@ -2180,26 +2192,24 @@ namespace PSSER_NAMESPACE
 		//       life, but we may need to do something about it.
 		if (Services::isCollectionType(pValue) && 1 == Services::evaluateLength(pValue))
 		{
-			switch (pValue.type)
+			if (pValue.type!=Afy::VT_COLLECTION)
+				assert(false && "Not a collection!");
+			else if (pValue.isNav())
 			{
-				case Afy::VT_ARRAY:
+				Value const * lNext = pValue.nav->navigate(GO_FIRST);
+				if (lNext)
+				{
 					ContextOutComparisons::TPrimitives::beginProperty(pCtx, pValue.property);
-					Out<ContextOutComparisons>::value(pCtx, pValue.varray[0]);
+					Out<ContextOutComparisons>::value(pCtx, *lNext);
 					ContextOutComparisons::TPrimitives::endProperty(pCtx, pValue.property);
 					return;
-				case Afy::VT_COLLECTION:
-				{
-					Value const * lNext = pValue.nav->navigate(GO_FIRST);
-					if (lNext)
-					{
-						ContextOutComparisons::TPrimitives::beginProperty(pCtx, pValue.property);
-						Out<ContextOutComparisons>::value(pCtx, *lNext);
-						ContextOutComparisons::TPrimitives::endProperty(pCtx, pValue.property);
-						return;
-					}
-					break;
 				}
-				default: assert(false && "Not a collection!"); break;
+			} else
+			{
+				ContextOutComparisons::TPrimitives::beginProperty(pCtx, pValue.property);
+				Out<ContextOutComparisons>::value(pCtx, pValue.varray[0]);
+				ContextOutComparisons::TPrimitives::endProperty(pCtx, pValue.property);
+				return;
 			}
 		}
 
@@ -2453,12 +2463,11 @@ namespace PSSER_NAMESPACE
 			*pLen = lPersistedLength;
 		pCtx.os() << std::dec << lPersistedLength << ") ";
 
-		if (Afy::VT_ARRAY == pValue.type || Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
+		if (Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
 		{
 			switch (pValue.type)
 			{
-				case Afy::VT_ARRAY: pCtx.os() << " VT_ARRAY "; break;
-				case Afy::VT_COLLECTION: pCtx.os() << " VT_COLLECTION "; break;
+				case Afy::VT_COLLECTION: pCtx.os() << (pValue.isNav() ? " VT_COLLECTION " : " VT_ARRAY "); break;
 				case Afy::VT_STRUCT: pCtx.os() << " VT_STRUCT "; break;
 				default: pCtx.os() << " <vt_unknown> "; break;
 			}
@@ -2470,7 +2479,7 @@ namespace PSSER_NAMESPACE
 
 	inline void PrimitivesOutDbg::endValue(ContextOutDbg & pCtx, Value const & pValue)
 	{
-		if (Afy::VT_ARRAY == pValue.type || Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
+		if (Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
 		{
 			pCtx.mCollStack.pop_back();
 			pCtx.mLevel--;
@@ -2730,7 +2739,7 @@ namespace PSSER_NAMESPACE
 		if (pLen)
 			*pLen = lPersistedLength;
 
-		if (Afy::VT_ARRAY == pValue.type || Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
+		if (Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
 		{
 			pCtx.mLevel++;
 			pCtx.mCollStack.push_back(ContextOutXml::CollStackItem(pCtx.mLevel, pValue.property, Afy::VT_STRUCT == pValue.type));
@@ -2742,7 +2751,7 @@ namespace PSSER_NAMESPACE
 	{
 		bool const lContentWasDeeper = (!pCtx.mCollStack.empty() && pCtx.mCollStack.back().mLevel > pCtx.mLevel);
 		bool const lIsElm = (!pCtx.mCollStack.empty() && pCtx.mCollStack.back().mLevel == pCtx.mLevel - 1 && !pCtx.mCollStack.back().mStruct);
-		if (Afy::VT_ARRAY == pValue.type || Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
+		if (Afy::VT_COLLECTION == pValue.type || Afy::VT_STRUCT == pValue.type)
 		{
 			pCtx.mCollStack.pop_back();
 			pCtx.mLevel--;

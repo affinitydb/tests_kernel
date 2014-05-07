@@ -144,7 +144,7 @@ bool TestProtoBuf::createPINs()
 						TIMESTAMP dt; getTimestamp(dt); lPVs[iV].setDateTime(dt);lPVs[iV].setPropID(PROP_SPEC_UPDATED);iV++;						
 					}
 					break;
-				case 6: // VT_ARRAY
+				case 6: // VT_COLLECTION (varray)
 					{
 						const unsigned nElts = rand()%NELTS + 1;
 						for (unsigned i=0; i<nElts; i++ ) {

@@ -54,7 +54,6 @@ long countLines(char const * pFN)
 void loadPeople(ISession & pSession, int pPass)
 {
     long const lTotalLineNum = countLines(sPeopleFN);
-    TPINs lPINs;
     std::ifstream lIs(sPeopleFN);
     char lLine[32768];
     long lLineNum = 0, lRefNum = 0;
@@ -62,8 +61,16 @@ void loadPeople(ISession & pSession, int pPass)
     long const lT1 = getTimeInMs();
     if (2 == pPass)
         pSession.startTransaction();
+    IBatch * lBatch = NULL;
     while (lIs.is_open() && !lIs.eof())
     {
+        if (1 == pPass)
+        {
+            if (!lBatch)
+                lBatch = pSession.createBatch();
+            assert(lBatch);
+        }
+
         lIs.getline(lLine, sizeof(lLine));
         if (0 == strlen(lLine))
             continue;
@@ -121,10 +128,7 @@ void loadPeople(ISession & pSession, int pPass)
                 SETVALUE(lV[4], sPropIDs[P_OCCUPATION], lAttributes[3].c_str(), OP_SET);
                 SETVALUE(lV[5], sPropIDs[P_COUNTRY], lAttributes[4].c_str(), OP_SET);
                 SETVALUE(lV[6], sPropIDs[P_POSTALCODE], lAttributes[5].c_str(), OP_SET);
-                size_t iV;
-		IPIN *pin;
-		pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), &pin, MODE_COPY_VALUES);
-                lPINs.push_back(pin);
+                lBatch->createPIN(lV, sizeof(lV) / sizeof(lV[0]),  MODE_COPY_VALUES);
                 break;
             }
             case 2:
@@ -179,13 +183,11 @@ void loadPeople(ISession & pSession, int pPass)
                 break;
         }
         
-        if (lPINs.size() > sTxSize)
+        if (lBatch!=NULL && lBatch->getNumberOfPINs() > sTxSize)
         {
-            if (RC_OK != pSession.commitPINs(&lPINs[0], lPINs.size()))
+            if (RC_OK != lBatch->process())
                 printf("ERROR(%d): Failed to commit pins\n", __LINE__);
-            for (TPINs::iterator iP = lPINs.begin(); lPINs.end() != iP; iP++)
-                (*iP)->destroy();
-            lPINs.clear();
+            lBatch=NULL;
         }
         lLineNum++;
     }
@@ -195,15 +197,11 @@ void loadPeople(ISession & pSession, int pPass)
         pSession.commit();
         printf(" created %ld relationships (%ld ms).\n", lRefNum, getTimeInMs() - lT1);
     }
-    else if (lPINs.size() > 0 && RC_OK != pSession.commitPINs(&lPINs[0], lPINs.size()))
+    else if ((lBatch!=NULL && lBatch->getNumberOfPINs() > 0 && RC_OK != lBatch->process()))
         printf("ERROR(%d): Failed to commit pins\n", __LINE__);
     else
-    {
-        for (TPINs::iterator iP = lPINs.begin(); lPINs.end() != iP; iP++)
-            (*iP)->destroy();
         printf(" created %ld people (%ld ms).\n", lLineNum, getTimeInMs() - lT1);
     }
-}
 
 void addChildToParent(ISession & pSession, char const * pClass, PropertyID pParentPropID, uint32_t pParentID, PID const & pChild)
 {
@@ -237,59 +235,78 @@ void walkCollection(ISession & pSession, Value const * pCollectionProp, TPINs & 
         pCollection.push_back(pCollectionProp->pin);
     else if (VT_REFID == pCollectionProp->type)
         pCollection.push_back(pSession.getPIN(pCollectionProp->id));
-    else if (VT_ARRAY == pCollectionProp->type || VT_COLLECTION == pCollectionProp->type)
+    else if (VT_COLLECTION == pCollectionProp->type)
     {
         size_t iC = 0;
-        Value const * lV = (VT_ARRAY == pCollectionProp->type && iC < pCollectionProp->length) ? &pCollectionProp->varray[iC++] : (VT_COLLECTION == pCollectionProp->type ? pCollectionProp->nav->navigate(GO_FIRST) : NULL);
+        Value const * lV = (!pCollectionProp->isNav() && iC < pCollectionProp->length) ? &pCollectionProp->varray[iC++] : (pCollectionProp->isNav() ? pCollectionProp->nav->navigate(GO_FIRST) : NULL);
         while (lV)
         {
             if (VT_REF == lV->type)
                 pCollection.push_back(lV->pin);
             else if (VT_REFID == lV->type)
                 pCollection.push_back(pSession.getPIN(lV->id));
-            lV = (VT_ARRAY == pCollectionProp->type && iC < pCollectionProp->length) ? &pCollectionProp->varray[iC++] : (VT_COLLECTION == pCollectionProp->type ? pCollectionProp->nav->navigate(GO_NEXT) : NULL);
+            lV = (!pCollectionProp->isNav() && iC < pCollectionProp->length) ? &pCollectionProp->varray[iC++] : (pCollectionProp->isNav() ? pCollectionProp->nav->navigate(GO_NEXT) : NULL);
         }
     }
     else
         printf("ERROR(%d): Unexpected value type %d.\n", __LINE__, pCollectionProp->type);
 }
 
-void commitProjects(ISession & pSession, TPINs & pProjects, TUint32s & pParentFIDs)
+void commitProjects(ISession & pSession, IBatch * pBatch, TUint32s & pParentFIDs)
 {
-    if (RC_OK != pSession.commitPINs(&pProjects[0], pProjects.size()))
-        printf("ERROR(%d): Failed to commitPINs.\n", __LINE__);
+    if (!pBatch)
+        return;
+    if (RC_OK != pBatch->process(false))
+        printf("ERROR(%d): Failed to process batch PINs.\n", __LINE__);
+    
     pSession.commit(); // REVIEW: Why do I need to do this? (if I don't, the modify below tends to freeze)
     pSession.startTransaction();
     size_t iP;
-    for (iP = 0; iP < pProjects.size(); iP++)
+    for (iP = 0; iP < pBatch->getNumberOfPINs(); iP++)
     {
         if (0 != pParentFIDs[iP])
         {
-            if (iP > 0 && pParentFIDs[iP] >= pProjects[0]->getValue(sPropIDs[P_FID])->ui)
+            if (iP > 0 && pParentFIDs[iP] >= pBatch->getProperty(0,sPropIDs[P_FID])->ui)
             {
                 size_t iPP;
                 RC lRC = RC_FALSE;
                 for (iPP = 0; iPP < iP && RC_OK != lRC; iPP++)
                 {
-                    if (pParentFIDs[iP] != pProjects[iPP]->getValue(sPropIDs[P_FID])->ui)
+                    if (pParentFIDs[iP] != pBatch->getProperty(iPP,sPropIDs[P_FID])->ui)
                         continue;
-                    Value lV;
-                    SETVALUE_C(lV, sPropIDs[P_CHILDREN], pProjects[iP], OP_ADD, STORE_LAST_ELEMENT);
-                    lRC = pProjects[iPP]->modify(&lV, 1);
+                    Value lV; PID lPidTo;
+                    pBatch->getPID(iP, lPidTo);
+                    IPIN * lPinTo = pSession.getPIN(lPidTo);
+                    SETVALUE_C(lV, sPropIDs[P_CHILDREN], lPinTo, OP_ADD, STORE_LAST_ELEMENT);
+                    PID lPidFrom;
+                    pBatch->getPID(iPP, lPidFrom);
+                    IPIN * lPinFrom = pSession.getPIN(lPidFrom);
+                    if (RC_OK != (lRC = lPinFrom->modify(&lV, 1)))
+                        assert(false);
+                    lPinFrom->destroy();
+                    lPinTo->destroy();
                     break;
                 }
                 if (RC_OK != lRC)
                     printf("ERROR(%d): Failed to add child project to its parent.\n", __LINE__);
             }
             else
-                addChildToParent(pSession, "fid", sPropIDs[P_CHILDREN], pParentFIDs[iP], pProjects[iP]->getPID());
+            {
+                PID lPid;
+                pBatch->getPID(iP, lPid);
+                addChildToParent(pSession, "fid", sPropIDs[P_CHILDREN], pParentFIDs[iP], lPid);
+            }
         }
         else
-            addChildToParent(pSession, "orgid", sPropIDs[P_ROOTPROJECT], pProjects[iP]->getValue(sPropIDs[P_ACCESS])->ui, pProjects[iP]->getPID());
+        {
+            const Value *val = pBatch->getProperty(iP, sPropIDs[P_ACCESS]);
+            PID lPid;
+            pBatch->getPID(iP, lPid);
+            addChildToParent(pSession, "orgid", sPropIDs[P_ROOTPROJECT], val->ui, lPid);
+        }
     }
-    for (iP = 0; iP < pProjects.size(); iP++)
-        pProjects[iP]->destroy();
-    pProjects.clear();
+    if (pBatch)
+        pBatch->destroy();
     pParentFIDs.clear();
 }
 
@@ -302,10 +319,15 @@ void loadProjects(ISession & pSession)
     printf("%3d%%", 0); fflush(stdout);
     long const lT1 = getTimeInMs();
     pSession.startTransaction();
-    TPINs lProjects;
+    IBatch * lBatch = NULL;
     TUint32s lParentFIDs;
+    RC rc;
     while (lIs.is_open() && !lIs.eof())
     {
+        if (!lBatch)
+            lBatch = pSession.createBatch();
+        assert(lBatch);
+        
         lIs.getline(lLine, sizeof(lLine));
         if (0 == strlen(lLine))
             continue;
@@ -328,37 +350,40 @@ void loadProjects(ISession & pSession)
         SETVALUE(lV[0], sPropIDs[P_FID], lFID, OP_SET);
         SETVALUE(lV[1], sPropIDs[P_FNAME], lAttributes[0].c_str(), OP_SET);
         SETVALUE(lV[2], sPropIDs[P_ACCESS], lAccessOrgID, OP_SET); // Review: maybe by reference instead...
-		IPIN *pin;
-		pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), &pin, MODE_COPY_VALUES);
-        lProjects.push_back(pin);
-        if (!lProjects.back())
+        rc = lBatch->createPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES);
+        if (rc != RC_OK)
             printf("ERROR(%d): Failed to createPIN.\n", __LINE__);
         lParentFIDs.push_back(lParentFID);
         if (0 == lLineNum % sTxSize)
         {
-            commitProjects(pSession, lProjects, lParentFIDs);
+            commitProjects(pSession, lBatch, lParentFIDs);
             pSession.commit();
             pSession.startTransaction();
+            lBatch = NULL;
         }
         lLineNum++;
     }
-    commitProjects(pSession, lProjects, lParentFIDs);
+    commitProjects(pSession, lBatch, lParentFIDs);
     pSession.commit();
     printf("\b\b\b\b\b%3d%%", 100);
     printf(" created %ld projects (%ld ms).\n", lLineNum, getTimeInMs() - lT1);
 }
 
-void commitPhotos(ISession & pSession, TPINs & pPhotos, TUint32s & pParentFIDs)
+void commitPhotos(ISession & pSession, IBatch * pBatch, TUint32s & pParentFIDs)
 {
-    if (RC_OK != pSession.commitPINs(&pPhotos[0], pPhotos.size()))
-        printf("ERROR(%d): Failed to commitPINs.\n", __LINE__);
+    if (!pBatch)
+        return;
+    if (RC_OK != pBatch->process(false))
+        printf("ERROR(%d): Failed to process batch PINs.\n", __LINE__);
     size_t iP;
-    for (iP = 0; iP < pPhotos.size(); iP++)
+    for (iP = 0; iP < pBatch->getNumberOfPINs(); iP++)
     {
-        addChildToParent(pSession, "fid", sPropIDs[P_CHILDREN], pParentFIDs[iP], pPhotos[iP]->getPID());
-        pPhotos[iP]->destroy();
+        PID pid;
+        pBatch->getPID(iP, pid);
+        addChildToParent(pSession, "fid", sPropIDs[P_CHILDREN], pParentFIDs[iP], pid);
     }
-    pPhotos.clear();
+    if (pBatch)
+        pBatch->destroy();
     pParentFIDs.clear();
 }
 
@@ -371,10 +396,14 @@ void loadPhotos(ISession & pSession)
     printf("%3d%%", 0); fflush(stdout);
     long const lT1 = getTimeInMs();
     pSession.startTransaction();
-    TPINs lPhotos;
     TUint32s lParentFIDs;
+    IBatch *lBatch = NULL;
     while (lIs.is_open() && !lIs.eof())
     {
+        if (!lBatch)
+            lBatch = pSession.createBatch();
+        assert(lBatch);
+
         lIs.getline(lLine, sizeof(lLine));
         if (0 == strlen(lLine))
             continue;
@@ -396,21 +425,20 @@ void loadPhotos(ISession & pSession)
         Value lV[2];
         SETVALUE(lV[0], sPropIDs[P_FID], lFID, OP_SET);
         SETVALUE(lV[1], sPropIDs[P_PNAME], lAttributes[0].c_str(), OP_SET);
-		IPIN *pin;
-		pSession.createPIN(lV, sizeof(lV) / sizeof(lV[0]), &pin, MODE_COPY_VALUES);
-        lPhotos.push_back(pin);
-        if (!lPhotos.back())
+        RC rc = lBatch->createPIN(lV, sizeof(lV) / sizeof(lV[0]), MODE_COPY_VALUES);
+        if (rc!=RC_OK)
             printf("ERROR(%d): Failed to createPIN.\n", __LINE__);
         lParentFIDs.push_back(lParentFID);
         if (0 == lLineNum % sTxSize)
         {
-            commitPhotos(pSession, lPhotos, lParentFIDs);
+            commitPhotos(pSession, lBatch, lParentFIDs);
             pSession.commit();
             pSession.startTransaction();
+            lBatch=NULL;
         }
         lLineNum++;
     }
-    commitPhotos(pSession, lPhotos, lParentFIDs);
+    commitPhotos(pSession, lBatch, lParentFIDs);
     pSession.commit();
     printf("\b\b\b\b\b%3d%%", 100);
     printf(" created %ld photos (%ld ms).\n", lLineNum, getTimeInMs() - lT1);
@@ -481,6 +509,7 @@ void runQueries(ISession & pSession)
     printf("%lu people\n", (unsigned long)lNumPeople);
     uint32_t lP1 = 10, lP2 = (uint32_t)lNumPeople - 10;
     char lStmt[2048];
+
     for (int iT = 0; iT < 20 && lP1 < lNumPeople && lP2 > 0; iT++)
     {
         // Case 1: can person1 reach person2?
@@ -521,7 +550,7 @@ void runQueries(ISession & pSession)
     }
     printf("done (%ld ms).\n", lTotalTime);
 
-    lS = pSession.createStmt("SELECT * FROM orgid([10, 15]);");
+    lS = pSession.createStmt("SELECT * FROM orgid(@[10, 15]);");
     ICursor * lC;
     IPIN * lPin;
     if (RC_OK == lS->execute(&lC))
@@ -549,7 +578,7 @@ void runQueries(ISession & pSession)
                 size_t iC = 0;
                 PID const lPID2 = (*iF)->getPID();
                 Value const * const lColl2 = (*iF)->getValue(sPropIDs[P_FRIENDOF]);
-                Value const * lV = (VT_ARRAY == lColl2->type && iC < lColl2->length) ? &lColl2->varray[iC++] : (VT_COLLECTION == lColl2->type ? lColl2->nav->navigate(GO_FIRST) : NULL);
+                Value const * lV = (!lColl2->isNav() && iC < lColl2->length) ? &lColl2->varray[iC++] : (lColl2->isNav() ? lColl2->nav->navigate(GO_FIRST) : NULL);
                 while (lV)
                 {
                     PID lPID3;
@@ -559,7 +588,7 @@ void runQueries(ISession & pSession)
                         lPID3 = lV->id;
                     if (lPID1 != lPID3 && lPID2 != lPID3)
                         lFof.insert(lPID3);
-                    lV = (VT_ARRAY == lColl2->type && iC < lColl2->length) ? &lColl2->varray[iC++] : (VT_COLLECTION == lColl2->type ? lColl2->nav->navigate(GO_NEXT) : NULL);
+                    lV = (!lColl2->isNav() && iC < lColl2->length) ? &lColl2->varray[iC++] : (lColl2->isNav() ? lColl2->nav->navigate(GO_NEXT) : NULL);
                 }
             }
             for (iF = lFriends1.begin(); lFriends1.end() != iF; iF++)
@@ -614,7 +643,7 @@ void runQueries(ISession & pSession)
             // Case 4: find all photos given access to A by his friends
             long const lT1 = getTimeInMs();
             long lNumPhotos = 0;
-            #if 0
+            #if 1
                 Value const * const lColl = lPin->getValue(sPropIDs[P_FRIENDOF]);
                 TPINs lFriends;
                 TPINs::iterator iF;
@@ -680,7 +709,8 @@ ClassID createClass(ISession * pSession, char const * pName, IStmt * pPredicate)
     vals[1].set(pPredicate); vals[1].setPropID(PROP_SPEC_PREDICATE); vals[1].setMeta(META_PROP_INDEXED);
     IPIN * lP;
     RC lRC = pSession->createPIN(vals, 2, &lP, MODE_COPY_VALUES|MODE_PERSISTENT);
-    if (RC_OK == lRC || RC_ALREADYEXISTS == lRC){
+    if (RC_OK == lRC || RC_ALREADYEXISTS == lRC)
+    {
             lClsid = lP->getValue(PROP_SPEC_OBJID)->uid;
         lP->destroy();
     }

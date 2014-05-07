@@ -92,8 +92,10 @@ void TestMultiColumnIndex2::doTest()
 	va[1].set((unsigned char*)"-99999.99999",12); va[1].property = ids[1]; 
 	va[2].set((unsigned char*)"-77777.77777",12); va[2].property = ids[2]; 
 
-	PID pid;
-	mSession->createPINAndCommit(pid,va,3);
+	PID pid;IPIN *temp;
+	TVERIFYRC(mSession->createPIN(va,3,&temp,MODE_PERSISTENT|MODE_COPY_VALUES));
+	pid = temp->getPID();
+	temp->destroy();
 
 	SourceSpec spec;
 

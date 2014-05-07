@@ -124,16 +124,14 @@ void TestOpEdit::testExpectedString( const char * inExpected, IPIN* pin, PID & p
 void TestOpEdit::quickstringtest( PropertyID & inID ) 
 {
 	// Quick overview of the OP_EDIT functionality, see teststring for more scenarios
-	PID pid ;
-	TVERIFYRC( mSession->createPINAndCommit( pid, NULL, 0 ) ) ;
-	CmvautoPtr<IPIN> pin( mSession->getPIN(pid)) ;
-	
+	PID pid ;IPIN *pin;
 
 	// Case 1 - insert 123 at position 1, removing no characters out of existing string
 	mCase = "Case 1" ;
 	Value val ;
 	val.set( "ABCDEF" ) ; val.property = inID ; 
-	TVERIFYRC( pin->modify( &val, 1 ) ) ; // Reset
+	TVERIFYRC( mSession->createPIN( &val, 1, &pin, MODE_PERSISTENT|MODE_COPY_VALUES) ) ; // Reset
+	pid = pin->getPID();
 
 	val.setEdit( "123" /*new string*/, 
 				(unsigned long)strlen( "123") /*nChars*/, // Number of characters to insert 
@@ -210,6 +208,7 @@ void TestOpEdit::quickstringtest( PropertyID & inID )
 	val.property = inID ;
 	TVERIFYRC(pin->modify( &val, 1 )) ; 
 	testExpectedString( "ABCDE1F", pin, pid, inID ) ; // REVIEW: getting ABCDE12
+	if(pin!=NULL) pin->destroy();
 }
 
 void TestOpEdit::teststring(ISession *session,URIMap *pm,int npm, PID *pid){
@@ -294,7 +293,8 @@ void TestOpEdit::teststring(ISession *session,URIMap *pm,int npm, PID *pid){
 	SETVALUE(pvs[0], pm[0].uid, "How about editing this piece of string?", OP_SET);
 	SETVALUE(pvs[1], pm[1].uid, str, OP_SET);
 	pvs[2].set(bstr,6); SETVATTR(pvs[2], pm[2].uid, OP_SET);
-	IPIN *uncommitpin = session->createPIN(pvs,3,MODE_COPY_VALUES);		
+	IPIN *uncommitpin;
+	TVERIFYRC(session->createPIN(pvs,3,&uncommitpin,MODE_COPY_VALUES));		
 	lVal= uncommitpin->getValue(pm[0].uid);
 	if ( isVerbose() )	std::cout<<"\n\n\nOriginal Uncommited PIN String:: "<<lVal->str<<std::endl;
 
@@ -429,7 +429,8 @@ void TestOpEdit::testbstr(ISession *session,URIMap *pm,int npm, PID *pid){
 	SETVALUE(pvs[0], pm[0].uid, "How about editing this piece of string?", OP_SET);
 	SETVALUE(pvs[1], pm[1].uid, str, OP_SET);
 	pvs[2].set(bstrx,6); SETVATTR(pvs[2], pm[2].uid, OP_SET);
-	IPIN *uncommitpin = session->createPIN(pvs,3,MODE_COPY_VALUES);		
+	IPIN *uncommitpin;
+	TVERIFYRC(session->createPIN(pvs,3,&uncommitpin,MODE_COPY_VALUES));		
 	lVal= uncommitpin->getValue(pm[2].uid);
 	if ( isVerbose() ) 
 	{
@@ -544,7 +545,7 @@ void TestOpEdit::teststream(ISession *session)
 	id = pin->getPID();
 	pin->destroy();
 	for (i=0; i<NOEDITS; i++){
-		const unsigned char bst[] = {65 + rand() %(26),'\0'};
+		const unsigned char bst[] = {(unsigned char)(65 + rand() %(26)),'\0'};
 		size_t z = rand() % stream.length();
 		strs[i] = (string)(char *)bst;
 		stream.replace(z,1,strs[i].c_str(),1);
@@ -655,7 +656,7 @@ void TestOpEdit::teststream(ISession *session)
 	PropertyID pids[1];
 	pids[0]=propid1;
 	args[0].setVarRef(0,*pids);
-	IExprTree *expr = session->expr(OP_EXISTS,1,args);
+	IExprNode *expr = session->expr(OP_EXISTS,1,args);
 	query->addCondition(var,expr);
 	
 	MVTRand::getString(str,100,0,true,false);
@@ -746,26 +747,26 @@ void TestOpEdit::teststream(ISession *session)
 	pin->destroy();
 
 	//case 15: increment value size in cycle
-
-	TVERIFYRC(session->createPINAndCommit( id, 0, 0 ));
 	unsigned char buffer[1024];
 	val[0].set(buffer,100); val[0].setPropID(propid);
 
-	TVERIFYRC(session->modifyPIN(id,val,1));
+	TVERIFYRC(session->createPIN(val,1,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));
 	for (i=1; i < 100; i++) {
         	val[0].setEdit(buffer,100,i*100,0); val[0].setPropID(propid);
-        	TVERIFYRC(session->modifyPIN(id,val,1));
+        	TVERIFYRC(pin->modify(val,1));
 	}
+	if(pin!=NULL) pin->destroy();
 
 // case 16: 
 // see performance bugzilla issue #8002
 // See also testlargeblob.cpp
-	PID myPID;
-	TVERIFYRC(session->createPINAndCommit( myPID, 0, 0 ));
+	IPIN *pin1;
 	const int size = 32*1024;
 	unsigned char *buf = (unsigned char *)alloca(size);
 	val[0].set(buf,size); val[0].setPropID(propid);
-    	TVERIFYRC(session->modifyPIN(myPID,val,1));
+    	TVERIFYRC(session->createPIN(val,1,&pin1,MODE_PERSISTENT|MODE_COPY_VALUES));
+	PID myPID = pin1->getPID();
+	if(pin1!=NULL) pin1->destroy();
 	uint64_t n;
 	//Modify the pins in a huge loop.
 
@@ -841,8 +842,10 @@ void TestOpEdit::populateStore(ISession *session,URIMap *pm,int npm, PID *pid)
 	//SETVALUE(pvs[1], pm[1].uid, ustr, OP_SET);
 	pvs[1].set(str,39);pvs[1].setPropID(pm[1].uid);
 	pvs[2].set(bstr,6); SETVATTR(pvs[2], pm[2].uid, OP_SET);
-
-	session->createPINAndCommit(pid[0],pvs,3);	
+	IPIN *pin;
+	TVERIFYRC(session->createPIN(pvs,3,&pin,MODE_COPY_VALUES|MODE_PERSISTENT));	
+	pid[0] = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 
 	/*
 	pvs[0].set(pm[0].uid,"Delhi");

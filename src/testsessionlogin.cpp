@@ -261,7 +261,7 @@ void TestSessionLogin::createIdentities(int sNumIdentities,long volatile &lStop)
 			Value lVal[2];
 			lVal[0].setVarRef(0,lPM[1].uid);
 			lVal[1].set((unsigned int)lTempIID);
-			IExprTree *lET = lSession->expr(OP_EQ,2,lVal);
+			IExprNode *lET = lSession->expr(OP_EQ,2,lVal);
 			lQ->addCondition(lVar,lET);
 			ICursor * lR = NULL;
 			TVERIFYRC(lQ->execute(&lR));

@@ -156,13 +156,19 @@ void TestRollforward::insertDataPhase1()
 	// But normal recovery testing should touch on some 
 	// of the same ground
 	mLogger.out() << "** Insert phase 1" << std::endl;
-	TVERIFYRC(mSession->createPINAndCommit(mPid1,NULL,0));
+	IPIN *pin;
+	TVERIFYRC(mSession->createPIN (NULL,0,&pin,MODE_PERSISTENT));
+	mPid1 = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 }
 void TestRollforward::insertDataPhase2()
 {
 	mLogger.out() << "** Insert phase 2" << std::endl;
-	TVERIFYRC(mSession->createPINAndCommit(mPid2,NULL,0));
+	IPIN *pin;
+	TVERIFYRC(mSession->createPIN (NULL,0,&pin,MODE_PERSISTENT));
+	mPid2 = pin->getPID();
 	TVERIFY(mPid1.pid != mPid2.pid);
+	if(pin!=NULL) pin->destroy();
 }
 void TestRollforward::testExpectedData()
 {

@@ -79,7 +79,7 @@ void TestMultiColumnIndex1::doTest()
 		{
 			Value val[2];
 			val[0].setVarRef(0,pmaps[i].uid); val[1].setParam(i);
-			IExprTree *exprt = mSession->expr(Afy::OP_IN,2,val);
+			IExprNode *exprt = mSession->expr(Afy::OP_IN,2,val);
 			qry->addCondition(var,exprt);
 			exprt->destroy();
 		}
@@ -96,8 +96,7 @@ void TestMultiColumnIndex1::doTest()
 			va.setOp(OP_SET);
 			va.setPropID(pmaps[i].uid); 
 		}
-		PID pid;
-		rc = mSession->createPINAndCommit(pid,vals,3);
+		rc = mSession->createPIN(vals,3,NULL,MODE_PERSISTENT|MODE_COPY_VALUES);
 		TVERIFY(rc == RC_OK);
 	}
 	 

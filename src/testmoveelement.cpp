@@ -66,8 +66,8 @@ void TestMoveElement::doTest()
 		lVal[idx].setPropID(prop);
 	}
 
-	CmvautoPtr<IPIN> lNewPIN(mSession->createPIN(lVal, cntElements,MODE_COPY_VALUES));
-	TVERIFYRC(mSession->commitPINs(&lNewPIN.Get(), 1));
+	IPIN *lNewPIN;
+	TVERIFYRC(mSession->createPIN(lVal, cntElements,&lNewPIN,MODE_COPY_VALUES|MODE_PERSISTENT));
 	lNewPIN->refresh();
 
 	ElementID e[cntElements]; // Eids in original ordering

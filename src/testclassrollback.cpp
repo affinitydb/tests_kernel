@@ -304,7 +304,7 @@ class TestClassRollBack : public ITest
 					Value args[2];
 					PropertyID pids[1];
 					IStmt *query; 
-					IExprTree *expr;
+					IExprNode *expr;
 					unsigned char var;
 					string s;
 
@@ -530,7 +530,7 @@ void TestClassRollBack::testclassrollbackmeta()
 	Value args[2];
 	PropertyID pids[1];
 	IStmt *query; 
-	IExprTree *expr;
+	IExprNode *expr;
 	unsigned char var;
 	string s;
 

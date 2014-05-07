@@ -29,24 +29,26 @@ static bool isExpectedRelationship(Value const & pV, PID const & pPIDTo)
 		return true;
 	else if (VT_REFID == pV.type && pV.id == pPIDTo)
 		return true;
-	else if (VT_ARRAY == pV.type)
-	{
-		bool lFound = false;
-		size_t i;
-		for (i = 0; i < pV.length && !lFound; i++)
-			lFound = isExpectedRelationship(pV.varray[i], pPIDTo);
-		return lFound;
-	}
 	else if (VT_COLLECTION == pV.type)
 	{
-		bool lFound = false;
-		Value const * lNext = pV.nav->navigate(GO_FIRST);
-		while (lNext && !lFound)
+		if (!pV.isNav())
 		{
-			lFound = isExpectedRelationship(*lNext, pPIDTo);
-			lNext = pV.nav->navigate(GO_NEXT);
+			bool lFound = false;
+			size_t i;
+			for (i = 0; i < pV.length && !lFound; i++)
+				lFound = isExpectedRelationship(pV.varray[i], pPIDTo);
+			return lFound;
+		} else
+		{
+			bool lFound = false;
+			Value const * lNext = pV.nav->navigate(GO_FIRST);
+			while (lNext && !lFound)
+			{
+				lFound = isExpectedRelationship(*lNext, pPIDTo);
+				lNext = pV.nav->navigate(GO_NEXT);
+			}
+			return lFound;
 		}
-		return lFound;
 	}
 	return false;
 }
@@ -190,9 +192,8 @@ int TestBatch::execute()
 				//       but this is a test after all :)
 				for (j = 0; j < lLocalBucketSize; j++)
 				{
-					PID lPID; unsigned nP = 1;
-					TVERIFYRC(lBatch->getPIDs(&lPID, nP, j));
-					TVERIFY(1 == nP);
+					PID lPID; 
+					TVERIFYRC(lBatch->getPID(j,lPID));
 					if (LOCALPID(lPID) == STORE_INVALID_PID)
 					{
 						lSuccess = false;
@@ -223,9 +224,8 @@ int TestBatch::execute()
 					{
 						Relationship const & lUR = *lIterUR;
 						CommittedRelationship lCR;
-						PID lPID; unsigned nP = 1;
-						TVERIFYRC(lBatch->getPIDs(&lPID, nP, lUR.mFromIdx));
-						TVERIFY(1 == nP);
+						PID lPID;
+						TVERIFYRC(lBatch->getPID(lUR.mFromIdx,lPID));
 						lCR.mFrom = lPID;
 						lCR.mTo = lUR.mToPtr ? lUR.mToPtr->getPID() : lUR.mTo;
 						lCR.mPropID = lUR.mPropID;
@@ -312,5 +312,4 @@ void TestBatch::createBatchPIN(IBatch & pBatch, PropertyID const * pPropIDs, int
 	// Create the in-memory PIN.
 	TVERIFYRC(pBatch.createPIN(lNewVs, pNumProps));
 }
-
 

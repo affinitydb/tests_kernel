@@ -47,7 +47,7 @@ void TestJoinExcept::createMeta()
 		{
 			Value lV[1];
 			lV[0].setVarRef(0,mPropIds[1]);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_EXISTS, 1, lV));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_EXISTS, 1, lV));
 			TVERIFYRC(lQ->addCondition(lVar,lET));			
 		}
 		char lB[64]; sprintf(lB, "TestJoinExcept.%s.Class%d", lStr.c_str(), 0);
@@ -61,7 +61,7 @@ void TestJoinExcept::createMeta()
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[1]);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_IN, 2, lV, CASE_INSENSITIVE_OP));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_IN, 2, lV, CASE_INSENSITIVE_OP));
 			TVERIFYRC(lQ->addCondition(lVar,lET));			
 		}
 		char lB[64]; sprintf(lB, "TestJoinExcept.%s.Family%d", lStr.c_str(), 1);
@@ -75,7 +75,7 @@ void TestJoinExcept::createMeta()
 			Value lV[2];
 			lV[0].setVarRef(0,mPropIds[4]);
 			lV[1].setParam(0);
-			CmvautoPtr<IExprTree> lET(mSession->expr(OP_IN, 2, lV, CASE_INSENSITIVE_OP));
+			CmvautoPtr<IExprNode> lET(mSession->expr(OP_IN, 2, lV, CASE_INSENSITIVE_OP));
 			TVERIFYRC(lQ->addCondition(lVar,lET));			
 		}
 		char lB[64]; sprintf(lB, "TestJoinExcept.%s.Family%d", lStr.c_str(), 2);
@@ -254,7 +254,7 @@ void TestJoinExcept::runJoinQuery(PID pPID, PropertyID pPropID, ClassID pRightCL
 		if(lCount != pExpectedCount)
 			mLogger.out() << "Expected count " << pExpectedCount << "; ICursor::next() count " << lCount << std::endl;
 		TVERIFY(lCount == pExpectedCount);
-	}
+	}	
 }
 
 void TestJoinExcept::doTest()

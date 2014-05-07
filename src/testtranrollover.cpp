@@ -149,7 +149,7 @@ void TestSpillover::countPINS(ISession *session)
 	args[0].set("foo");
 	args[1].set("foo");
 
-	IExprTree *expr = session->expr(OP_EQ,2,args);
+	IExprNode *expr = session->expr(OP_EQ,2,args);
 	query->addCondition(lVar,expr);
 	ICursor *result = NULL;
        TVERIFYRC(query->execute(&result));

@@ -36,7 +36,7 @@ class TestFamilies : public ITest{
 		bool executeFamilies(ISession *pSession,const int pCase);
 	protected:
 		bool createPINs(ISession *pSession);
-		IExprTree * createExpr(ISession *pSession, IStmt &lQ, const int pCase = 0, unsigned char const lVar = 0);
+		IExprNode * createExpr(ISession *pSession, IStmt &lQ, const int pCase = 0, unsigned char const lVar = 0);
 		void getParams(Value *pParam, const int pCase);
 		bool quickTest(ISession *pSession);
 
@@ -110,7 +110,7 @@ int	TestFamilies::execute(){
 		for(i = 0; i < mNumClasses; i++){			
 			IStmt * lQ	= lSession->createStmt();
 			unsigned char const lVar = lQ->addVariable();
-			IExprTree *lE = createExpr(lSession, *lQ, i, lVar); // Create different query depending on "i"
+			IExprNode *lE = createExpr(lSession, *lQ, i, lVar); // Create different query depending on "i"
 			if(lE){
 				
 				TVERIFYRC(lQ->addCondition(lVar,lE));
@@ -120,7 +120,7 @@ int	TestFamilies::execute(){
 				TVERIFYRC(defineClass(lSession, lB, lQ, &mCLSIDs[i]));
 				lE->destroy();				
 			}else{
-				mLogger.out() << "Failed to create IExprTree " << std::endl;
+				mLogger.out() << "Failed to create IExprNode " << std::endl;
 				lSuccess = false;
 			}
 			lQ->destroy();
@@ -129,7 +129,7 @@ int	TestFamilies::execute(){
 		for (i = 0; i < mNumClasses; i++){
 			IStmt * lQ1	= lSession->createStmt();
 			unsigned char const lVar = lQ1->addVariable();
-			IExprTree *lE1 = createExpr(lSession, *lQ1, i, lVar);
+			IExprNode *lE1 = createExpr(lSession, *lQ1, i, lVar);
 			Value lParam[10];getParams(lParam, i);
 			lQ1->addCondition(lVar,lE1);
 			uint64_t lCount = 0;
@@ -252,12 +252,12 @@ bool TestFamilies::createPINs(ISession *pSession){
 	return lSuccess;
 }
 
-IExprTree * TestFamilies::createExpr(ISession *pSession, IStmt &lQ, const int pCase, unsigned char const lVar){
+IExprNode * TestFamilies::createExpr(ISession *pSession, IStmt &lQ, const int pCase, unsigned char const lVar){
 	// Note: This test outputs many "WARNING: Full scan query!!!" warnings
 	// even though the queries are sometimes assigned to classes.  This is because
 	// of the presence of OP_IN and other non-indexable operations
 	
-	IExprTree *lE = NULL;
+	IExprNode *lE = NULL;
 	switch(pCase){
 		case 0:
 			{
@@ -575,12 +575,11 @@ bool TestFamilies::quickTest(ISession *pSession){
 
 	RC rc ;
 	bool lSuccess = true;
-	PID lPID;	
 	Value lV[3];
 	SETVALUE(lV[0],mPropIds[0],"quickTest",OP_SET);
 	SETVALUE(lV[1],mPropIds[1],"quickTest",OP_SET);
 	SETVALUE(lV[2],mPropIds[2],1000,OP_SET);
-	if(RC_OK!=pSession->createPINAndCommit(lPID,lV,3)){
+	if(RC_OK!=pSession->createPIN(lV,3,NULL,MODE_PERSISTENT|MODE_COPY_VALUES)){
 		mLogger.out() << "ERROR(quickTest): Failed to create PIN" << std::endl;
 		return false;
 	}
@@ -588,7 +587,7 @@ bool TestFamilies::quickTest(ISession *pSession){
 	// Query "(prop0 exists AND prop1=param0) OR prop2=param1"
 	IStmt *lQ = pSession->createStmt();
 	unsigned const char lVar = lQ->addVariable();
-	IExprTree *lET;
+	IExprNode *lET;
 	{
 		Value val[2];
 		val[0].setVarRef(0,mPropIds[0]);

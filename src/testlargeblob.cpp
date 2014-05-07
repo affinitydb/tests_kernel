@@ -69,8 +69,10 @@ PID TestLargeBlob::createFilePin( int pageSize, int pagePerPageGroup, int testFi
 	}
    
 	RC rc ;
-	PID myPID;
-	TVERIFYRC(mSession->createPINAndCommit( myPID, 0, 0 ));
+	PID myPID;IPIN *pin;
+	TVERIFYRC(mSession->createPIN(NULL, 0,&pin,MODE_PERSISTENT));
+	myPID = pin->getPID();
+	if(pin!=NULL) pin->destroy();
 	
 	int currentSize = 0 ; // Assuming that caller is tracking file size
 
@@ -116,7 +118,7 @@ PID TestLargeBlob::createFilePin( int pageSize, int pagePerPageGroup, int testFi
 				TVERIFYRC(rc = mSession->modifyPIN(myPID,&v,1)) ;
 				if ( rc != RC_OK )
 				{
-					// RC_NORESOURCES error seen when local collection reaches
+					// RC_NOMEM error seen when local collection reaches
 					// 253 elements
 					mLogger.out() << "OP_ADD failed page " << i << endl ;
 					return myPID ;
@@ -232,7 +234,7 @@ void TestLargeBlob::validateFilePin( int inPageSize, int inGroupSize, const PID 
 		mLogger.out() << "VT_STREAM Pages:" << std::dec << fileData.stream.is->length() / inPageSize << endl ; 
 		fileData.stream.is->destroy() ;
 	}
-	else if ( fileData.type == VT_COLLECTION ) 
+	else if ( fileData.type == VT_COLLECTION && fileData.isNav() ) 
 	{
 		mLogger.out() << "VT_COLLECTION Elements:" << fileData.nav->count() << endl ; 
 

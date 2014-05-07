@@ -97,9 +97,9 @@ public:
 			// Means that any common english words will be excluded from the index
 			// vl.meta = META_PROP_STOPWORDS ; // it's done always now
 		}
-		PID newPin ;
-		TVRC_R(mSession->createPINAndCommit( newPin, &vl, 1 ),mTest) ;
-		return newPin ;
+		IPIN *pin;
+		TVRC_R(mSession->createPIN(&vl, 1, &pin, MODE_PERSISTENT|MODE_COPY_VALUES),mTest) ;
+		return pin->getPID() ;
 	}
 
 	unsigned long search(
@@ -267,10 +267,10 @@ protected:
 			// Means that any common english words will be excluded from the index
 			// vl.meta = META_PROP_STOPWORDS ; // it's done always now
 		}
-		PID newPin ;
-		TVRC_R(mSession->createPINAndCommit( newPin, &vl, 1 ),mTest) ;
+		IPIN *pin;
+		TVRC_R(mSession->createPIN(&vl, 1, &pin, MODE_PERSISTENT|MODE_COPY_VALUES),mTest) ;
 		ts->destroy() ;
-		return newPin ;
+		return pin->getPID() ;
 	}
 
 protected:
@@ -928,9 +928,9 @@ PID TestFTBasic::create2PropPin( const char * inProp1, const char * inProp2, boo
 		cnt++ ;
 	}
 
-	PID newPin ;
-	mSession->createPINAndCommit( newPin, vls, cnt ) ;
-	return newPin ;
+	IPIN *pin;
+	mSession->createPIN(vls, cnt, &pin, MODE_PERSISTENT|MODE_COPY_VALUES) ;
+	return pin->getPID() ;
 }
 
 unsigned long TestFTBasic::search2PropPin( char* inSearch, bool bProp1, bool bProp2, unsigned int flags )
