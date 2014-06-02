@@ -18,13 +18,13 @@ class TestClassMembership : public ITest
 		TEST_DECLARE(TestClassMembership);
 		virtual char const * getName() const { return "testclassmembership"; }
 		virtual char const * getHelp() const { return ""; }
-		virtual char const * getDescription() const { return "test for testing class membership (IPIN::testClassMembership)"; }
+		virtual char const * getDescription() const { return "test for testing class membership (IPIN::testDataEvent)"; }
 		virtual bool isPerformingFullScanQueries() const { return true; }
 
 		virtual int execute();
 		virtual void destroy() { delete this; }
 	protected:
-		void testClassMembership();
+		void testDataEvent();
 		void testFamilyMembership();
 };
 TEST_IMPLEMENT(TestClassMembership, TestLogger::kDStdOut);
@@ -34,7 +34,7 @@ int TestClassMembership::execute()
 	if (MVTApp::startStore())
 	{
 		mSession = MVTApp::startSession();
-		testClassMembership();		
+		testDataEvent();		
 		testFamilyMembership();
 		mSession->terminate();
 		MVTApp::stopStore();
@@ -47,11 +47,11 @@ int TestClassMembership::execute()
 }
 
 #define lAllClassNotifs (CLASS_NOTIFY_JOIN | CLASS_NOTIFY_LEAVE | CLASS_NOTIFY_CHANGE | CLASS_NOTIFY_DELETE | CLASS_NOTIFY_NEW)
-void TestClassMembership::testClassMembership()
+void TestClassMembership::testDataEvent()
 {
 	Value val[2];
 	Value args[2];
-	ClassID	cls = STORE_INVALID_CLASSID, clsopexist = STORE_INVALID_CLASSID;
+	DataEventID	cls = STORE_INVALID_CLASSID, clsopexist = STORE_INVALID_CLASSID;
 	PropertyID pm[3];
 	IPIN *pin;
 	bool isinclass;
@@ -84,7 +84,7 @@ void TestClassMembership::testClassMembership()
 	TVERIFYRC(mSession->createPIN(val,2,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 
 	//test for membership
-	isinclass = pin->testClassMembership(cls);
+	isinclass = pin->testDataEvent(cls);
 	TVERIFY(isinclass);
 
 	expr->destroy();
@@ -132,7 +132,7 @@ void TestClassMembership::testClassMembership()
 	mSession->enableClassNotifications(clsopexist,lAllClassNotifs); 
 
 	//should return the above pin cos it has both props
-	isinclass = pin->testClassMembership(clsopexist);
+	isinclass = pin->testDataEvent(clsopexist);
 	if ( !isinclass )
 	{
 		TVERIFY2(0,"Expected pin to be member of class" ) ;
@@ -150,13 +150,13 @@ void TestClassMembership::testClassMembership()
 	val[0].set("Somethingelse");val[0].setPropID(pm[0]);
 	IPIN* pin2;
 	TVERIFYRC(mSession->createPIN(val,1,&pin2,MODE_PERSISTENT|MODE_COPY_VALUES));
-	TVERIFY(pin2->testClassMembership(clsopexist)) ;
+	TVERIFY(pin2->testDataEvent(clsopexist)) ;
 	pin2->destroy();
 	// PIN with other props should not show up
 	val[0].set("uninteresting prop");val[0].setPropID(pm[2]);
 	IPIN* pin3;
 	TVERIFYRC(mSession->createPIN(val,1,&pin3,MODE_PERSISTENT|MODE_COPY_VALUES));
-	TVERIFY(!pin3->testClassMembership(clsopexist)) ;
+	TVERIFY(!pin3->testDataEvent(clsopexist)) ;
 	pin3->destroy();
 	
 	//Case 3: test for app issue after upgrade: get pin with specific pids and test for class membership
@@ -164,7 +164,7 @@ void TestClassMembership::testClassMembership()
 	//unclear how it could be used in future, perhaps it should be removed.
 	IPIN *clspin;
 	PID clspid;
-	ClassID clsapp = STORE_INVALID_CLASSID;
+	DataEventID clsapp = STORE_INVALID_CLASSID;
 	clspid.pid=1641843539153715255LL;  // HARDCODED
 	clspid.ident=STORE_OWNER;
 	clspin = mSession->getPIN(clspid);
@@ -173,48 +173,48 @@ void TestClassMembership::testClassMembership()
 
 	MVTApp::output(*clspin,mLogger.out(),mSession);
 	//Defn: ("blog","/pin[pin has uriname]")
-	rc = mSession->getClassID("blog",clsapp);
+	rc = mSession->getDataEventID("blog",clsapp);
 	mSession->enableClassNotifications(clsapp,lAllClassNotifs);
-	isinclass = clspin->testClassMembership(clsapp);
+	isinclass = clspin->testDataEvent(clsapp);
 
 	//("document","/pin[pin has title]")
-	rc = mSession->getClassID("document",clsapp);
+	rc = mSession->getDataEventID("document",clsapp);
 	mSession->enableClassNotifications(clsapp,lAllClassNotifs);
-	isinclass = clspin->testClassMembership(clsapp);
+	isinclass = clspin->testDataEvent(clsapp);
 
 	//("filetype","/pin[pin has mime]") -- should not satisfy but does
-	rc = mSession->getClassID("filetype",clsapp);
+	rc = mSession->getDataEventID("filetype",clsapp);
 	mSession->enableClassNotifications(clsapp,lAllClassNotifs);
-	isinclass = clspin->testClassMembership(clsapp);
+	isinclass = clspin->testDataEvent(clsapp);
 
 	//("systempin","/pin[prop_system='true']") -- works fine
-	rc = mSession->getClassID("systempin",clsapp);
+	rc = mSession->getDataEventID("systempin",clsapp);
 	mSession->enableClassNotifications(clsapp,lAllClassNotifs);
-	isinclass = clspin->testClassMembership(clsapp);
+	isinclass = clspin->testDataEvent(clsapp);
 
 	//("contact","/pin[pin has email and pin has name]") should not satisfy but does.
-	rc = mSession->getClassID("contact",clsapp);
+	rc = mSession->getDataEventID("contact",clsapp);
 	mSession->enableClassNotifications(clsapp,lAllClassNotifs);
-	isinclass = clspin->testClassMembership(clsapp);
+	isinclass = clspin->testDataEvent(clsapp);
 
-	rc = mSession->getClassID("searchSet",clsapp);
+	rc = mSession->getDataEventID("searchSet",clsapp);
 	mSession->enableClassNotifications(clsapp,lAllClassNotifs);
-	isinclass = clspin->testClassMembership(clsapp);
+	isinclass = clspin->testDataEvent(clsapp);
 
-	rc = mSession->getClassID("searchSet2",clsapp);
+	rc = mSession->getDataEventID("searchSet2",clsapp);
 	mSession->enableClassNotifications(clsapp,lAllClassNotifs);
-	isinclass = clspin->testClassMembership(clsapp);
+	isinclass = clspin->testDataEvent(clsapp);
 	//works fine.
-	rc = mSession->getClassID("raju",clsapp);
+	rc = mSession->getDataEventID("raju",clsapp);
 	mSession->enableClassNotifications(clsapp,lAllClassNotifs);
-	isinclass = clspin->testClassMembership(clsapp);
+	isinclass = clspin->testDataEvent(clsapp);
 
 	clspin->destroy();
 }
 
 void TestClassMembership::testFamilyMembership()
 {
-		mLogger.out() << " Testing IPIN::testClassMembership for Families ... " << std::endl;
+		mLogger.out() << " Testing IPIN::testDataEvent for Families ... " << std::endl;
 		static const int sNumProps = 10;
 		PropertyID lPropIDs[sNumProps];
 		MVTApp::mapURIs(mSession, "TestClassMembership.testFamilyMembership.prop.",sNumProps, lPropIDs);
@@ -225,7 +225,7 @@ void TestClassMembership::testFamilyMembership()
 		{
 			// Create a simple family
 			// Family1($var) = /pin[propA in $var)
-			ClassID lFamilyID = STORE_INVALID_CLASSID;
+			DataEventID lFamilyID = STORE_INVALID_CLASSID;
 			{
 				CmvautoPtr<IStmt> lQ( mSession->createStmt());
 				unsigned char lVar = lQ->addVariable();
@@ -274,19 +274,19 @@ void TestClassMembership::testFamilyMembership()
 				if(isVerbose()) mLogger.out() << " Testing PIN(" << std::hex << lPIDs[i].pid << ")" << std::endl;
 				IPIN *lPIN = mSession->getPIN(lPIDs[i]); TVERIFY(lPIN != NULL);
 				// Check with no Params as kernel now supports Family queries with NULL params(returns all pins using index)
-				TVERIFY(lPIN->testClassMembership(lFamilyID));
+				TVERIFY(lPIN->testDataEvent(lFamilyID));
 
 				// Check with params
 				lParam[0].set(i); lParam[1].set(i); lParam[2].setRange(&lParam[0]); 
-				TVERIFY(lPIN->testClassMembership(lFamilyID, &lParam[2], 1));
+				TVERIFY(lPIN->testDataEvent(lFamilyID, &lParam[2], 1));
 
 				// Check with huge range
 				lParam[0].set(0); lParam[1].set(100); lParam[2].setRange(&lParam[0]); 
-				TVERIFY(lPIN->testClassMembership(lFamilyID, &lParam[2], 1));
+				TVERIFY(lPIN->testDataEvent(lFamilyID, &lParam[2], 1));
 
 				// Check with wrong params
 				lParam[0].set(i+1); lParam[1].set(i+100); lParam[2].setRange(&lParam[0]); 
-				TVERIFY(!lPIN->testClassMembership(lFamilyID, &lParam[2], 1));
+				TVERIFY(!lPIN->testDataEvent(lFamilyID, &lParam[2], 1));
 				
 				if(lPIN) lPIN->destroy();
 			}

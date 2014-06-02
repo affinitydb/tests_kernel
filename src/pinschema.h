@@ -57,7 +57,7 @@ public:
 	uint16_t schemaFlags ; // bits from SF_*
 
 	ExprOp indexOp ; // Op for family OP_IN, OP_EQ etc (if SF_FAMILY set)
-	ClassID cid ;	 // Class ID (if SF_FAMILY set) 
+	DataEventID cid ;	 // Class ID (if SF_FAMILY set) 
 } ;
 
 class PinSchema
@@ -122,7 +122,7 @@ public:
 			string className( prop->URIName ) ;
 			className += "Family" ; 
 
-			RC rc = mSession->getClassID( className.c_str(), prop->cid ) ;
+			RC rc = mSession->getDataEventID( className.c_str(), prop->cid ) ;
 			if ( rc == RC_OK )
 			{
 				// Class already registered.  (Hopefully 

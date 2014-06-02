@@ -21,13 +21,13 @@ class TestDropBaseClass:  public ITest
 		virtual int execute();		
 	private:
 		ISession * mSession ;	
-		ClassID mBaseClassID, mBase2ClassID, mDerivedClassID, mDerived2ClassID, mDerivedFamilyID;
+		DataEventID mBaseClassID, mBase2ClassID, mDerivedClassID, mDerived2ClassID, mDerivedFamilyID;
 		Tstring mBaseClassName, mBase2ClassName, mDerivedClassName, mDerived2ClassName, mDerivedFamilyName;
 		
 		void doTest();
 		void createMeta();
 		void createPINs(int pNumPINs = 100);
-		unsigned long queryCount(ClassID pClassID);
+		unsigned long queryCount(DataEventID pClassID);
 };
 
 TEST_IMPLEMENT(TestDropBaseClass, TestLogger::kDStdOut);
@@ -137,7 +137,7 @@ void TestDropBaseClass::createPINs(int pNumPINs)
 	mLogger.out() << " DONE" << std::endl;	
 }
 
-unsigned long TestDropBaseClass::queryCount(ClassID pClassID)
+unsigned long TestDropBaseClass::queryCount(DataEventID pClassID)
 {
 	CmvautoPtr<IStmt> lQ(mSession->createStmt());			
 	SourceSpec lCS = {pClassID, 0 , NULL};

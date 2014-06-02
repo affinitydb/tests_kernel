@@ -54,7 +54,7 @@ class TestDocModel : public ITest
 	protected:
 		void doTest() ;
 		PID populateStore() ;
-		ClassID CreateVolumeFamily() ;
+		DataEventID CreateVolumeFamily() ;
 		void DeleteVolume( const PID& inVolume ) ;
 		PID AddDirectory( const PID& inVolume, const PID& inParentDir, const char * inDirName ) ;
 		PID AddFile( 
@@ -70,7 +70,7 @@ class TestDocModel : public ITest
 		void GetFileSystemPids2( const PID & inRoot, bool inbFiles, bool inbDirs, vector<PID>& outPids ) ;
 
 
-		ClassID CreateDocFamily() ;
+		DataEventID CreateDocFamily() ;
 	private:
 
 		ISession * mSession ;
@@ -429,13 +429,13 @@ void TestDocModel::DeleteVolume( const PID & rootPID )
 	}
 }
 
-ClassID TestDocModel::CreateDocFamily()
+DataEventID TestDocModel::CreateDocFamily()
 {
 	// Query to find all PIDs associated with a particular document
 	// (e.g. PROP_SPEC_DOCUMENT=param0)
 	// registered as a Class query so that it is indexed
-	ClassID cls = STORE_INVALID_CLASSID ;
-	RC rc = mSession->getClassID(mDocClass.c_str(),cls) ;
+	DataEventID cls = STORE_INVALID_CLASSID ;
+	RC rc = mSession->getDataEventID(mDocClass.c_str(),cls) ;
 	if ( rc == RC_OK ) 
 	{
 		return cls ; // Class already exists in this store
@@ -482,8 +482,8 @@ void TestDocModel::GetFileSystemPids2( const PID & inRoot, bool /*inbFiles*/, bo
 	IStmt * elemsQ = mSession->createStmt() ;
 
 #if TEST_PROP_SPEC_DOC_CLASS
-	ClassID cls = STORE_INVALID_CLASSID;
-	TVERIFYRC( mSession->getClassID(mDocClass.c_str(),cls) ); // Lookup the ClassID of existing class query
+	DataEventID cls = STORE_INVALID_CLASSID;
+	TVERIFYRC( mSession->getDataEventID(mDocClass.c_str(),cls) ); // Lookup the DataEventID of existing class query
 
 	Value refRoot ;
 	refRoot.set( inRoot ) ;

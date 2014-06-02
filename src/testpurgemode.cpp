@@ -29,7 +29,7 @@ class TestPurgeMode : public ITest
 
     protected:
         URIID ids[10];
-        ClassID objectID;
+        DataEventID objectID;
         std::vector<PID> purged_PIDs;
         void doTest();
         void xpageTest();

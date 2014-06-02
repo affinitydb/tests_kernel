@@ -22,7 +22,7 @@ class TestIndexNav : public ITest
         virtual void destroy() { delete this; }
 
     protected:
-        ClassID objectID;
+        DataEventID objectID;
         URIID ids[10];
         void doTest();
         void populate();
@@ -76,7 +76,7 @@ void TestIndexNav::doTest()
     cout << iExpr->toString() <<endl;
     iExpr->destroy();
     
-    ClassID objectID = STORE_INVALID_CLASSID;
+    DataEventID objectID = STORE_INVALID_CLASSID;
     objectID = MVTUtil::createUniqueClass(mSession, "testIndexNav.CLASS", iStmt, NULL);
     TVERIFY(STORE_INVALID_CLASSID != objectID);
     iStmt->destroy();

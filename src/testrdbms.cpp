@@ -78,7 +78,7 @@ public:
 
 		string className = mTableName + ".class" ;
 
-		if ( RC_OK == mSession->getClassID(className.c_str(),mClass))
+		if ( RC_OK == mSession->getDataEventID(className.c_str(),mClass))
 			return ; // Already defined
 
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
@@ -107,7 +107,7 @@ public:
 		TV_R( mClass != STORE_INVALID_CLASSID, mTest ) ; // call CreateClass first
 		string className = mTableName + ".keylookup" ;
 
-		if ( RC_OK == mSession->getClassID(className.c_str(),mIndexFamily))
+		if ( RC_OK == mSession->getDataEventID(className.c_str(),mIndexFamily))
 			return ; // Already defined
 
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
@@ -181,8 +181,8 @@ public:
 		return retVal ;
 	}
 
-	ClassID mClass ;		// Class that defines membership in the table
-	ClassID mIndexFamily ;   // Family, based on mClass, for lookup by the primary key
+	DataEventID mClass ;		// Class that defines membership in the table
+	DataEventID mIndexFamily ;   // Family, based on mClass, for lookup by the primary key
 
 	string mTableName ;
 	ISession * mSession ;

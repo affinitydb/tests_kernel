@@ -14,7 +14,7 @@ class TestFamilyOrder: public ITest
 		ISession *mSession;
 		PropertyID mPropIDs[sNumProps];
 		static const int sNumPINs = 50;	
-        ClassID fID;
+        DataEventID fID;
 		PID vPIDS1[sNumPINs], vPIDS2[sNumPINs];
 		int mCase;
 
@@ -31,7 +31,7 @@ class TestFamilyOrder: public ITest
 	protected:
 		void createPINs(int count = sNumPINs);
 		void createFamily(unsigned int);
-		void queryFamily(ClassID,int);
+		void queryFamily(DataEventID,int);
 		void validate();
 };
 static Tstring valuestr[] = {"Apple","aPple","ApPle","appLe","APPlE"};
@@ -95,7 +95,7 @@ void TestFamilyOrder::validate()
 	mLogger.out()<<"Mcase:"<<mCase<<endl;
 }
 
-void TestFamilyOrder::queryFamily(ClassID cid,int opt)
+void TestFamilyOrder::queryFamily(DataEventID cid,int opt)
 {
 	IStmt *lQ = mSession->createStmt();
 	Value paramVals;
@@ -259,7 +259,7 @@ int TestFamilyOrder::execute()
 		mSession = MVTApp::startSession();
 		MVTApp::mapURIs(mSession, "TestAbortQuery.prop.", sNumProps, mPropIDs);
 		fID = STORE_INVALID_CLASSID;
-		ClassID cid1,cid2;
+		DataEventID cid1,cid2;
 		
 		/*write the code here*/
 		createFamily(CASE_INSENSITIVE_OP);

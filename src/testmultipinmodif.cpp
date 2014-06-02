@@ -23,7 +23,7 @@ class TestMultiPinModif : public ITest
 	public:
 		PropertyID pm[6];
 		Tstring lRandStr;
-		ClassID cls,clsd;
+		DataEventID cls,clsd;
 		map<int,Tstring> qmap;//to run multiple times w.o failure.
 		IStmt *query;
 		TEST_DECLARE(TestMultiPinModif);

@@ -93,7 +93,7 @@ class TestClassRollBack : public ITest
 							  
 		/* the purpose of the test dictates to remember the underlaying queries for the classes */
 		/* the map serves the purpose                                                           */                        
-		typedef map<ClassID, IStmt *,less<ClassID> >  clsqrymap;
+		typedef map<DataEventID, IStmt *,less<DataEventID> >  clsqrymap;
 		clsqrymap m_clsqryMap; 
       
 		/*
@@ -300,7 +300,7 @@ class TestClassRollBack : public ITest
 				*/ 
 				void createQueryPlusFamily()
 				{
-					ClassID cls = STORE_INVALID_CLASSID;
+					DataEventID cls = STORE_INVALID_CLASSID;
 					Value args[2];
 					PropertyID pids[1];
 					IStmt *query; 
@@ -320,7 +320,7 @@ class TestClassRollBack : public ITest
 					query->addCondition(var,expr);
 						
 					TVRC_R(pTest->defineRandomClass(class_name,query, &s),pTest);
-					TVRC_R(pTest->mSession->getClassID(s.c_str(),cls),pTest);
+					TVRC_R(pTest->mSession->getDataEventID(s.c_str(),cls),pTest);
 					TVRC_R(pTest->mSession->enableClassNotifications(cls,lAllClassNotifs),pTest);
 
 					m_clsScn3Map.insert(clsqrymap::value_type(cls, query));
@@ -526,7 +526,7 @@ RC TestClassRollBack::defineRandomClass(string s, IStmt *classQ, string *psretur
  */
 void TestClassRollBack::testclassrollbackmeta()
 {
-	ClassID cls = STORE_INVALID_CLASSID;
+	DataEventID cls = STORE_INVALID_CLASSID;
 	Value args[2];
 	PropertyID pids[1];
 	IStmt *query; 
@@ -543,7 +543,7 @@ void TestClassRollBack::testclassrollbackmeta()
 	query->addCondition(var,expr);
 	
 	TVERIFYRC(defineRandomClass(class1_name,query, &s));
-	TVERIFYRC(mSession->getClassID(s.c_str(),cls));
+	TVERIFYRC(mSession->getDataEventID(s.c_str(),cls));
 	TVERIFYRC(mSession->enableClassNotifications(cls,lAllClassNotifs));
 	
 	m_clsqryMap.insert(clsqrymap::value_type(cls, query));
@@ -559,7 +559,7 @@ void TestClassRollBack::testclassrollbackmeta()
 
 	query->addCondition(var,expr);
 	TVERIFYRC(defineRandomClass(class2_name,query, &s));
-	TVERIFYRC(mSession->getClassID(s.c_str(),cls));
+	TVERIFYRC(mSession->getDataEventID(s.c_str(),cls));
 	TVERIFYRC(mSession->enableClassNotifications(cls,lAllClassNotifs));
 	
 	m_clsqryMap.insert(clsqrymap::value_type(cls, query));
@@ -575,7 +575,7 @@ void TestClassRollBack::testclassrollbackmeta()
 
 	query->addCondition(var,expr);
 	TVERIFYRC(defineRandomClass(class3_name,query, &s));
-	TVERIFYRC(mSession->getClassID(s.c_str(),cls));
+	TVERIFYRC(mSession->getDataEventID(s.c_str(),cls));
 	TVERIFYRC(mSession->enableClassNotifications(cls,lAllClassNotifs));
 	
 	m_clsqryMap.insert(clsqrymap::value_type(cls, query));

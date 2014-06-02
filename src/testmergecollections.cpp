@@ -40,7 +40,7 @@ int TestMergeCollections::execute()
 		PropertyID const lPropIdRef    = lData[1].uid;
 		PropertyID const lPropIdPinId  = PROP_SPEC_PINID;
 
-		ClassID lClassVal = STORE_INVALID_CLASSID;
+		DataEventID lClassVal = STORE_INVALID_CLASSID;
 		{
 			char lB[100]; sprintf(lB,"TestMergeCollections.ClassVal.%d",rand());
 			Value lV[2]; 
@@ -53,7 +53,7 @@ int TestMergeCollections::execute()
 			lQ->destroy();
 		}
 
-		ClassID lClassRef = STORE_INVALID_CLASSID;
+		DataEventID lClassRef = STORE_INVALID_CLASSID;
 		{
 			char lB[100]; sprintf(lB,"TestMergeCollections.ClassRef.%d",rand());
 			IStmt *lQ = lSession->createStmt();
@@ -66,7 +66,7 @@ int TestMergeCollections::execute()
 		/**
 		* The following creates the family on reference class...
 		**/		
-		ClassID lClassFamilyOnRef = STORE_INVALID_CLASSID;
+		DataEventID lClassFamilyOnRef = STORE_INVALID_CLASSID;
 		{
 			char lB[100]; sprintf(lB,"TestMergeCollections.ClassFamilyOnRef.%d",rand());
 			Value lVFoR[2];

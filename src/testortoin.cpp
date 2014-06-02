@@ -31,7 +31,7 @@ class TestOrToIN : public ITest
 		void createClasses();
 		void createFamilies();
 		void createData();
-		ClassID getClassID(int pIndex, bool pIsFamily = false);
+		DataEventID getDataEventID(int pIndex, bool pIsFamily = false);
 		
 		void testClasses();
 		void testClass(int pIndex, unsigned long pExpCount);
@@ -40,12 +40,12 @@ class TestOrToIN : public ITest
 };
 TEST_IMPLEMENT(TestOrToIN, TestLogger::kDStdOut);
 
-ClassID TestOrToIN::getClassID(int pIndex, bool pIsFamily)
+DataEventID TestOrToIN::getDataEventID(int pIndex, bool pIsFamily)
 {
 	Tstring lClass = pIsFamily?"Family":"Class";
 	char lB[124]; sprintf(lB, "TestOrToIN.%s.%s.%d", mClassStr.c_str(), lClass.c_str(), pIndex);
-	ClassID lCLSID = STORE_INVALID_CLASSID;
-	TVERIFYRC(mSession->getClassID(lB, lCLSID));
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
+	TVERIFYRC(mSession->getDataEventID(lB, lCLSID));
 	return lCLSID;	
 }
 
@@ -53,7 +53,7 @@ void TestOrToIN::createClasses()
 {
 	mLogger.out() << "\t Creating Classes ..." << std::endl;
 	// Create a Class /pin[(prop0 = 20 or prop0 = 30)]
-	ClassID lClassID1 = STORE_INVALID_CLASSID;
+	DataEventID lClassID1 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -79,7 +79,7 @@ void TestOrToIN::createClasses()
 	}
 
 	// Create a Class /pin[(prop0 = 20 or prop0 = 30) and prop1 > 50]
-	ClassID lClassID2 = STORE_INVALID_CLASSID;
+	DataEventID lClassID2 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -113,7 +113,7 @@ void TestOrToIN::createClasses()
 	}
 
 	// Create a Class /pin[(prop0 = 20 or prop0 = 30) and (prop1 = 40 or prop1 = 50)]
-	ClassID lClassID3 = STORE_INVALID_CLASSID;
+	DataEventID lClassID3 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -155,7 +155,7 @@ void TestOrToIN::createClasses()
 	}
 
 	// Create a Class /pin[(prop2 = 'abc' or prop2 = 'xyz')]
-	ClassID lClassID4 = STORE_INVALID_CLASSID;
+	DataEventID lClassID4 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -186,7 +186,7 @@ void TestOrToIN::createFamilies()
 	mLogger.out() << "\t Creating Families ..." << std::endl;
 
 	// Create a Family /pin[(prop0 = 20 or prop0 = 30) and prop1 > $var]
-	ClassID lFamilyID1;
+	DataEventID lFamilyID1;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -220,7 +220,7 @@ void TestOrToIN::createFamilies()
 	}
 
 	// Create a Family /pin[(prop0 = 20 or prop0 = 30) and (prop1 = 40 or prop1 = 50) and prop2 in $var]
-	ClassID lFamilyID2 = STORE_INVALID_CLASSID;
+	DataEventID lFamilyID2 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -270,7 +270,7 @@ void TestOrToIN::createFamilies()
 	}
 
 	// Create a Family /pin[prop0 in $var and (prop1 = 40 or prop1 = 50)]
-	ClassID lFamilyID3 = STORE_INVALID_CLASSID;
+	DataEventID lFamilyID3 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -379,7 +379,7 @@ void TestOrToIN::testFamilies()
 
 void TestOrToIN::testClass(int pIndex, unsigned long pExpCount)
 {
-	ClassID lCLSID = getClassID(pIndex);
+	DataEventID lCLSID = getDataEventID(pIndex);
 	if(STORE_INVALID_CLASSID != lCLSID)
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
@@ -394,7 +394,7 @@ void TestOrToIN::testClass(int pIndex, unsigned long pExpCount)
 
 void TestOrToIN::testFamily(int pIndex, unsigned long pExpCount, unsigned int pNumParams, const Value *pParams)
 {
-	ClassID lCLSID = getClassID(pIndex, true);
+	DataEventID lCLSID = getDataEventID(pIndex, true);
 	if(STORE_INVALID_CLASSID != lCLSID)
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());

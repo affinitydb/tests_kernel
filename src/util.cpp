@@ -1585,18 +1585,18 @@ void MVTUtil::unregisterTestPINs(std::vector<IPIN *> &pTestPINs,ISession *pSessi
 	pTestPINs.clear();	
 }
 
-ClassID MVTUtil::getClass(ISession* inS, const char* inClass,uint32_t classnotify) 
+DataEventID MVTUtil::getClass(ISession* inS, const char* inClass,uint32_t classnotify) 
 {
-	ClassID cls ;
-	if ( RC_OK == inS->getClassID(inClass,cls) && RC_OK == inS->enableClassNotifications(cls,classnotify))
+	DataEventID cls ;
+	if ( RC_OK == inS->getDataEventID(inClass,cls) && RC_OK == inS->enableClassNotifications(cls,classnotify))
 		return cls ;
 	else
 		return STORE_INVALID_CLASSID ;
 }
 
-ClassID MVTUtil::createUniqueClass(ISession* inS, const char* inPrefix, IStmt* inQ, std::string * outname /*optional*/,uint32_t classnotify/*optional */)
+DataEventID MVTUtil::createUniqueClass(ISession* inS, const char* inPrefix, IStmt* inQ, std::string * outname /*optional*/,uint32_t classnotify/*optional */)
 {
-	RC rc; ClassID clsid = STORE_INVALID_CLASSID;
+	RC rc; DataEventID clsid = STORE_INVALID_CLASSID;
 
 	if ( inS==NULL || inPrefix==NULL || inQ==NULL)
 		return STORE_INVALID_CLASSID;

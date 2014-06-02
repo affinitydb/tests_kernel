@@ -49,8 +49,8 @@ start1:
 
 	mSession = MVTApp::startSession();
 	char *class1 = "TestClassification1.CLASS1";
-	ClassID clsid = STORE_INVALID_CLASSID;
-	if (mSession->getClassID(class1,clsid) != RC_OK)
+	DataEventID clsid = STORE_INVALID_CLASSID;
+	if (mSession->getDataEventID(class1,clsid) != RC_OK)
 	{
 		//first time run this test...
 		
@@ -183,7 +183,7 @@ start1:
 		mSession->mapURIs(1,&pmap);
 		prop = pmap.uid;
 
-		mSession->getClassID("TestClassification1.CLASS2",clsid);
+		mSession->getDataEventID("TestClassification1.CLASS2",clsid);
 		spec.objectID = clsid;
 
 		qry->setPropCondition(qry->addVariable(),&prop,1);

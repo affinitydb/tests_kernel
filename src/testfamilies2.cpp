@@ -124,7 +124,7 @@ struct RunFamilyThreadInfo
 {
 	uint64_t mStartDate;
 	uint64_t mEndDate;
-	ClassID mFamilyID;
+	DataEventID mFamilyID;
 	int mExpNumPINs;
 	PropertyID mPropID;
 	Afy::IAffinity *mStoreCtx;
@@ -736,7 +736,7 @@ bool TestFamilies2::testImportFamily1(ISession *pSession){
 	}	
 	lQ->addCondition(lVar,lET);
 	char lB[100];
-	ClassID lCLSID1 = STORE_INVALID_CLASSID;
+	DataEventID lCLSID1 = STORE_INVALID_CLASSID;
 	Tstring lFamilyStr; MVTRand::getString(lFamilyStr,10,10,false,false);
 	sprintf(lB, "TestFamilies2.importTest%s.%d", lFamilyStr.c_str(), 1);
 	defineClass(pSession, lB, lQ, &lCLSID1);
@@ -930,7 +930,7 @@ bool TestFamilies2::testImportFamily3(ISession *pSession){
 	}	
 	lQ->addCondition(lVar,lET);
 	char lB[100];
-	ClassID lCLSID1 = STORE_INVALID_CLASSID;
+	DataEventID lCLSID1 = STORE_INVALID_CLASSID;
 	Tstring lFamilyStr; MVTRand::getString(lFamilyStr,10,10,false,false);
 	sprintf(lB, "TestFamilies2.importTest%s.%d",lFamilyStr.c_str(), 3);
 	mLogger.out() << "Creating Family " << lB << " ...";
@@ -1028,7 +1028,7 @@ bool TestFamilies2::testHistogramFamily(ISession *pSession, bool pBoundaryInclud
 	}	
 	lQ->addCondition(lVar,lET);
 	char lB[100];
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	Tstring lStr;MVTRand::getString(lStr,10,10,false,true);
 	sprintf(lB, "TestFamilies2.histogram%s.%d",lStr.c_str(), 1);	
 	mLogger.out() << "Creating Family " << lB << " ...";
@@ -1129,7 +1129,7 @@ bool TestFamilies2::testHistogramDateFamily(ISession *pSession){
 	}	
 	lQ->addCondition(lVar,lET);
 	char lB[100];
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	Tstring lFamilyStr; MVTRand::getString(lFamilyStr,10,10,false,false);
 	sprintf(lB, "TestFamilies2.HistogramDateFamily%s.%d", lFamilyStr.c_str(), 1);
 	mLogger.out() << "Creating Family " << lB << " ...";
@@ -1274,7 +1274,7 @@ bool TestFamilies2::testHistogramDateFamily2(ISession *pSession){
 	}	
 	lQ->addCondition(lVar,lET);
 	char lB[64];
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	Tstring lFamilyStr; MVTRand::getString(lFamilyStr,10,10,false,false);
 	sprintf(lB, "TestFamilies2.HistogramDateFamily%s.%d",lFamilyStr.c_str(), 2);
 	mLogger.out() << "Creating Family " << lB << " ...";
@@ -1464,7 +1464,7 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 	unsigned char lVar;
 	if(pUseClass)
 	{
-		ClassID lCLSImageID = STORE_INVALID_CLASSID;
+		DataEventID lCLSImageID = STORE_INVALID_CLASSID;
 		{
 			IStmt *lQ = pSession->createStmt();
 			unsigned const char lVar = lQ->addVariable();
@@ -1522,7 +1522,7 @@ bool TestFamilies2::testFamilyWithMultiConditions(ISession *pSession, bool pUseC
 	}	
 	lQ->addCondition(lVar,lET);
 	char lB[200];
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	sprintf(lB, "TestFamilies2.testFamilyWithMultiConditions%s.%d", lRandSubStr.c_str(), mRunTimes);
 	if(RC_OK!=defineClass(pSession,lB, lQ, &lCLSID)){
 		mLogger.out() << "ERROR(testFamilyWithMultiConditions): Failed to create Class " << lB << std::endl;	
@@ -1627,7 +1627,7 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 	Tstring lRandSubStr = lRandStr.substr(0,5);
 	
 	#if CREATE_FAMILY_BEFORE_PINS
-		ClassID lCLSImageID = STORE_INVALID_CLASSID;
+		DataEventID lCLSImageID = STORE_INVALID_CLASSID;
 		{
 			IStmt *lQ = pSession->createStmt();
 			unsigned const char lVar = lQ->addVariable();
@@ -1656,7 +1656,7 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 
 	#if !CREATE_FAMILY_BEFORE_PINS
 		MVTestsPortability::threadSleep(2000);
-		ClassID lCLSImageID = STORE_INVALID_CLASSID;
+		DataEventID lCLSImageID = STORE_INVALID_CLASSID;
 		{
 			IStmt *lQ = pSession->createStmt();
 			unsigned const char lVar = lQ->addVariable();
@@ -1694,7 +1694,7 @@ bool TestFamilies2::testAsyncPINCreationWithFamily(ISession *pSession)
 	}
 	lQ->addCondition(lVar,lET);
 	char lB[200];
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	sprintf(lB, "TestFamilies2.testAsyncPINCreationWithFamily%s.%d", lRandSubStr.c_str(), mRunTimes);
 	if(RC_OK!=defineClass(pSession,lB, lQ, &lCLSID)){
 		mLogger.out() << "ERROR(testAsyncPINCreationWithFamily): Failed to create Class " << lB << std::endl;	
@@ -1770,7 +1770,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 	Tstring lImageSubStr = lImageStr.substr(0,6);
 	Tstring lRandSubStr = lRandStr.substr(0,5);
 
-	ClassID lCLSImageID = STORE_INVALID_CLASSID;
+	DataEventID lCLSImageID = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = pSession->createStmt();
 		unsigned const char lVar = lQ->addVariable();
@@ -1790,7 +1790,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		}
 	}
 
-	ClassID lCLSBelongID = STORE_INVALID_CLASSID;
+	DataEventID lCLSBelongID = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = pSession->createStmt();
 		lQ = pSession->createStmt();
@@ -1824,7 +1824,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		}
 	}
 
-	ClassID lCLSNotBelongID = STORE_INVALID_CLASSID;
+	DataEventID lCLSNotBelongID = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = pSession->createStmt();
 		lQ = pSession->createStmt();
@@ -1862,7 +1862,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 		}
 	}
 	// Create the Family with lCLSBelongID's class
-	ClassID lCLSIDBelong = STORE_INVALID_CLASSID;
+	DataEventID lCLSIDBelong = STORE_INVALID_CLASSID;
 	char lBuf1[200];
 	{
 		IStmt *lQ = pSession->createStmt();
@@ -1890,7 +1890,7 @@ bool TestFamilies2::testClassInClassFamily(ISession *pSession, bool pUseClass)
 	}
 
 	// Create the Family with lCLSBelongID's class
-	ClassID lCLSIDNotBelong = STORE_INVALID_CLASSID;
+	DataEventID lCLSIDNotBelong = STORE_INVALID_CLASSID;
 	char lBuf2[200];
 	{
 		IStmt *lQ = pSession->createStmt();
@@ -2125,7 +2125,7 @@ bool TestFamilies2::testFamilyWithOrderBy(ISession *pSession, int pOrderBy)
 	}	
 	lQ->addCondition(lVar,lET);
 	char lB[64];
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	MVTRand::getString(lPropStr,10,10,false,true);
 	sprintf(lB, "TestFamilies2.testFamilyWithOrderBy%s.%d", lPropStr.c_str(), 1);
 	if(RC_OK!=defineClass(pSession,lB, lQ, &lCLSID)){
@@ -2242,7 +2242,7 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 	Tstring lRandSubStr = lRandStr.substr(0,5);
 	mRunTimes++;  // Used to build easy to recognize class names
 
-	ClassID lCLSImageID = STORE_INVALID_CLASSID;
+	DataEventID lCLSImageID = STORE_INVALID_CLASSID;
 	{
 		// pins where prop0 contains a specific string, which is equivalent to the "image"
 		// class in MVPhoto
@@ -2262,7 +2262,7 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 		lQ->destroy();
 	}
 
-	ClassID lCLSSubImageID = STORE_INVALID_CLASSID;
+	DataEventID lCLSSubImageID = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = pSession->createStmt();
 		unsigned char lVar;
@@ -2308,7 +2308,7 @@ bool TestFamilies2::testComplexFamily(ISession *pSession, bool pMakeCollection, 
 	}
 	
 	// Create the Family with lCLSSubImageID's class
-	ClassID lFamilyID = STORE_INVALID_CLASSID;
+	DataEventID lFamilyID = STORE_INVALID_CLASSID;
 	char lBuf[200];
 	{
 		// pin is lCLSSubImageID and prop2 IN var1 (range of dates)
@@ -2463,7 +2463,7 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 	static const int lNumPINsToCreate = 200;
 	
 	Tstring lFamilyStr; MVTRand::getString(lFamilyStr,10,10,false,false);		
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	char lB[100];
 	{
 		IStmt *lQ = pSession->createStmt();
@@ -2485,7 +2485,7 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 			mLogger.out() << " DONE" << std::endl;
 		}
 	}
-	ClassID lCLSID1 = STORE_INVALID_CLASSID;
+	DataEventID lCLSID1 = STORE_INVALID_CLASSID;
 	char lB1[100];
 	{
 		IStmt *lQ = pSession->createStmt();
@@ -2508,7 +2508,7 @@ bool TestFamilies2::testArrayFamily(ISession *pSession)
 		}
 	}
 
-	ClassID lCLSID2 = STORE_INVALID_CLASSID;
+	DataEventID lCLSID2 = STORE_INVALID_CLASSID;
 	char lB2[100];
 	{
 		IStmt *lQ = pSession->createStmt();
@@ -2771,7 +2771,7 @@ bool TestFamilies2::testImageImportPerf(ISession *pSession){
 	}	
 	lQ->addCondition(lVar,lET);
 	char lB[64];
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	sprintf(lB, "TestFamilies2.imageimportperf%d", 1);
 	if(RC_OK!=defineClass(pSession,lB, lQ, &lCLSID)){
 		mLogger.out() << "ERROR (testImageImportPerf): Failed to create Class " << lB << std::endl;	
@@ -3080,7 +3080,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 	Tstring lRandSubStr = lRandStr.substr(0,5);
 	
 	//mLogger.out() << "Tag being looked for " << lRandStr.c_str() << std::endl;
-	ClassID lCLSImageID = STORE_INVALID_CLASSID;
+	DataEventID lCLSImageID = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = pSession->createStmt();
 		unsigned const char lVar = lQ->addVariable();
@@ -3100,7 +3100,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 		}
 	}
 
-	ClassID lCLSSubImageID = STORE_INVALID_CLASSID;
+	DataEventID lCLSSubImageID = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = pSession->createStmt();
 		lQ = pSession->createStmt();
@@ -3146,7 +3146,7 @@ bool TestFamilies2::testCountPerfOnFamily(ISession *pSession, bool pCollWithComm
 	}
 	
 	// Create the Family with lCLSSubImageID's class
-	ClassID lFamilyID = STORE_INVALID_CLASSID;
+	DataEventID lFamilyID = STORE_INVALID_CLASSID;
 	char lBuf[200];
 	{
 		IStmt *lQ = pSession->createStmt();

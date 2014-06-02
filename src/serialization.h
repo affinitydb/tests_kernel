@@ -358,7 +358,7 @@ namespace PSSER_NAMESPACE
 			inline static void outRef(ContextOut & pCtx, PID const & pPID);
 			inline static void outRef(ContextOut & pCtx, PID const & pPID, PropertyID const & pPropID);
 			inline static void outRef(ContextOut & pCtx, PID const & pPID, PropertyID const & pPropID, ElementID const & pEid);
-			inline static void outCLSID(ContextOut & pCtx, ClassID const & pCLSID);
+			inline static void outCLSID(ContextOut & pCtx, DataEventID const & pCLSID);
 			inline static void outClassSpec(ContextOutRaw & pCtx, SourceSpec const & pClassSpec);
 			inline static void outDateTime(ContextOutRaw & pCtx, DateTime const & pDateTime);
 			inline static void outPropertyID(ContextOut & pCtx, PropertyID const & pPropID);
@@ -385,7 +385,7 @@ namespace PSSER_NAMESPACE
 			inline static void inRef(ContextIn & pCtx, PID & pPID, PropertyID & pPropID, ElementID & pEid);
 			inline static void inRefIDVal(ContextIn & pCtx,Value & pValue);
 			inline static void inRefIDELT(ContextIn & pCtx,Value & pValue);
-			inline static void inCLSID(ContextIn & pCtx, ClassID & pCLSID);
+			inline static void inCLSID(ContextIn & pCtx, DataEventID & pCLSID);
 			inline static void inClassSpec(ContextInRaw & pCtx, SourceSpec & pClassSpec);
 			inline static void inDateTime(ContextInRaw & pCtx, DateTime & pDateTime);
 			template <class TContextIn> inline static void value(TContextIn & pCtx, Value & pValue){In<TContextIn>::value(pCtx,pValue);};
@@ -539,12 +539,6 @@ namespace PSSER_NAMESPACE
 		uint64_t lPersistedLen;
 		TContextOut::TPrimitives::beginValue(pCtx, pValue, &lPersistedLen);
 		Out<TContextOut>::valueContent(pCtx, pValue, lPersistedLen);
-		// Special treatment for OP_EDIT...
-		if (OP_EDIT == pValue.op)
-		{
-			pCtx.os() << pValue.edit.length << " ";
-			pCtx.os() << pValue.edit.shift << " ";
-		}
 		TContextOut::TPrimitives::endValue(pCtx, pValue);
 	}
 
@@ -801,13 +795,6 @@ namespace PSSER_NAMESPACE
 			std::cout << "in: " << (int)lTmp.type << std::endl;
 		#endif
 		In<TContextIn>::valueContent(pCtx, lTmp.type,pValue);
-		// Special treatment for OP_EDIT...
-		if (OP_EDIT == lTmp.op && pCtx.getVersion() >= ContextIn::kVOPEDITFix1)
-		{
-			pValue.edit.str = pValue.str;
-			pCtx.is() >> pValue.edit.length;
-			pCtx.is() >> pValue.edit.shift;
-		}
 
 		TContextIn::TPrimitives::endValue(pCtx, pValue, lTmp);
 	}
@@ -1208,7 +1195,7 @@ namespace PSSER_NAMESPACE
 		}
 	}
 
-	inline void PrimitivesOutRaw::outCLSID(ContextOut & pCtx, ClassID const & pCLSID)
+	inline void PrimitivesOutRaw::outCLSID(ContextOut & pCtx, DataEventID const & pCLSID)
 	{
 		// Review: Can only persist a +/- irrelevant id at the moment...
 		pCtx.os() << pCLSID << " ";
@@ -1483,7 +1470,7 @@ namespace PSSER_NAMESPACE
 		pValue.refId = lRVID; 
 		inRef(pCtx, lRVID->id, lRVID->pid, lRVID->eid); 
 	}
-	inline void PrimitivesInRaw::inCLSID(ContextIn & pCtx, ClassID & pCLSID)
+	inline void PrimitivesInRaw::inCLSID(ContextIn & pCtx, DataEventID & pCLSID)
 	{
 		// Review: Can only persist a +/- irrelevant id at the moment...
 		pCtx.is() >> pCLSID;
@@ -1888,11 +1875,6 @@ namespace PSSER_NAMESPACE
 			pCtx.os() << kIPCVTPointer << " ";
 			ContextOutIPC::TPrimitives::beginValue(pCtx, pValue, NULL);
 			pCtx.os() << pCtx.C2S(pValue.str) << " ";
-			if (OP_EDIT == pValue.op)
-			{
-				pCtx.os() << pValue.edit.length << " ";
-				pCtx.os() << pValue.edit.shift << " ";
-			}
 			ContextOutIPC::TPrimitives::endValue(pCtx, pValue);
 		}
 		else
@@ -1918,11 +1900,6 @@ namespace PSSER_NAMESPACE
 				pValue.stream.is = (Afy::IStream *)lAddr;
 			else
 				pValue.str = (char *)lAddr;
-			if (OP_EDIT == lTmp.op)
-			{
-				pCtx.is() >> pValue.edit.length;
-				pCtx.is() >> pValue.edit.shift;
-			}
 			ContextInIPC::TPrimitives::endValue(pCtx, pValue, lTmp);
 		}
 		else if (kIPCVTPointerToRef == lIPCVT)
@@ -2284,7 +2261,7 @@ namespace PSSER_NAMESPACE
 			inline static void outRef(ContextOutDbg & pCtx, PID const & pPID);
 			inline static void outRef(ContextOutDbg & pCtx, PID const & pPID, PropertyID const & pPropID) { if (pCtx.mSession) PrimitivesOutRaw::outRef(pCtx, pPID, pPropID); else { outRef(pCtx, pPID); pCtx.os() << pPropID << " "; } }
 			inline static void outRef(ContextOutDbg & pCtx, PID const & pPID, PropertyID const & pPropID, ElementID const & pEid) { if (pCtx.mSession) PrimitivesOutRaw::outRef(pCtx, pPID, pPropID, pEid); else { outRef(pCtx, pPID, pPropID); pCtx.os() << pEid << " "; } }
-			inline static void outCLSID(ContextOutDbg & pCtx, ClassID const & pCLSID) { PrimitivesOutRaw::outCLSID(pCtx, pCLSID); }
+			inline static void outCLSID(ContextOutDbg & pCtx, DataEventID const & pCLSID) { PrimitivesOutRaw::outCLSID(pCtx, pCLSID); }
 			inline static void outPropertyID(ContextOutDbg & pCtx, PropertyID const & pPropID);
 			inline static void beginValue(ContextOutDbg & pCtx, Value const & pValue, uint64_t * pLen);
 			inline static void endValue(ContextOutDbg & pCtx, Value const & pValue);
@@ -2557,7 +2534,7 @@ namespace PSSER_NAMESPACE
 			inline static void outRef(ContextOutXml & pCtx, PID const & pPID);
 			inline static void outRef(ContextOutXml & pCtx, PID const & pPID, PropertyID const & pPropID) { if (pCtx.mSession) PrimitivesOutRaw::outRef(pCtx, pPID, pPropID); else { outRef(pCtx, pPID); pCtx.os() << pPropID << " "; } }
 			inline static void outRef(ContextOutXml & pCtx, PID const & pPID, PropertyID const & pPropID, ElementID const & pEid) { if (pCtx.mSession) PrimitivesOutRaw::outRef(pCtx, pPID, pPropID, pEid); else { outRef(pCtx, pPID, pPropID); pCtx.os() << pEid << " "; } }
-			inline static void outCLSID(ContextOutXml & pCtx, ClassID const & pCLSID) { PrimitivesOutRaw::outCLSID(pCtx, pCLSID); }
+			inline static void outCLSID(ContextOutXml & pCtx, DataEventID const & pCLSID) { PrimitivesOutRaw::outCLSID(pCtx, pCLSID); }
 			inline static void outPropertyID(ContextOutXml & pCtx, PropertyID const & pPropID);
 			inline static void beginValue(ContextOutXml & pCtx, Value const & pValue, uint64_t * pLen);
 			inline static void endValue(ContextOutXml & pCtx, Value const & pValue);
@@ -2711,8 +2688,8 @@ namespace PSSER_NAMESPACE
 				case PROP_SPEC_OBJID: lPropertyURI = "afy:objectID"; break;
 				case PROP_SPEC_PREDICATE: lPropertyURI = "afy:predicate"; break;
 				case PROP_SPEC_COUNT: lPropertyURI = "afy:count"; break;
-				case PROP_SPEC_SUBCLASSES: lPropertyURI = "afy:subclasses"; break;
-				case PROP_SPEC_SUPERCLASSES: lPropertyURI = "afy:superclasses"; break;
+				case PROP_SPEC_SPECIALIZATION: lPropertyURI = "afy:subclasses"; break;
+				case PROP_SPEC_ABSTRACTION: lPropertyURI = "afy:superclasses"; break;
 				case PROP_SPEC_INDEX_INFO: lPropertyURI = "afy:indexInfo"; break;
 				case PROP_SPEC_PROPERTIES: lPropertyURI = "afy:properties"; break;
 				case PROP_SPEC_ONENTER: lPropertyURI = "afy:onEnter"; break;

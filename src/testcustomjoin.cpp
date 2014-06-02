@@ -29,7 +29,7 @@ public:
 	static const int sNumProps = 5;
 	static const int sNumClasses = 5;
 	PropertyID mProp[sNumProps];
-	ClassID mClass[sNumClasses];
+	DataEventID mClass[sNumClasses];
 	PID pinid[1];
 };
 TEST_IMPLEMENT(testcustomjoin, TestLogger::kDStdOut);

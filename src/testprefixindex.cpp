@@ -108,7 +108,7 @@ void TestPrefixIndex::doTest()
         // cout << iStmt->toString() <<endl;
         iExpr2->destroy();
         
-        ClassID objectID = STORE_INVALID_CLASSID;
+        DataEventID objectID = STORE_INVALID_CLASSID;
         objectID = MVTUtil::createUniqueClass(mSession, "TestPrefixIndex.CLASS", iStmt, NULL);
         TVERIFY(STORE_INVALID_CLASSID != objectID);
         iStmt->destroy();

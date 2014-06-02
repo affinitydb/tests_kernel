@@ -97,8 +97,8 @@ static inline bool testResultingStreams(TestLogger & pLogger, Value const * pVal
 		ISession * const lSession =	MVTApp::startSession();
 
 		// Define a class of all pins created by this test.
-		ClassID lClsid;
-		if (RC_OK != lSession->getClassID("teststreams.bashquery", lClsid))
+		DataEventID lClsid;
+		if (RC_OK != lSession->getDataEventID("teststreams.bashquery", lClsid))
 		{
 			IStmt * const lQClass = lSession->createStmt();
 			unsigned char const lVarClass = lQClass->addVariable();

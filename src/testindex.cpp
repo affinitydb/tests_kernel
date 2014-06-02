@@ -16,7 +16,7 @@ class CStoreClass
 		// Represent a single class in the store	
 		Afy::ISession * mSession;
 		Afy::IStmt* mClassQuery;
-		Afy::ClassID mClassID;
+		Afy::DataEventID mClassID;
 		std::string mClassName;
 		int mPinCnt; // To cache result if calculated
 		bool mFamily;
@@ -46,14 +46,14 @@ class CStoreClass
 			return ClassHelper::getQueryUsingClass(mSession, mClassID);
 		}
 
-		void init( const char * inClassName, Afy::ClassID inClsid, Afy::IStmt * inQuery ) 
+		void init( const char * inClassName, Afy::DataEventID inClsid, Afy::IStmt * inQuery ) 
 		{
 			mClassName = inClassName ;
 			mClassID = inClsid ;
 			mClassQuery = inQuery ; // Take ownership
 			mFamily = false;
 			IPIN *cpin=NULL;
-			if (mSession->getClassInfo(inClsid,cpin)==RC_OK) {
+			if (mSession->getDataEventInfo(inClsid,cpin)==RC_OK) {
 				assert(cpin!=NULL);
 				mFamily = cpin->getValue(PROP_SPEC_INDEX_INFO)!=NULL;
 				cpin->destroy();
@@ -126,7 +126,7 @@ class CStoreInfo
 			#endif
 
 			std::vector<Tstring> lCNames;
-			std::vector<ClassID> lCIDs;
+			std::vector<DataEventID> lCIDs;
 			std::vector<IStmt *> lCPredicates;
 			MVTApp::enumClasses(*mSession, &lCNames, &lCIDs, &lCPredicates);
 			for (size_t i = 0; i < lCNames.size(); i++)
@@ -216,7 +216,7 @@ int testindex::execute()
 	for(size_t i=0;i<indexInfo_bef.mClasses.size();i++)
 	{
 		TVERIFY(indexInfo_bef.mClasses[i]->mClassID == indexInfo_aft.mClasses[i]->mClassID);
-		//mLogger.out()<<"ClassID:"<<indexInfo_bef.mClasses[i]->mClassID<<"\t";
+		//mLogger.out()<<"DataEventID:"<<indexInfo_bef.mClasses[i]->mClassID<<"\t";
 
 		TVERIFY(indexInfo_bef.mClasses[i]->mClassName == indexInfo_aft.mClasses[i]->mClassName);
 		//mLogger.out()<<"ClassName:"<<indexInfo_bef.mClasses[i]->mClassName<<"\t";
@@ -229,7 +229,7 @@ int testindex::execute()
 
 		TVERIFY(indexInfo_bef.mClasses[i]->mIndexedProp == indexInfo_aft.mClasses[i]->mIndexedProp);
 		//mLogger.out()<<"IndexedPropID:"<<indexInfo_bef.mClasses[i]->mIndexedProp<<"\n";
-		mLogger.out()<<"ClassID:"<<indexInfo_bef.mClasses[i]->mClassID<<"\t"<<"verified successfully..."<<i+1<<endl;
+		mLogger.out()<<"DataEventID:"<<indexInfo_bef.mClasses[i]->mClassID<<"\t"<<"verified successfully..."<<i+1<<endl;
 		mVerifyCnt++;
 	}
 

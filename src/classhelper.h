@@ -35,7 +35,7 @@ public:
 
 	/*! Determine whether the class has been dropped
 	*/
-	static bool isDropped(ISession *inSession, ClassID inClassID)
+	static bool isDropped(ISession *inSession, DataEventID inClassID)
 	{
 		// Todo, possible via store inspector, but no ipc support
 		return false;
@@ -48,7 +48,7 @@ public:
 	*/
 	static IStmt* getQueryUsingClass(
 		ISession *inSession, 
-		ClassID inClassID,
+		DataEventID inClassID,
 		STMT_OP sop=STMT_QUERY,
 		unsigned int inCntParams =0,				
 		const Value * inParams = NULL,						// Optional variables for Family queries
@@ -86,11 +86,11 @@ public:
 
 		Caller must call destroy() on the returned query
 	*/
-	static IStmt* getQueryDefiningClass(ISession *inSession, const char *inClassName, ClassID& outClassid)
+	static IStmt* getQueryDefiningClass(ISession *inSession, const char *inClassName, DataEventID& outClassid)
 	{
 		outClassid = STORE_INVALID_CLASSID ; IPIN *cpin=NULL;
-		if (inSession->getClassID(inClassName,outClassid)!=RC_OK
-			|| inSession->getClassInfo(outClassid,cpin)!=RC_OK) return NULL;
+		if (inSession->getDataEventID(inClassName,outClassid)!=RC_OK
+			|| inSession->getDataEventInfo(outClassid,cpin)!=RC_OK) return NULL;
 
 		assert(cpin!=NULL); IStmt *qry=NULL;
 		const Value *cv = cpin->getValue(PROP_SPEC_PREDICATE);
@@ -101,7 +101,7 @@ public:
 
 	// Find the class name given a class ID
 
-	static bool getClassNameFromID(ISession *inSession, ClassID inClassid, string &outClassName )
+	static bool getClassNameFromID(ISession *inSession, DataEventID inClassid, string &outClassName )
 	{
 		outClassName.clear() ; char buf[256]; size_t l=sizeof(buf)-1;
 		if (inSession->getURI(inClassid,buf,l)!=RC_OK) return false;
@@ -115,8 +115,8 @@ public:
 		// For example this is important if trying to fill in a parameter to a 
 		// family.
 		//
-		ClassID cid; IPIN *cpin=NULL; bool fRange=false;
-		if (inSession->getClassID(inClassName,cid)==RC_OK && inSession->getClassInfo(cid,cpin)==RC_OK) {
+		DataEventID cid; IPIN *cpin=NULL; bool fRange=false;
+		if (inSession->getDataEventID(inClassName,cid)==RC_OK && inSession->getDataEventInfo(cid,cpin)==RC_OK) {
 			assert(cpin!=NULL);
 			const Value *cv = cpin->getValue(PROP_SPEC_INDEX_INFO);
 			if (cv!=NULL && cv->type==VT_COLLECTION && !cv->isNav()) fRange=cv->varray[0].iseg.op==OP_IN;
@@ -124,11 +124,11 @@ public:
 		}
 		return fRange;
 	}
-	static bool isRangeQuery(ISession *inSession, ClassID inClassID )
+	static bool isRangeQuery(ISession *inSession, DataEventID inClassID )
 	{
 		// Second signature, if classname not known
 		IPIN *cpin=NULL; bool fRange=false;
-		if (inSession->getClassInfo(inClassID,cpin)==RC_OK) {
+		if (inSession->getDataEventInfo(inClassID,cpin)==RC_OK) {
 			assert(cpin!=NULL);
 			const Value *cv = cpin->getValue(PROP_SPEC_INDEX_INFO);
 			if (cv!=NULL && cv->type==VT_COLLECTION && !cv->isNav()) fRange=cv->varray[0].iseg.op==OP_IN;
@@ -172,7 +172,7 @@ public:
 		// REVIEW: in debug two potentially distracting fullscan query printouts are logged,
 		// perhaps they should be silenced during this period
 
-		ClassID lClassID;
+		DataEventID lClassID;
 		outCntQ=-1;
 
 		// TODO: If we find any of these errors can happen in practice we should build even more context information into the result string
@@ -191,7 +191,7 @@ public:
 	*/
 	static bool testClass(
 		ISession *inSession,
-		ClassID inClassID,
+		DataEventID inClassID,
 		IStmt* inRawQ,
 		std::ostream & outResultInfo,
 		int &outCntQ,
@@ -204,7 +204,7 @@ public:
 		outCntQ=0;
 
 		unsigned int cntParams = 0; IPIN *cpin=NULL;
-		if (inSession->getClassInfo(inClassID,cpin)==RC_OK) {
+		if (inSession->getDataEventInfo(inClassID,cpin)==RC_OK) {
 			assert(cpin!=NULL);
 			const Value *cv=cpin->getValue(PROP_SPEC_INDEX_INFO);
 			if (cv!=NULL && cv->type==VT_COLLECTION && !cv->isNav()) cntParams = cv->length;
@@ -292,7 +292,7 @@ public:
 	}
 
 	static bool getClassFamilyValues(
-		ClassID inClass, 
+		DataEventID inClass, 
 		ISession * inSession,
 		vector<Value> & vals)
 	{
@@ -323,7 +323,7 @@ public:
 	}
 
 	static bool printClassFamily(
-		ClassID inClass, 
+		DataEventID inClass, 
 		ISession * inSession,
 		std::ostream & outResultInfo, 
 		bool printPIDs=true,
@@ -417,7 +417,7 @@ public:
 	}
 
 	static bool familyInfo(
-		ClassID inClass, 
+		DataEventID inClass, 
 		ISession * inSession,
 		PropertyID & outIndexedProp, // Which index it is based on
 		uint8_t & outType,
@@ -561,7 +561,7 @@ private:
 		const TPidSet & A, 
 		const TPidSet & B, 
 		const char * msg,
-		ClassID inClassID,
+		DataEventID inClassID,
 		ISession* inSession,
 		bool bFamilyPins,
 		std::ostream & outResultInfo )
@@ -597,16 +597,16 @@ private:
 			{
 				if (bFamilyPins)
 				{
-					// testClassMembership only works for class
+					// testDataEvent only works for class
 					outResultInfo << " (Load: OK)";
 				}
-				else if (!missingPIN->testClassMembership(inClassID))
+				else if (!missingPIN->testDataEvent(inClassID))
 				{
-					outResultInfo << " testClassMembership: FAIL";
+					outResultInfo << " testDataEvent: FAIL";
 				}
 				else
 				{
-					outResultInfo << " (Load: OK, testClassMembership: OK)";
+					outResultInfo << " (Load: OK, testDataEvent: OK)";
 				}
 			}
 			outResultInfo << std::endl;
@@ -626,7 +626,7 @@ private:
 	*/
 	static bool testClassOrParameterizedFamily(
 		ISession *inSession,
-		ClassID inClassID,
+		DataEventID inClassID,
 		IStmt* inRawQ,
 		std::ostream & outResultInfo,
 		int &outCntQ,

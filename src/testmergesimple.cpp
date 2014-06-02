@@ -58,7 +58,7 @@ class TestMergeSimple : public ITest
 		void stopStartStore();
 	private:	
 		ISession * mSession;
-		ClassID mClassFamily;
+		DataEventID mClassFamily;
 		PropertyID mTextProp;
 		PropertyID mDateProp;
 

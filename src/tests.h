@@ -260,7 +260,7 @@ class ITest
 
 	public:
 		// mvStore helpers (implement common services that used to be in ISession)
-		static RC defineClass(ISession *ses, const char *className, IStmt *qry, ClassID *pClsid=NULL)
+		static RC defineClass(ISession *ses, const char *className, IStmt *qry, DataEventID *pClsid=NULL)
 		{
 			Value vals[2]; RC rc=RC_OK;
 			vals[0].set(className); vals[0].setPropID(PROP_SPEC_OBJID);
@@ -280,12 +280,12 @@ class ITest
 		}
 		static RC updateClass(ISession *ses, const char *className, IStmt *qry, bool fIndex=true)
 		{
-			ClassID cid=STORE_INVALID_CLASSID; IPIN *pin=NULL;
+			DataEventID cid=STORE_INVALID_CLASSID; IPIN *pin=NULL;
 			if (className==NULL) return ses->rebuildIndices();
-			RC rc=ses->getClassID(className,cid);
+			RC rc=ses->getDataEventID(className,cid);
 			if (rc==RC_OK) {
 				if (qry==NULL) rc=ses->rebuildIndices(&cid,1);
-				else if ((rc=ses->getClassInfo(cid,pin))==RC_OK) {
+				else if ((rc=ses->getDataEventInfo(cid,pin))==RC_OK) {
 					Value v; v.set(qry); v.setPropID(PROP_SPEC_PREDICATE); v.setMeta(META_PROP_INDEXED);
 					rc=pin->modify(&v,1);
 				}
@@ -294,9 +294,9 @@ class ITest
 		}
 		static RC dropClass(ISession *ses,const char *className)
 		{
-			ClassID cid=STORE_INVALID_CLASSID; IPIN *pin=NULL;
-			RC rc=ses->getClassID(className,cid);
-			if (rc==RC_OK && (rc=ses->getClassInfo(cid,pin))==RC_OK) rc=pin->deletePIN();
+			DataEventID cid=STORE_INVALID_CLASSID; IPIN *pin=NULL;
+			RC rc=ses->getDataEventID(className,cid);
+			if (rc==RC_OK && (rc=ses->getDataEventInfo(cid,pin))==RC_OK) rc=pin->deletePIN();
 			return rc;
 		}
 

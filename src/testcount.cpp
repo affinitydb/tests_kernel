@@ -127,7 +127,7 @@ void TestCount::testcount(ISession *session)
 	result->destroy();
 
 	//Third Query - class query for "str" (based on the first query)
-	ClassID cls = STORE_INVALID_CLASSID;
+	DataEventID cls = STORE_INVALID_CLASSID;
 	IStmt *clsquery = session->createStmt();
 	var = clsquery->addVariable();
 	

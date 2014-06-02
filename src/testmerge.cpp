@@ -40,7 +40,7 @@ int	TestMerge::execute()
 		PropertyID const lPropIdPinId = PROP_SPEC_PINID;
 
 		char lB[100]; sprintf(lB,"TestMerge.ClassVal.%d",rand());
-		Value lV[4]; ClassID lClassVal = STORE_INVALID_CLASSID;
+		Value lV[4]; DataEventID lClassVal = STORE_INVALID_CLASSID;
 		lV[0].setVarRef(0,lPropIdVal);
 		lV[1].setParam(0);
 		IExprNode *expr=lSession->expr(OP_LT,2,lV);
@@ -50,7 +50,7 @@ int	TestMerge::execute()
 		lQ->destroy();
 
 		sprintf(lB,"TestMerge.ClassRef.%d",rand());
-		ClassID lClassRef = STORE_INVALID_CLASSID;
+		DataEventID lClassRef = STORE_INVALID_CLASSID;
 		lQ = lSession->createStmt();
 		lQ->addVariable();
 		lQ->setPropCondition(0,&lPropIdRef,1);
@@ -61,7 +61,7 @@ int	TestMerge::execute()
 		* The following creates the family on reference class...
 		**/
 		sprintf(lB,"TestMerge.ClassFamilyOnRef.%d",rand());
-		ClassID lClassFamilyOnRef = STORE_INVALID_CLASSID; Value lVFoR[2];
+		DataEventID lClassFamilyOnRef = STORE_INVALID_CLASSID; Value lVFoR[2];
 		lVFoR[0].setVarRef(0,lPropIdRef);
 		lVFoR[1].setParam(0);
 		expr=lSession->expr(OP_IN,2,lVFoR);
@@ -127,7 +127,7 @@ int	TestMerge::execute()
 			if (isVerbose()) MVTApp::output(*pInResults,mLogger.out());
 
 			// Prove that it is the pins from lClassRef that are returned
-			TVERIFY(pInResults->testClassMembership(lClassRef));
+			TVERIFY(pInResults->testDataEvent(lClassRef));
 
 			// Prove the reason why this pin is returned in the query
 			// In future, reference may be automatically resolved into a PIN pointer

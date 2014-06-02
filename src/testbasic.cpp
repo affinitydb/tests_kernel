@@ -33,7 +33,7 @@ class TestBasic : public ITest
 		void InitProperties() ;
 		void RemoveData() ;
 
-		ClassID CreatePeopleClass() ;
+		DataEventID CreatePeopleClass() ;
 
 		void CreateAlbertPIN() ;
 		void CreateSaraPIN() ;
@@ -220,7 +220,7 @@ void TestBasic::InitProperties()
 	TVERIFY( 0 == strcmp( "basictest.age",  infobuf ) ) ;
 }
 
-ClassID TestBasic::CreatePeopleClass()
+DataEventID TestBasic::CreatePeopleClass()
 {
 	// Define a query for all people
 	
@@ -233,8 +233,8 @@ ClassID TestBasic::CreatePeopleClass()
 	pAllPINsWithName->setPropCondition( v, &nameProp, 1 ) ;
 
 	// See if someone has already run this test on this store
-	ClassID lClsid = STORE_INVALID_CLASSID ;
-	if ( RC_NOTFOUND == mSession->getClassID("testbasic.allpeople", lClsid) )
+	DataEventID lClsid = STORE_INVALID_CLASSID ;
+	if ( RC_NOTFOUND == mSession->getDataEventID("testbasic.allpeople", lClsid) )
 	{
 		TVERIFY( lClsid == STORE_INVALID_CLASSID ) ;
 
@@ -243,18 +243,18 @@ ClassID TestBasic::CreatePeopleClass()
 		TVERIFY( lClsid != STORE_INVALID_CLASSID ) ;
 
 		// Note - you could call again to retrieve the classid later
-		ClassID lClsid2 = STORE_INVALID_CLASSID ;
-		TVERIFYRC( mSession->getClassID("testbasic.allpeople", lClsid2) );
+		DataEventID lClsid2 = STORE_INVALID_CLASSID ;
+		TVERIFYRC( mSession->getDataEventID("testbasic.allpeople", lClsid2) );
 		TVERIFY( lClsid == lClsid2 ) ;
 
 		// Side note - you have to define the class before you can find its classid
-		ClassID lClsid3 = STORE_INVALID_CLASSID ;
-		TVERIFY( mSession->getClassID("bogus", lClsid3) != RC_OK );
+		DataEventID lClsid3 = STORE_INVALID_CLASSID ;
+		TVERIFY( mSession->getDataEventID("bogus", lClsid3) != RC_OK );
 
 		TVERIFY( RC_ALREADYEXISTS == defineClass(mSession,"testbasic.allpeople", pAllPINsWithName )) ;
 
-		ClassID lClsid4 = STORE_INVALID_CLASSID ;
-		TVERIFYRC( mSession->getClassID("testbasic.allpeople", lClsid4) );
+		DataEventID lClsid4 = STORE_INVALID_CLASSID ;
+		TVERIFYRC( mSession->getDataEventID("testbasic.allpeople", lClsid4) );
 		TVERIFY( lClsid == lClsid4 ) ;
 	}
 
@@ -268,10 +268,10 @@ IStmt * TestBasic::GetPeopleQuery()
 	// Get a Query that finds all members of class "testbasic.allpeople" 
 	// See GetPeopleQuery2() for the recommended way
 
-	IStmt *query = NULL; ClassID cid = STORE_INVALID_CLASSID; IPIN *cpin;
+	IStmt *query = NULL; DataEventID cid = STORE_INVALID_CLASSID; IPIN *cpin;
 
-	if (mSession->getClassID("testbasic.allpeople",cid)==RC_OK &&
-						mSession->getClassInfo(cid,cpin)==RC_OK) {
+	if (mSession->getDataEventID("testbasic.allpeople",cid)==RC_OK &&
+						mSession->getDataEventInfo(cid,cpin)==RC_OK) {
 		const Value *cv = cpin->getValue(PROP_SPEC_PREDICATE);
 		if (cv!=NULL && cv->type==VT_STMT) query = cv->stmt->clone();
 		cpin->destroy();
@@ -287,10 +287,10 @@ IStmt * TestBasic::GetPeopleQuery2(STMT_OP sop)
 	// matching on class membership
 
 	// Look up the objectID
-	ClassID lClsid = STORE_INVALID_CLASSID ;
-	TVERIFYRC( mSession->getClassID("testbasic.allpeople", lClsid) );
+	DataEventID lClsid = STORE_INVALID_CLASSID ;
+	TVERIFYRC( mSession->getDataEventID("testbasic.allpeople", lClsid) );
 
-	//Query that matches by ClassID
+	//Query that matches by DataEventID
 	IStmt * query = mSession->createStmt(sop);
 	SourceSpec lCS;
 	lCS.objectID = lClsid ;
@@ -691,9 +691,9 @@ IPIN * TestBasic::FindPerson( char * inName, bool bAllowMissing )
 	//
 	// Caller must destroy returned IPIN
 
-	// Specify the ClassID of the data we want to search.  (Otherwise a "WARNING: Full scan query!!!" is logged)
-	ClassID lClsid = STORE_INVALID_CLASSID ;
-	TVERIFYRC( mSession->getClassID("testbasic.allpeople", lClsid) );
+	// Specify the DataEventID of the data we want to search.  (Otherwise a "WARNING: Full scan query!!!" is logged)
+	DataEventID lClsid = STORE_INVALID_CLASSID ;
+	TVERIFYRC( mSession->getDataEventID("testbasic.allpeople", lClsid) );
 	SourceSpec lCS;
 	lCS.objectID = lClsid ;
 	lCS.nParams = 0;
@@ -763,9 +763,9 @@ IPIN * TestBasic::FindPerson( char * inName, bool bAllowMissing )
 	// should belong to the class of people
 	if ( pin )
 	{
-		ClassID objectID = STORE_INVALID_CLASSID; 
-		TVERIFYRC( mSession->getClassID( "testbasic.allpeople", objectID ) );
-		TVERIFY( pin->testClassMembership( objectID ) );
+		DataEventID objectID = STORE_INVALID_CLASSID; 
+		TVERIFYRC( mSession->getDataEventID( "testbasic.allpeople", objectID ) );
+		TVERIFY( pin->testDataEvent( objectID ) );
 	}
 
 	return pin ;
@@ -794,8 +794,8 @@ unsigned long TestBasic::FindBachelors( )
 
 	IStmt *qry = mSession->createStmt();     
 
-	ClassID lClsid = STORE_INVALID_CLASSID ;
-	TVERIFYRC( mSession->getClassID("testbasic.allpeople", lClsid) );
+	DataEventID lClsid = STORE_INVALID_CLASSID ;
+	TVERIFYRC( mSession->getDataEventID("testbasic.allpeople", lClsid) );
 	SourceSpec lCS;
 	lCS.objectID = lClsid ;
 	lCS.nParams = 0;

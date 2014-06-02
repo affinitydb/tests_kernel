@@ -237,7 +237,7 @@ void TestMiscOperators::testOPBegins(ISession *session)
 	query->destroy();
 
 	//case 3: OP_BEGINS in a class query.
-	ClassID cls = STORE_INVALID_CLASSID;
+	DataEventID cls = STORE_INVALID_CLASSID;
 	IStmt *classquery = session->createStmt();
 	unsigned char var1  = classquery->addVariable();
 	pids[0]=pm[2].uid;

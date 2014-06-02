@@ -52,7 +52,7 @@ void TestRedefineClass::doTest()
 
 	{
 		Value va[3];
-		ClassID clsid;
+		DataEventID clsid;
 		PID pid1;
 		IPIN *pin1;
 		uint64_t cnt;
@@ -83,8 +83,8 @@ void TestRedefineClass::doTest()
 
 
 		mSession->startTransaction(); //drop c1.index, then delete all pins belonging to c1, then drop c1
-			mSession->getClassID("TestRedefineClass.class1.index",clsid);
-			mSession->getClassInfo(clsid,pin1);
+			mSession->getDataEventID("TestRedefineClass.class1.index",clsid);
+			mSession->getDataEventInfo(clsid,pin1);
 			pid1 = pin1->getPID(); pin1->destroy();
 			mSession->deletePINs(&pid1,1,MODE_PURGE); //drop c1.index
 
@@ -92,8 +92,8 @@ void TestRedefineClass::doTest()
 			qry->execute(NULL,NULL,0U,~0U,0U,MODE_PURGE);
 			qry->destroy(); //deleting all PINS
 
-			mSession->getClassID("TestRedefineClass.class1",clsid);
-			mSession->getClassInfo(clsid,pin1);
+			mSession->getDataEventID("TestRedefineClass.class1",clsid);
+			mSession->getDataEventInfo(clsid,pin1);
 			pid1 = pin1->getPID(); pin1->destroy();
 			mSession->deletePINs(&pid1,1,MODE_PURGE); //drop c1
 		mSession->commit(true); 
@@ -135,13 +135,13 @@ void TestRedefineClass::doTest()
 			insertStr = "INSERT $0=20,$1=20;";
 			TVERIFYRC(mSession->execute(insertStr,strlen(insertStr),NULL,&ids[7],2));
 
-			mSession->getClassID("TestRedefineClass.class3.index1",clsid);
-			mSession->getClassInfo(clsid,pin1);
+			mSession->getDataEventID("TestRedefineClass.class3.index1",clsid);
+			mSession->getDataEventInfo(clsid,pin1);
 			pid1 = pin1->getPID(); pin1->destroy();
 			mSession->deletePINs(&pid1,1,MODE_PURGE); //drop i1
 
-			mSession->getClassID("TestRedefineClass.class3.index2",clsid);
-			mSession->getClassInfo(clsid,pin1);
+			mSession->getDataEventID("TestRedefineClass.class3.index2",clsid);
+			mSession->getDataEventInfo(clsid,pin1);
 			pid1 = pin1->getPID(); pin1->destroy();
 			mSession->deletePINs(&pid1,1,MODE_PURGE); //drop i2
 
@@ -150,8 +150,8 @@ void TestRedefineClass::doTest()
 			qry->execute(NULL,NULL,0U,~0U,0U,MODE_PURGE);
 			qry->destroy(); //deleting all PINS
 
-			mSession->getClassID("TestRedefineClass.class3",clsid);
-			mSession->getClassInfo(clsid,pin1);
+			mSession->getDataEventID("TestRedefineClass.class3",clsid);
+			mSession->getDataEventInfo(clsid,pin1);
 			pid1 = pin1->getPID(); pin1->destroy();
 			mSession->deletePINs(&pid1,1,MODE_PURGE); //drop c1
 		}
@@ -173,8 +173,8 @@ void TestRedefineClass::doTest()
 			qry->execute(NULL,NULL,0U,~0U,0U,MODE_PURGE);
 			qry->destroy(); //deleting all PINS
 
-			mSession->getClassID("TestRedefineClass.class2",clsid);
-			mSession->getClassInfo(clsid,pin1);
+			mSession->getDataEventID("TestRedefineClass.class2",clsid);
+			mSession->getDataEventInfo(clsid,pin1);
 			pid1 = pin1->getPID(); pin1->destroy();
 			mSession->deletePINs(&pid1,1,MODE_PURGE); //drop c1
 		}	

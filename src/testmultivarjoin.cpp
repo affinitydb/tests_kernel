@@ -91,9 +91,9 @@ class TestMultiVarJoin : public ITest
 		PropertyID mExtraProps[CNT_EXTRA_PROPS];
 		PropertyID mFTProp;
 
-		ClassID mFamilies[CNT_SUB_QUERY]; // Each sub query uses a different family
+		DataEventID mFamilies[CNT_SUB_QUERY]; // Each sub query uses a different family
 		string mFamilyNames[CNT_SUB_QUERY];
-		ClassID mClass; // Extra class that includes all the test pins
+		DataEventID mClass; // Extra class that includes all the test pins
 		int	mRandLookups[CNT_SUB_QUERY]; // Random numbers used in all queries (so they produce equiv results)
 };
 TEST_IMPLEMENT(TestMultiVarJoin, TestLogger::kDStdOut);

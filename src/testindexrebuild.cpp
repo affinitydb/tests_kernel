@@ -39,7 +39,7 @@ class TestIndexRebuild : public ITest
 		void  getClassName(Tstring &pClassName, int pClassType, int pClassIndex);
 		void getFamilyName(Tstring &pFamilyName, int pFamilyType, int pFamilyIndex);
 		unsigned long getCountForClass(const char *pClassName);
-		unsigned long getCountForClass(ClassID pCLSID);
+		unsigned long getCountForClass(DataEventID pCLSID);
 		void dropClass(const char *pClassName = NULL);
 		void initialize(bool pDrop = false);
 
@@ -87,8 +87,8 @@ void TestIndexRebuild::dropClass(const char *pClassName)
 {
 	if(pClassName)
 	{
-		ClassID lCLSID = STORE_INVALID_CLASSID;
-		TVERIFYRC(mSession->getClassID(pClassName, lCLSID)); TVERIFY(lCLSID != STORE_INVALID_CLASSID);
+		DataEventID lCLSID = STORE_INVALID_CLASSID;
+		TVERIFYRC(mSession->getDataEventID(pClassName, lCLSID)); TVERIFY(lCLSID != STORE_INVALID_CLASSID);
 		TVERIFYRC(ITest::dropClass(mSession,pClassName));	
 		std::vector<Tstring>::iterator lIt;
 		bool lFound = false;
@@ -125,7 +125,7 @@ void TestIndexRebuild::initialize(bool pDrop)
 	MVTRand::getString(mClassStr, 5, 10, false, false);	
 }
 
-unsigned long TestIndexRebuild::getCountForClass(ClassID pCLSID)
+unsigned long TestIndexRebuild::getCountForClass(DataEventID pCLSID)
 {
 	TVERIFY(pCLSID != STORE_INVALID_CLASSID);
 	CmvautoPtr<IStmt> lQ(mSession->createStmt());
@@ -138,8 +138,8 @@ unsigned long TestIndexRebuild::getCountForClass(ClassID pCLSID)
 
 unsigned long TestIndexRebuild::getCountForClass(const char *pClassName)
 {
-	ClassID lCLSID = STORE_INVALID_CLASSID;
-	TVERIFYRC(mSession->getClassID(pClassName, lCLSID)); TVERIFY(lCLSID != STORE_INVALID_CLASSID);
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
+	TVERIFYRC(mSession->getDataEventID(pClassName, lCLSID)); TVERIFY(lCLSID != STORE_INVALID_CLASSID);
 	return getCountForClass(lCLSID);
 }
 

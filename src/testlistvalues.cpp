@@ -43,7 +43,7 @@ void TestListValues::checkClass(
 	//NOTE: a more generic version of this has been established in classhelper.h,
 	//so don't cut and paste this specialized one!
 
-	ClassID lCls = getClass( inName ) ;
+	DataEventID lCls = getClass( inName ) ;
 	if ( lCls == STORE_INVALID_CLASSID ) { TVERIFY(0) ; return ; }
 
 	CmvautoPtr<IndexNav> lValEnum ; 

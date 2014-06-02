@@ -67,7 +67,7 @@ void TestMultiColumnIndex2::doTest()
 
 	mSession = MVTApp::startSession();
 	//char *class1 = "TestMultiColumnIndex2.CLASS1";
-	ClassID clsid = STORE_INVALID_CLASSID, clsid2 = STORE_INVALID_CLASSID;
+	DataEventID clsid = STORE_INVALID_CLASSID, clsid2 = STORE_INVALID_CLASSID;
 
 	URIMap pmaps[20];
 	MVTApp::mapURIs(mSession,"TestMultiColumnIndex2",3,pmaps);

@@ -42,11 +42,11 @@ class PITNotification
 {
 	public:
 		PID mPID;
-		ClassID mCLSID;
+		DataEventID mCLSID;
 		PropertyID mPropID;
 		ElementID mEid;
 		IStoreNotification::NotificationEventType mAction;
-		PITNotification(PID pPID, ClassID pCLSID, IStoreNotification::NotificationEventType pAction)
+		PITNotification(PID pPID, DataEventID pCLSID, IStoreNotification::NotificationEventType pAction)
 			: mPID(pPID), mCLSID(pCLSID), mPropID(STORE_INVALID_URIID), mEid(STORE_COLLECTION_ID), mAction(pAction) {}
 		PITNotification(PID pPID, PropertyID pPropID, ElementID pEid)
 			: mPID(pPID), mCLSID(STORE_INVALID_CLASSID), mPropID(pPropID), mEid(pEid), mAction(IStoreNotification::NE_PIN_UPDATED) {}
@@ -115,11 +115,11 @@ class PITStoreClass
 		class CompareCLSIDs { public: bool operator()(PITStoreClass const & p1, PITStoreClass const & p2) const { return p1.mCLSID < p2.mCLSID; } };
 	public:
 		long mPropBitMask;
-		ClassID mCLSID;
+		DataEventID mCLSID;
 		int mIndex;
-		PITStoreClass(long pPropBitMask = 0, ClassID pCLSID = STORE_INVALID_CLASSID, int pIndex = -1) : mPropBitMask(pPropBitMask), mCLSID(pCLSID), mIndex(pIndex) {}
+		PITStoreClass(long pPropBitMask = 0, DataEventID pCLSID = STORE_INVALID_CLASSID, int pIndex = -1) : mPropBitMask(pPropBitMask), mCLSID(pCLSID), mIndex(pIndex) {}
 	public:
-		static ClassID registerRealClass(ISession * pSession, std::vector<PropertyID> const & pPropIDs, long pPropBitMask, const char *pRandStr)
+		static DataEventID registerRealClass(ISession * pSession, std::vector<PropertyID> const & pPropIDs, long pPropBitMask, const char *pRandStr)
 		{
 			if (0 == pPropIDs.size())
 				return STORE_INVALID_CLASSID;
@@ -163,7 +163,7 @@ class PITStoreClass
 			char lName[255];
 			sprintf(lName, "testNotifications%s_class%lx", pRandStr, pPropBitMask);
 
-			ClassID lCLSID = STORE_INVALID_CLASSID;
+			DataEventID lCLSID = STORE_INVALID_CLASSID;
 			ITest::defineClass(pSession,lName, lQ, &lCLSID);
 			pSession->enableClassNotifications(lCLSID,lAllClassNotifs); 
 			return lCLSID;
@@ -234,7 +234,7 @@ int TestNotifications::execute()
 				continue;
 			std::vector<PropertyID> lPropIDs;
 			PITStoreClass::extractPropIDs(lPropIDBase, lPropBitMask, lPropIDs);
-			ClassID const lClassID = PITStoreClass::registerRealClass(lSession, lPropIDs, lPropBitMask, lRandStr.c_str());
+			DataEventID const lClassID = PITStoreClass::registerRealClass(lSession, lPropIDs, lPropBitMask, lRandStr.c_str());
 			if (STORE_INVALID_CLASSID == lClassID)
 				{ assert(false); continue; }
 			lPinsForClasses.push_back(Tbitsetpins());
@@ -376,9 +376,9 @@ int TestNotifications::execute()
 			{
 				TClasses::iterator lItClasses;
 				for (lItClasses = lClasses.begin(); lClasses.end() != lItClasses; lItClasses++){
-					ClassID lCLSID = (*lItClasses).mCLSID;
+					DataEventID lCLSID = (*lItClasses).mCLSID;
 					int const lIndexClass = (*lItClasses).mIndex;
-					if(lPINs[lPinIndex]->testClassMembership(lCLSID)){
+					if(lPINs[lPinIndex]->testDataEvent(lCLSID)){
 						lNumPINinClasses++;
 						lUpdClasses.set(lIndexClass);
 					}
@@ -418,9 +418,9 @@ int TestNotifications::execute()
 							lNumPINinClasses = 0;
 							TClasses::iterator lItClasses;
 							for (lItClasses = lClasses.begin(); lClasses.end() != lItClasses; lItClasses++){
-								ClassID lCLSID = (*lItClasses).mCLSID;
+								DataEventID lCLSID = (*lItClasses).mCLSID;
 								int const lIndexClass = (*lItClasses).mIndex;
-								if(lPINs[lPinIndex]->testClassMembership(lCLSID)){
+								if(lPINs[lPinIndex]->testDataEvent(lCLSID)){
 									lNumPINinClasses++;
 									lUpdClasses.set(lIndexClass);
 								}

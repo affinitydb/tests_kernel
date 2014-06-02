@@ -97,7 +97,7 @@ int testjoinorderby::execute()
 			Afy::SourceSpec lclassSpec;
 			lclassSpec.nParams=0;
 			lclassSpec.params=NULL;
-			if(RC_OK == (rc = mSession->getClassID(lClassList[iidx],lclassSpec.objectID)))
+			if(RC_OK == (rc = mSession->getDataEventID(lClassList[iidx],lclassSpec.objectID)))
 			{
 				unsigned char tmpVar = lQuery->addVariable(&lclassSpec,1); 
 				lastvar = iidx==0 ? tmpVar : lQuery->setOp(lastvar,tmpVar,Afy::QRY_UNION);
@@ -110,13 +110,13 @@ int testjoinorderby::execute()
 		if(bSuccess)
 		{
 			Afy::SourceSpec lclassSpec;
-			if( RC_OK == (rc =mSession->getClassID("hostingPinsPushShredder",lclassSpec.objectID)))
+			if( RC_OK == (rc =mSession->getDataEventID("hostingPinsPushShredder",lclassSpec.objectID)))
 			{
 				lclassSpec.nParams=0;
 				lclassSpec.params=NULL;
 				unsigned char tmpVar = lQuery->addVariable(&lclassSpec,1); 
 				lastvar = lQuery->setOp(lastvar,tmpVar,Afy::QRY_INTERSECT);
-				if( RC_OK == (rc =mSession->getClassID("hostingPinsNotShredded1",lclassSpec.objectID)))
+				if( RC_OK == (rc =mSession->getDataEventID("hostingPinsNotShredded1",lclassSpec.objectID)))
 				{
 					TIMESTAMP lTS;getTimestamp(lTS);
 					DateTime lDT;mSession->convDateTime(lTS,lDT,true/*UTC*/);	

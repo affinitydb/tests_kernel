@@ -161,7 +161,7 @@ void TestRename::testrename(ISession *session)
 	unsigned char var = query->addVariable();
 	PropertyID pids[1];
 	Value args[1];
-	ClassID cls = STORE_INVALID_CLASSID;
+	DataEventID cls = STORE_INVALID_CLASSID;
 
 	pids[0]=pm[1].uid;
 	args[0].setVarRef(0,*pids);
@@ -182,7 +182,7 @@ void TestRename::testrename(ISession *session)
 	if(RC_OK == rc){
 		val[0].setRename(pm[0].uid,pm[1].uid);
 		rc = pin->modify(val,1);
-		if (RC_OK != rc || !pin->testClassMembership(cls))
+		if (RC_OK != rc || !pin->testDataEvent(cls))
 			mRCFinal = RC_FALSE;
 		pin->destroy();
 		pin = NULL;

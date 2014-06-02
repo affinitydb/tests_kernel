@@ -230,7 +230,7 @@ class TestPGTree : public ITest
 	protected:
 		RC mRCUpdates;
 		PropertyID mProps[kCTotal];
-		ClassID mFamilies[kPTotal][kCTotal];
+		DataEventID mFamilies[kPTotal][kCTotal];
 };
 TEST_IMPLEMENT(TestPGTree, TestLogger::kDStdOut);
 TestPGTree::TFunc_str const TestPGTree::sFuncs_str[kCEnd_str - kCFirst_str] = { &TestPGTree::simpleInsertForward, &TestPGTree::simpleInsertBackward, &TestPGTree::simpleInsertRandom, &TestPGTree::simpleInsertBackwardByLen_str, };
@@ -708,7 +708,7 @@ void TestPGTree::defineFamilies(ISession & pSession, size_t pPassIndex)
 		char lClassName[256];
 		sprintf(lClassName, "testpgtree_class%lu_%lu", (unsigned long)iC, (unsigned long)pPassIndex);
 		mFamilies[pPassIndex][iC] = STORE_INVALID_CLASSID;
-		if (RC_OK != pSession.getClassID(lClassName, mFamilies[pPassIndex][iC]))
+		if (RC_OK != pSession.getDataEventID(lClassName, mFamilies[pPassIndex][iC]))
 		{
 			CmvautoPtr<IStmt> lQ(pSession.createStmt());
 			unsigned char const lVar = lQ->addVariable();

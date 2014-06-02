@@ -58,7 +58,7 @@ class TestVTStruct : public ITest
     protected:
         URIID ids[VISITOR_ALL];
         std::list<Visitor> visitors;  
-        ClassID objectID;
+        DataEventID objectID;
         string classname;
         void doTest();
         void insert();

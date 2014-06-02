@@ -52,7 +52,7 @@ void TestClassInfo::testClassInfo()
 	// Create simple family /pin[prop3 ciin $var]
 	char lB[64]; sprintf(lB, "TestClassInfo.%s.testClassInfo.%d", mClassStr.c_str(), 0);
 	Tstring lClassString, lClassInfoString;
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt()); unsigned char lVar = lQ->addVariable();
 		TVERIFYRC(lQ->setPropCondition(lVar, lPropIDs, 2));
@@ -66,7 +66,7 @@ void TestClassInfo::testClassInfo()
 	}
 
 	{
-		IPIN *cpin=NULL; TVERIFYRC(mSession->getClassInfo(lCLSID, cpin));
+		IPIN *cpin=NULL; TVERIFYRC(mSession->getDataEventInfo(lCLSID, cpin));
 		if (cpin!=NULL) {
 			lClassInfoString = cpin->getValue(PROP_SPEC_PREDICATE)->stmt->toString();
 			TVERIFY(strcmp(lClassString.c_str(), lClassInfoString.c_str()) == 0);
@@ -75,9 +75,9 @@ void TestClassInfo::testClassInfo()
 	}	
 
 	char lB1[64]; sprintf(lB1, "TestClassInfo.%s.testClassInfo.%d", mClassStr.c_str(), 1);
-	ClassID lCLSID1 = STORE_INVALID_CLASSID;
+	DataEventID lCLSID1 = STORE_INVALID_CLASSID;
 	{
-		IPIN *cpin=NULL; TVERIFYRC(mSession->getClassInfo(lCLSID, cpin));
+		IPIN *cpin=NULL; TVERIFYRC(mSession->getDataEventInfo(lCLSID, cpin));
 		if (cpin!=NULL) {
 			TVERIFYRC(defineClass(mSession,lB1, cpin->getValue(PROP_SPEC_PREDICATE)->stmt, &lCLSID1));
 			cpin->destroy();
@@ -96,7 +96,7 @@ void TestClassInfo::testSimpleFamily()
 	// Create simple family /pin[prop3 ciin $var]
 	char lB[64]; sprintf(lB, "TestClassInfo.%s.testSimpleFamily.%d", mClassStr.c_str(), 0);
 	Tstring lClassString, lClassInfoString;
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt()); 
 		QVarID lVar = lQ->addVariable();
@@ -110,7 +110,7 @@ void TestClassInfo::testSimpleFamily()
 	}
 
 	{
-		IPIN *cpin=NULL; TVERIFYRC(mSession->getClassInfo(lCLSID, cpin));
+		IPIN *cpin=NULL; TVERIFYRC(mSession->getDataEventInfo(lCLSID, cpin));
 		if (cpin!=NULL) {
 			lClassInfoString = cpin->getValue(PROP_SPEC_PREDICATE)->stmt->toString();
 			TVERIFY(strcmp(lClassString.c_str(), lClassInfoString.c_str()) == 0);
@@ -121,7 +121,7 @@ void TestClassInfo::testSimpleFamily()
 	TVERIFYRC(dropClass(mSession,lB));
 
 	{
-		IPIN *cpin=NULL; TVERIFY(mSession->getClassInfo(lCLSID, cpin)!=RC_OK);
+		IPIN *cpin=NULL; TVERIFY(mSession->getDataEventInfo(lCLSID, cpin)!=RC_OK);
 	}
 }
 
@@ -136,7 +136,7 @@ void TestClassInfo::testSimpleClass()
 	// Create simple class /pin[pin has prop0]
 	char lB[64]; sprintf(lB, "TestClassInfo.%s.testSimpleClass.%d", mClassStr.c_str(), 0);
 	Tstring lClassString, lClassInfoString;
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	{
 		CmvautoPtr<IStmt> lQ(mSession->createStmt());
 		unsigned char lVar = lQ->addVariable();
@@ -146,7 +146,7 @@ void TestClassInfo::testSimpleClass()
 	}
 
 	// Get Class info and Query
-	IPIN *cpin=NULL; TVERIFYRC(mSession->getClassInfo(lCLSID, cpin));
+	IPIN *cpin=NULL; TVERIFYRC(mSession->getDataEventInfo(lCLSID, cpin));
 	if (cpin!=NULL) {
 		lClassInfoString = cpin->getValue(PROP_SPEC_PREDICATE)->stmt->toString();
 		TVERIFY(strcmp(lClassString.c_str(), lClassInfoString.c_str()) == 0);

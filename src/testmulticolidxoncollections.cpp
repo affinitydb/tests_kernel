@@ -80,7 +80,7 @@ void TestMultiColIdxonCollections::defineMultiColIdx()
         iExpr2->destroy();
 
         // create a class family(multi-column index)
-        ClassID mMulti = MVTUtil::createUniqueClass(mSession, "TestMultiColIdxonCollections.A", iStmt, NULL);
+        DataEventID mMulti = MVTUtil::createUniqueClass(mSession, "TestMultiColIdxonCollections.A", iStmt, NULL);
         TVERIFY(STORE_INVALID_CLASSID != mMulti);
         iStmt->destroy();
 }

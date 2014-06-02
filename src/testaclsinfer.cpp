@@ -15,7 +15,7 @@ class TestACLsInfer : public ITest
 		static const int sNumIdentities = 10;
 		PropertyID mPropIDs[sNumProps];
 		PID mFolderPID;
-		ClassID mCLSID, mCLSID2;
+		DataEventID mCLSID, mCLSID2;
 		Tstring mClassStr;		
 		int mExpectedCount;
 	public:

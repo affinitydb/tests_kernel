@@ -23,7 +23,7 @@ class TestJoinExcept:  public ITest
 	private:
 		ISession * mSession ;	
 		PID mBigAlbumPID, mSmallAlbumPID;
-		ClassID mClassID, mFamilyID, mFamily2ID;
+		DataEventID mClassID, mFamilyID, mFamily2ID;
 		PropertyID mPostsPropID;
 		std::vector<PID> mPIDs, mExceptPIDs;
 
@@ -31,8 +31,8 @@ class TestJoinExcept:  public ITest
 		void createMeta();
 		void createData();
 
-		void runJoinQuery(ClassID pLeftCLSID, ClassID pRightCLSID, QUERY_SETOP pJoinOp, unsigned long pExpectedCount);
-		void runJoinQuery(PID pPID, PropertyID pPropID, ClassID pRightCLSID, QUERY_SETOP pJoinOp, unsigned long pExpectedCount);
+		void runJoinQuery(DataEventID pLeftCLSID, DataEventID pRightCLSID, QUERY_SETOP pJoinOp, unsigned long pExpectedCount);
+		void runJoinQuery(PID pPID, PropertyID pPropID, DataEventID pRightCLSID, QUERY_SETOP pJoinOp, unsigned long pExpectedCount);
 };
 
 TEST_IMPLEMENT(TestJoinExcept, TestLogger::kDStdOut);
@@ -141,7 +141,7 @@ void TestJoinExcept::createData()
 	lPIN->destroy();
 }
 
-void TestJoinExcept::runJoinQuery(ClassID pLeftCLSID, ClassID pRightCLSID, QUERY_SETOP pJoinOp, unsigned long pExpectedCount)
+void TestJoinExcept::runJoinQuery(DataEventID pLeftCLSID, DataEventID pRightCLSID, QUERY_SETOP pJoinOp, unsigned long pExpectedCount)
 {
 	// storejoin /pin[pin is class()] as A, [pin is family()] as B were A except|intersects B
 	//mLogger.out() << ">>> " << std::endl;
@@ -201,7 +201,7 @@ void TestJoinExcept::runJoinQuery(ClassID pLeftCLSID, ClassID pRightCLSID, QUERY
 	}
 }
 
-void TestJoinExcept::runJoinQuery(PID pPID, PropertyID pPropID, ClassID pRightCLSID, QUERY_SETOP pJoinOp, unsigned long pExpectedCount)
+void TestJoinExcept::runJoinQuery(PID pPID, PropertyID pPropID, DataEventID pRightCLSID, QUERY_SETOP pJoinOp, unsigned long pExpectedCount)
 {
 	// storejoin /pin[@pid=$pinid]/posts as A, [pin is family()] as B were A except|joins|intersects B	
 	//mLogger.out() << ">>> " << std::endl;

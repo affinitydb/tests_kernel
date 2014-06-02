@@ -186,7 +186,7 @@ void testunitconversionqueries::createUnitPins(void)
 	}
 	
 	/* creating class and classSpec*/
-	ClassID CLSID = STORE_INVALID_CLASSID;
+	DataEventID CLSID = STORE_INVALID_CLASSID;
 	IStmt * pAllPINsWithUnit = mySession->createStmt() ;
 	unsigned char v = pAllPINsWithUnit->addVariable() ;
 	pAllPINsWithUnit->setPropCondition( v, &myProp[0], 1 ) ;

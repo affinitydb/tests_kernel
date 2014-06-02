@@ -43,9 +43,9 @@ class TestFamilyType : public ITest
 		void testForceType() ;
 		void testStringIndex() ;
 
-		ClassID createEqFamily(const char * inFamilyName, PropertyID inProp, ValueType inIndexType = VT_ANY) ;
+		DataEventID createEqFamily(const char * inFamilyName, PropertyID inProp, ValueType inIndexType = VT_ANY) ;
 
-		template<class T> void countIndexMatches(ClassID inIndex, PropertyID inProp, T inValToLookup, int inExpected) ;
+		template<class T> void countIndexMatches(DataEventID inIndex, PropertyID inProp, T inValToLookup, int inExpected) ;
 	private:	
 		ISession * mSession ;
 		string mClassRand ; 
@@ -78,7 +78,7 @@ void TestFamilyType::testIndexBeforePin()
 	// Create class before first pin
 	//
 	PropertyID prop1 = MVTUtil::getPropRand( mSession, "infamfirst" ) ;
-	ClassID mFamilyFirst = createEqFamily( "FamFirst", prop1 ) ;
+	DataEventID mFamilyFirst = createEqFamily( "FamFirst", prop1 ) ;
 	
 	// first pin doesn't establish type of index anymore
 	int i=-1 ;
@@ -131,7 +131,7 @@ void TestFamilyType::testIndexForceInt()
 	// Create class before first pin
 	//
 	PropertyID prop1 = MVTUtil::getPropRand( mSession, "forceint" ) ;
-	ClassID mFamilyFirst = createEqFamily( "FamFirst", prop1, VT_INT ) ;
+	DataEventID mFamilyFirst = createEqFamily( "FamFirst", prop1, VT_INT ) ;
 	
 	int i=-1 ;
 	Value v ; v.set( i ) ; v.property = prop1 ;
@@ -191,7 +191,7 @@ void TestFamilyType::testIndexAfterPin()
 	TVERIFYRC( mSession->createPIN(&v, 1, NULL, MODE_PERSISTENT|MODE_COPY_VALUES) ) ;
 
 	// Create family.  pid1 should be categorized and establish the type
-	ClassID mFamily = createEqFamily( "PinFirst", prop1 ) ;
+	DataEventID mFamily = createEqFamily( "PinFirst", prop1 ) ;
 
 	// String can be converted to a number
 	v.set( "100" ) ; v.property = prop1 ;
@@ -209,7 +209,7 @@ void TestFamilyType::testForceType()
 	// Create class and explicitly specify the type 
 	//
 	PropertyID prop1 = MVTUtil::getPropRand( mSession, "infamfirst" ) ;
-	ClassID mFamilyFirst = createEqFamily( "TypeForced", prop1, VT_DOUBLE ) ;
+	DataEventID mFamilyFirst = createEqFamily( "TypeForced", prop1, VT_DOUBLE ) ;
 	
 	// first pin is int but index should remain double
 	int i=-1 ;
@@ -245,7 +245,7 @@ void TestFamilyType::testStringIndex()
 	PropertyID prop1 = MVTUtil::getPropRand( mSession, "stringprop" ) ;
 
 	// (Case sensitive OP_EQ string index)
-	ClassID mFamilyFirst = createEqFamily( "StringIndex", prop1 /*, VT_STR*/ ) ;
+	DataEventID mFamilyFirst = createEqFamily( "StringIndex", prop1 /*, VT_STR*/ ) ;
 
 	Value v ; 
 	
@@ -256,7 +256,7 @@ void TestFamilyType::testStringIndex()
 }
 
 
-ClassID TestFamilyType::createEqFamily
+DataEventID TestFamilyType::createEqFamily
 (
 	const char * inFamilyName, 
 	PropertyID inProp, 
@@ -304,13 +304,13 @@ ClassID TestFamilyType::createEqFamily
 	strFamily += inFamilyName ;
 	strFamily += mClassRand ;
 	
-	ClassID ret = STORE_INVALID_CLASSID;
+	DataEventID ret = STORE_INVALID_CLASSID;
 	TVERIFYRC(defineClass(mSession, strFamily.c_str(), lQRecreated, &ret ));
 	return ret;
 }
 
 template<class T>
-void TestFamilyType::countIndexMatches(ClassID inIndex, PropertyID inProp, T inVal, int inExpected)
+void TestFamilyType::countIndexMatches(DataEventID inIndex, PropertyID inProp, T inVal, int inExpected)
 {
 #if VERBOSE		
 	mLogger.out() << "Scanning for pins with property " << inProp << " eq " << inVal << endl ;

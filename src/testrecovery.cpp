@@ -408,7 +408,7 @@ void TestRecoveryBase::addBasicContent()
 	// problems - workaround to 6274
 	IStmt * lQ = mSession->createStmt() ;
 	lQ->setPropCondition(lQ->addVariable(),&id,1);
-	ClassID cid = STORE_INVALID_CLASSID;
+	DataEventID cid = STORE_INVALID_CLASSID;
 	TVERIFYRC(defineClass(mSession,"PinsWithDummyProp",lQ,&cid));
 	TVERIFY( cid != STORE_INVALID_CLASSID) ;
 	lQ->destroy() ;
@@ -469,7 +469,7 @@ class TestRecoveryMeta : public TestRecoveryBase
 
 			IStmt * lQ = mSession->createStmt() ;
 			lQ->setPropCondition(lQ->addVariable(),&mExpectedPropIDForC,1);
-			ClassID cid = STORE_INVALID_CLASSID;
+			DataEventID cid = STORE_INVALID_CLASSID;
 			TVERIFYRC(defineClass(mSession,"PinsWithPropC",lQ,&cid));
 			TVERIFY( cid != STORE_INVALID_CLASSID) ;
 			lQ->destroy() ;
@@ -491,8 +491,8 @@ class TestRecoveryMeta : public TestRecoveryBase
 			PropertyID lPropC = MVTApp::getProp(mSession,"PropC");
 			TVERIFY(lPropC==mExpectedPropIDForC); mLogger.out() << lPropC << endl ;
 
-			ClassID cid ;
-			TVERIFYRC(mSession->getClassID("PinsWithPropC",cid));
+			DataEventID cid ;
+			TVERIFYRC(mSession->getDataEventID("PinsWithPropC",cid));
 			TVERIFY( cid != STORE_INVALID_CLASSID) ;
 
 			IdentityID lookupOfIdentityC = mSession->getIdentityID("IdentC");
@@ -531,7 +531,7 @@ class TestRecoveryTransaction : public TestRecoveryBase
 			// Index will be affected by the uncommitted pins
 			IStmt * lQ = mSession->createStmt() ;
 			lQ->setPropCondition(lQ->addVariable(),&idC,1);
-			ClassID cid = STORE_INVALID_CLASSID;
+			DataEventID cid = STORE_INVALID_CLASSID;
 			TVERIFYRC(defineClass(mSession,"PinsWithPropC",lQ,&cid));
 			TVERIFY( cid != STORE_INVALID_CLASSID) ;
 			lQ->destroy() ;
@@ -544,7 +544,7 @@ class TestRecoveryTransaction : public TestRecoveryBase
 			TVERIFYRC(mSession->createPIN(&v,1,&pin,MODE_PERSISTENT|MODE_COPY_VALUES));
 			pid = pin->getPID();
 			pin->destroy();
-
+			
 			// Also add this pin as part of the "PinsWithPropC" index
 			v.set(99) ; v.property=idC ;
 			TVERIFYRC(mSession->modifyPIN( pid, &v, 1 )) ;
@@ -587,8 +587,8 @@ class TestRecoveryTransaction : public TestRecoveryBase
 		virtual void testRecoveredStore()
 		{
 			// See if the index finds anything related to the uncommitted pins
-			ClassID cid ;
-			TVERIFYRC(mSession->getClassID("PinsWithPropC",cid));
+			DataEventID cid ;
+			TVERIFYRC(mSession->getDataEventID("PinsWithPropC",cid));
 			TVERIFY( cid != STORE_INVALID_CLASSID) ;
 
 			SourceSpec spec ;

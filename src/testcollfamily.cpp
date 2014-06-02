@@ -86,14 +86,14 @@ void TestCollFamily::defineFamilies(ISession *session)
 {
 	// Note: Randoms string are used in the class name,
 	// so each test execution is isolated
-	ClassID cls = STORE_INVALID_CLASSID;	
+	DataEventID cls = STORE_INVALID_CLASSID;	
 	Tstring lName; MVTRand::getString(lName,10,10,false,false);
 	char lB[100];
 	sprintf(lB,"testCollFamily.OP_EQ%s.%d", lName.c_str(), 1); mFamilyNames.push_back(lB);
 	sprintf(lB,"testCollFamily.OP_BEGINS%s.%d", lName.c_str(), 1); mFamilyNames.push_back(lB);
 
 	//OP_EQ family
-	if (RC_NOTFOUND == session->getClassID(mFamilyNames[0].c_str(),cls)){
+	if (RC_NOTFOUND == session->getDataEventID(mFamilyNames[0].c_str(),cls)){
 		IStmt *query = session->createStmt();
 		unsigned char var = query->addVariable();
 		Value args[2],args1[2],argsfinal[2];
@@ -117,7 +117,7 @@ void TestCollFamily::defineFamilies(ISession *session)
 		query->destroy();
 		exprfinal->destroy();
 	}
-	if (RC_NOTFOUND == session->getClassID(mFamilyNames[1].c_str(),cls)){
+	if (RC_NOTFOUND == session->getDataEventID(mFamilyNames[1].c_str(),cls)){
 		IStmt *query = session->createStmt();
 		unsigned char var = query->addVariable();
 		Value args[2];
@@ -341,7 +341,7 @@ void TestCollFamily::testOperators(ISession *session, int op,Tstring &deletedstr
 
 	// Go through all the strings that have been added as collection items
 	for (it=strmap.begin();strmap.end() != it; it++){
-		ClassID cls = STORE_INVALID_CLASSID;
+		DataEventID cls = STORE_INVALID_CLASSID;
 		SourceSpec csp[1];
 		IStmt *query;
 		unsigned char var;
@@ -351,12 +351,12 @@ void TestCollFamily::testOperators(ISession *session, int op,Tstring &deletedstr
 		switch (op){
 			case (0): 
 				// Class Query is : "prop0 contains "image" AND prop1=parameter 0
-				session->getClassID(mFamilyNames[0].c_str(),cls);
+				session->getDataEventID(mFamilyNames[0].c_str(),cls);
 				args[0].set(it->c_str());
 				break ;
 			case(1):
 				// Class query "prop2 begins with Parameter 0"
-				session->getClassID(mFamilyNames[1].c_str(),cls);
+				session->getDataEventID(mFamilyNames[1].c_str(),cls);
 				str = it->substr(0,10);
 				args[0].set(str.c_str());
 
@@ -404,9 +404,9 @@ void TestCollFamily::testCollDups(ISession *pSession)
 	}
 	TVERIFYRC(pSession->createPIN(lV,10,NULL,MODE_COPY_VALUES|MODE_PERSISTENT));
 
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	SourceSpec lCS;
-	TVERIFYRC(pSession->getClassID(mFamilyNames[1].c_str(), lCLSID));
+	TVERIFYRC(pSession->getDataEventID(mFamilyNames[1].c_str(), lCLSID));
 	
 	Value lParam;
 	lParam.set(lStr.c_str());

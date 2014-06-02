@@ -23,7 +23,7 @@ class TestPINIn : public ITest{
 		virtual void destroy() { delete this; }		
 	protected:
 		void createBasePINs(ISession *pSession);
-		void createClass(ISession *pSession, ClassID &pCLSID, const int pCase = 0);
+		void createClass(ISession *pSession, DataEventID &pCLSID, const int pCase = 0);
 		
 };
 TEST_IMPLEMENT(TestPINIn, TestLogger::kDStdOut);
@@ -83,7 +83,7 @@ int	TestPINIn::execute(){
 
 	//Case #2: With a Class
 	{
-		ClassID lCLSID; createClass(lSession,lCLSID);
+		DataEventID lCLSID; createClass(lSession,lCLSID);
 		SourceSpec lCS;
 		lCS.objectID = lCLSID;
 		lCS.nParams = 0;
@@ -103,7 +103,7 @@ int	TestPINIn::execute(){
 
 	//Case #3: With 2 Classes
 	{
-		ClassID lCLSID; createClass(lSession,lCLSID);
+		DataEventID lCLSID; createClass(lSession,lCLSID);
 		SourceSpec lCS[2];
 		lCS[0].objectID = lCLSID;
 		lCS[0].nParams = 0;
@@ -170,7 +170,7 @@ void TestPINIn::createBasePINs(ISession *pSession){
 	
 }
 
-void TestPINIn::createClass(ISession *pSession, ClassID &pCLSID, const int pCase){
+void TestPINIn::createClass(ISession *pSession, DataEventID &pCLSID, const int pCase){
 	IStmt * lQ	= pSession->createStmt();
 	unsigned char const lVar = lQ->addVariable();
 	IExprNode *lE;

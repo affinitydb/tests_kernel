@@ -55,8 +55,8 @@ void TestMultiColumnIndex1::doTest()
 
 	mSession = MVTApp::startSession();
 	char *class1 = "TestMultiColumnIndex1.CLASS1";
-	ClassID clsid = STORE_INVALID_CLASSID;
-	if (mSession->getClassID(class1,clsid) != RC_OK)
+	DataEventID clsid = STORE_INVALID_CLASSID;
+	if (mSession->getDataEventID(class1,clsid) != RC_OK)
 	{
 		//first time run this test...		
 		Afy::PropertyID props[10];

@@ -60,7 +60,7 @@ class TestOrderBy : public ITest
 		bool validateResults(unsigned long cntExpected,IStmt *Q,size_t cntOrderBy, const OrderSeg *order) ;
 		int compareValues( const Value * val, const Value * nextval, unsigned short order ) ;
 		int comparePins( IPIN * current, IPIN * next, size_t cntOrderBy, const OrderSeg *order ) ;
-		IStmt * getClassQuery(ClassID incls, ISession* session );
+		IStmt * getClassQuery(DataEventID incls, ISession* session );
 		void getRandomOrdering( OrderSeg *order ) ;
 		bool validateBasicExprResults(unsigned long cntExpected, IStmt *Q ) ;
 		void testPinIDOrdering(ISession* session);
@@ -143,7 +143,7 @@ void TestOrderBy::doTest()
 	// Create a class which will exclude
 	// some of the pins we create
 	// (( PinIndex >= 2 && PinIndex <= (COUNT_PINS - 2) ) && propInt >= -5)
-	ClassID	lCLSID = STORE_INVALID_CLASSID;
+	DataEventID	lCLSID = STORE_INVALID_CLASSID;
 	{
 		IStmt * lQ	= mSession->createStmt();
 		unsigned char const var = lQ->addVariable();
@@ -331,7 +331,7 @@ void TestOrderBy::testPinIDOrdering(ISession* session)
 	}
 }
 
-IStmt * TestOrderBy::getClassQuery(ClassID incls, ISession* session)
+IStmt * TestOrderBy::getClassQuery(DataEventID incls, ISession* session)
 {
 	IStmt * lQ = session->createStmt();
 	SourceSpec lCS;
@@ -718,8 +718,8 @@ void TestOrderBy::testOrderByIndex( ISession * inSession, int inCntPins )
 	}
 	while( rc == RC_ALREADYEXISTS ) ; // Problem when seed reused
 
-	ClassID dateClass = STORE_INVALID_CLASSID;
-	TVERIFYRC(inSession->getClassID( randClassName.c_str(), dateClass)) ;
+	DataEventID dateClass = STORE_INVALID_CLASSID;
+	TVERIFYRC(inSession->getDataEventID( randClassName.c_str(), dateClass)) ;
 
 	//
 	// Create pins for class

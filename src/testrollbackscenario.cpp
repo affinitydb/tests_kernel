@@ -29,7 +29,7 @@ class testrollbackscenario : public ITest
 		PropertyID mPropIDs[nProps];
 		Afy::IAffinity *mCtx;
 		ISession *mSession[NSESSION];
-		ClassID clsid,familyid;
+		DataEventID clsid,familyid;
 		MVTestsPortability::Mutex *lck;
 		MVTestsPortability::Event *evnt;
 		unsigned ses_count;
@@ -190,7 +190,7 @@ int testrollbackscenario::execute()
 	
 		query->setPropCondition(v,&(mPropIDs[0]),1);
 
-		if( RC_NOTFOUND == lSession->getClassID("testrollbackscenario.basic.class",clsid))
+		if( RC_NOTFOUND == lSession->getDataEventID("testrollbackscenario.basic.class",clsid))
 		{
 			mLogger.out()<<"Defining basic class..\n";
 			TVERIFYRC(defineClass(lSession,"testrollbackscenario.basic.class",query,&clsid));
@@ -211,7 +211,7 @@ int testrollbackscenario::execute()
 		
 		query->addCondition(v,expr);
 
-		if( RC_NOTFOUND == lSession->getClassID("testrollbackscenario.basic.family",familyid))
+		if( RC_NOTFOUND == lSession->getDataEventID("testrollbackscenario.basic.family",familyid))
 		{
 			mLogger.out()<<"Defining basic family..\n";
 			TVERIFYRC(defineClass(lSession,"testrollbackscenario.basic.family",query,&familyid));

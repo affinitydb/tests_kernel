@@ -3502,7 +3502,7 @@ IExprNode * TestQueries::createOP_INExpr(ISession *session,unsigned var,int type
 	PropertyID pids[1];
 	Value val[10];
 	Value val1[2];
-	ClassID	pClassID = 0;
+	DataEventID	pClassID = 0;
 	IStmt * pQuery = session->createStmt();
 	QVarID const var1 = pQuery->addVariable();
 	switch(type){
@@ -3604,7 +3604,7 @@ void TestQueries::executeSimpleQuery(ISession *session,int Op,int type,int nExpR
 	IExprNode *expr = NULL;
 	string lCLSName = "TestQueries." + mRandStr + ".";
 	//lCLSName.append(".");
-	ClassID	lCLSID = STORE_INVALID_CLASSID;
+	DataEventID	lCLSID = STORE_INVALID_CLASSID;
 	{
 		IStmt * lQ = session->createStmt();
 		unsigned var = lQ->addVariable();
@@ -3682,7 +3682,7 @@ void TestQueries::executeComplexQuery(ISession *session,int Op,int Op1,int type1
 {
 	IExprNode *expr = NULL;
 	string lCLSName = "TestQueries." + mRandStr + ".";
-	ClassID	lCLSID = STORE_INVALID_CLASSID;
+	DataEventID	lCLSID = STORE_INVALID_CLASSID;
 	{
 		IStmt * lQ = session->createStmt();
 		unsigned var = lQ->addVariable();

@@ -17,8 +17,8 @@ class TestGetPageLock : public ITest
 		static const int sNumProps = 2;
 		PropertyID mPropIDs[sNumProps];
 		RC mRCFinal;
-		ClassID pagecls;
-		ClassID pagecls1;
+		DataEventID pagecls;
+		DataEventID pagecls1;
 
 		TEST_DECLARE(TestGetPageLock);
 		virtual char const * getName() const { return "testgetpagelock"; }
@@ -57,7 +57,7 @@ void TestGetPageLock::testcreatemeta(ISession *session)
 	char lB[100], lB1[100]; // Names of the two classes
 	sprintf(lB,"testGetPageLockClass%s.%d",lClassName.c_str(),1);
 	sprintf(lB1,"testGetPageLockClass%s.%d",lClassName.c_str(),2);
-	if (RC_NOTFOUND == session->getClassID(lB,pagecls)){
+	if (RC_NOTFOUND == session->getDataEventID(lB,pagecls)){
 		// /pin[pin is image()]
 		IStmt *query = session->createStmt();
 		unsigned char var = query->addVariable();
@@ -75,7 +75,7 @@ void TestGetPageLock::testcreatemeta(ISession *session)
 		expr->destroy();
 		query->destroy();
 	}
-	if (RC_NOTFOUND == session->getClassID(lB1,pagecls1)){
+	if (RC_NOTFOUND == session->getDataEventID(lB1,pagecls1)){
 		//pin[pin is image() and tag = $tagName]"
 		IStmt *query = session->createStmt();
 		Value args[2];

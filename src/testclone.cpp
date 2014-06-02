@@ -181,7 +181,7 @@ void TestClone::pinClone(ISession *session)
 	pin->destroy();
 	pin1->destroy();
 
-	//case 4: for overwrite values(OP_DELETE, OP_EDIT, at specific collection element).
+	//case 4: for overwrite values(OP_DELETE at specific collection element).
 	SETVALUE(pvs[0], pm[0].uid, "Rahul the WALL Dravid", OP_SET);
 	SETVALUE(pvs[1], pm[1].uid, "Karnataka da huli", OP_SET);
 	SETVALUE(pvs[2], pm[2].uid, 7900, OP_SET);

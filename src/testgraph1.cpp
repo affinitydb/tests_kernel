@@ -34,8 +34,8 @@ char const * sPhotosFN = "../photos_"PARAMS_ACTUAL".txt";
 char const * const sProps[] = {"orgid", "firstname", "middlename", "lastname", "occupation", "country", "postalcode", "friendof", "rootproject", "fid", "children", "access", "fname", "pname"};
 enum eProps { P_ORGID = 0, P_FIRSTNAME, P_MIDDLENAME, P_LASTNAME, P_OCCUPATION, P_COUNTRY, P_POSTALCODE, P_FRIENDOF, P_ROOTPROJECT, P_FID, P_CHILDREN, P_ACCESS, P_FNAME, P_PNAME, P_TOTALCOUNT };
 PropertyID sPropIDs[P_TOTALCOUNT];
-ClassID sClsid_orgid = STORE_INVALID_CLASSID;
-ClassID sClsid_fid = STORE_INVALID_CLASSID;
+DataEventID sClsid_orgid = STORE_INVALID_CLASSID;
+DataEventID sClsid_fid = STORE_INVALID_CLASSID;
 size_t const sTxSize = 1024;
 
 long countLines(char const * pFN)
@@ -701,9 +701,9 @@ void runQueries(ISession & pSession)
     lS->destroy();
 }
 
-ClassID createClass(ISession * pSession, char const * pName, IStmt * pPredicate)
+DataEventID createClass(ISession * pSession, char const * pName, IStmt * pPredicate)
 {
-    ClassID lClsid = STORE_INVALID_CLASSID;
+    DataEventID lClsid = STORE_INVALID_CLASSID;
 	Value vals[2];
 	vals[0].set(pName); vals[0].setPropID(PROP_SPEC_OBJID);
     vals[1].set(pPredicate); vals[1].setPropID(PROP_SPEC_PREDICATE); vals[1].setMeta(META_PROP_INDEXED);
@@ -752,9 +752,9 @@ int TestGraph1::execute()
         }
 
         // Create classes.
-        if (RC_NOTFOUND == lSession->getClassID("orgid", sClsid_orgid))
+        if (RC_NOTFOUND == lSession->getDataEventID("orgid", sClsid_orgid))
             sClsid_orgid = createClass(lSession, "orgid", lSession->createStmt("select * where $0 in :0;", &sPropIDs[P_ORGID], 1));
-        if (RC_NOTFOUND == lSession->getClassID("fid", sClsid_fid))
+        if (RC_NOTFOUND == lSession->getDataEventID("fid", sClsid_fid))
             sClsid_fid = createClass(lSession, "fid", lSession->createStmt("select * where $0 in :0;", &sPropIDs[P_FID], 1));
 
         // Run the benchmark.

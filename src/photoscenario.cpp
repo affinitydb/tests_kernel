@@ -119,7 +119,7 @@ PropertyID PhotoScenario::getProp( const char * inAppName )
 	return MVTApp::getProp(mSession,string(inAppName+mPostfix).c_str()) ;
 }
 
-ClassID PhotoScenario::getClass( const char * inClassName, ISession *pSession)
+DataEventID PhotoScenario::getClass( const char * inClassName, ISession *pSession)
 {
 	return MVTApp::getClass(pSession==NULL?mSession:pSession,string(inClassName+mPostfix).c_str()) ;
 }
@@ -311,11 +311,11 @@ void PhotoScenario::createPhotoClasses()
 	string className ;
 
 	// These ClassIDs can become member variables for easy usage in tests
-	ClassID lCLSUncachedImageID = STORE_INVALID_CLASSID; //0
+	DataEventID lCLSUncachedImageID = STORE_INVALID_CLASSID; //0
 	{
 		//Uncached Image   /pin[cache > 0 and pin has binary and refresh-node-id ="yasir.pinexus.com"]
 		className = string("uncachedimage") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSUncachedImageID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSUncachedImageID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -346,11 +346,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSUncachedImageID, mNotificationMeta));
 	}
 
-	ClassID lCLSSystemPinID = STORE_INVALID_CLASSID; //1
+	DataEventID lCLSSystemPinID = STORE_INVALID_CLASSID; //1
 	{
 		//mv:defineclass("systemPin","/pin[pin has prop_system]",0)
 		className = string("systempin") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSSystemPinID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSSystemPinID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -364,11 +364,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSSystemPinID, mNotificationMeta));
 	}
 
-	ClassID lFamilyFeedID = STORE_INVALID_CLASSID;//2
+	DataEventID lFamilyFeedID = STORE_INVALID_CLASSID;//2
 	{
 		//mv:defineclass("feed($var)","/pin[pin has feedinfo and feedtype = $var]",0)
 		className = string("feed") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyFeedID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lFamilyFeedID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned char lVar = lQ->addVariable();		
@@ -391,11 +391,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lFamilyFeedID, mNotificationMeta));
 	}
 
-	ClassID lCLSRSSFeedID = STORE_INVALID_CLASSID;//3
+	DataEventID lCLSRSSFeedID = STORE_INVALID_CLASSID;//3
 	{
 		//mv:defineclass("rssFeed","/pin[pin has feed and feedType = 3]",0)
 		className = string("rssFeed") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSRSSFeedID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSRSSFeedID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned char lVar = lQ->addVariable();		
@@ -418,11 +418,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSRSSFeedID, mNotificationMeta));
 	}
 
-	ClassID lCLSEmailFeedID = STORE_INVALID_CLASSID;//4
+	DataEventID lCLSEmailFeedID = STORE_INVALID_CLASSID;//4
 	{
 		//mv:defineclass("emailFeed","/pin[feedType = 2 and acceptemail = 1]",0)
 		className = string("emailFeed") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSEmailFeedID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSEmailFeedID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned char lVar = lQ->addVariable();		
@@ -446,11 +446,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSEmailFeedID, mNotificationMeta));
 	}
 	
-	ClassID lCLSTagID = STORE_INVALID_CLASSID; //5
+	DataEventID lCLSTagID = STORE_INVALID_CLASSID; //5
 	{
 		////mv:defineclass("tag","/pin[pin has tagword]",0)
 		className = string("tag") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSTagID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSTagID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -464,11 +464,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSTagID, mNotificationMeta));
 	}
 
-	ClassID lCLSTaggedPinID = STORE_INVALID_CLASSID; //6
+	DataEventID lCLSTaggedPinID = STORE_INVALID_CLASSID; //6
 	{
 		//taggedPin  /pin[pin has tag_id]
 		className = string("taggedPin") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSTaggedPinID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSTaggedPinID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -482,11 +482,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSTaggedPinID, mNotificationMeta));
 	}
 
-	ClassID lCLSAlbumID = STORE_INVALID_CLASSID; //7
+	DataEventID lCLSAlbumID = STORE_INVALID_CLASSID; //7
 	{
 		//	mv:defineclass("album","/pin[pin has name and (pin has shortname or pin has posts)]",0)
 		className = string("album") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSAlbumID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSAlbumID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -515,11 +515,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSAlbumID, mNotificationMeta));
 	}
 
-	ClassID lCLSSearchSetID = STORE_INVALID_CLASSID; //8
+	DataEventID lCLSSearchSetID = STORE_INVALID_CLASSID; //8
 	{
 		//	mv:defineclass("searchSet","/pin[pin has name and (pin has shortname or pin has posts) and !(pin has prop_system)]",0)
 		className = string("searchSet") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSSearchSetID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSSearchSetID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -558,10 +558,10 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSSearchSetID, mNotificationMeta));
 	}
 
-	ClassID lCLSImageID = STORE_INVALID_CLASSID; //9
+	DataEventID lCLSImageID = STORE_INVALID_CLASSID; //9
 	{
 		className = string("image") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSImageID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSImageID))
 		{
 			// pins where mime_id contains "image"
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
@@ -577,11 +577,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSImageID, mNotificationMeta));
 	}
 
-	ClassID lCLSListID = STORE_INVALID_CLASSID; //10
+	DataEventID lCLSListID = STORE_INVALID_CLASSID; //10
 	{
 		//mv:defineclass("list","/pin[pin has posts]",0)
 		className = string("list") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSListID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSListID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -595,11 +595,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSListID, mNotificationMeta));
 	}
 
-	ClassID lCLSClusterParentID = STORE_INVALID_CLASSID; //11
+	DataEventID lCLSClusterParentID = STORE_INVALID_CLASSID; //11
 	{
 		//	mv:defineclass("clusterparent","/pin[pin has cluster]",0)
 		className = string("clusterparent") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSClusterParentID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSClusterParentID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -613,11 +613,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSClusterParentID, mNotificationMeta));
 	}
 
-	ClassID lCLSImportedFileID = STORE_INVALID_CLASSID;//12
+	DataEventID lCLSImportedFileID = STORE_INVALID_CLASSID;//12
 	{
 		//importedFile  /pin[pin has fs_path]
 		className = string("importedFile") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSImportedFileID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSImportedFileID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -631,11 +631,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSImportedFileID, mNotificationMeta));
 	}
 
-	ClassID lCLSImportedFolderID = STORE_INVALID_CLASSID;//13
+	DataEventID lCLSImportedFolderID = STORE_INVALID_CLASSID;//13
 	{
 		//mv:defineclass("importedFolder","/pin[pin has fs_folder]",0)]
 		className = string("importedFolder") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSImportedFolderID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSImportedFolderID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -649,11 +649,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSImportedFolderID, mNotificationMeta));
 	}
 
-	ClassID lCLSSubscriptionID = STORE_INVALID_CLASSID;//14
+	DataEventID lCLSSubscriptionID = STORE_INVALID_CLASSID;//14
 	{
 		//mv:defineclass("subscription","/pin[pin has feed]",0)
 		className = string("subscription") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSSubscriptionID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSSubscriptionID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());			
 			unsigned const char lVar = lQ->addVariable();		
@@ -668,11 +668,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSSubscriptionID, mNotificationMeta));
 	}
 
-	ClassID lCLSSubscriptionQueueID = STORE_INVALID_CLASSID;//15
+	DataEventID lCLSSubscriptionQueueID = STORE_INVALID_CLASSID;//15
 	{
 		//mv:defineclass("subscriptionqueue","/pin[name = 'subscriptionqueue' and prop_system = 'true']",0)
 		className = string("subscriptionqueue") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSSubscriptionQueueID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSSubscriptionQueueID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());			
 			unsigned const char lVar = lQ->addVariable();		
@@ -696,11 +696,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSSubscriptionQueueID, mNotificationMeta));
 	}
 
-	ClassID lCLSSubscriptionListID = STORE_INVALID_CLASSID;//16
+	DataEventID lCLSSubscriptionListID = STORE_INVALID_CLASSID;//16
 	{
 		//mv:defineclass("subscriptionlist","/pin[name = 'subscriptionslist' and prop_system = 'true']",0)
 		className = string("subscriptionlist") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSSubscriptionListID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSSubscriptionListID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());			
 			unsigned const char lVar = lQ->addVariable();		
@@ -724,11 +724,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSSubscriptionListID, mNotificationMeta));
 	}
 
-	ClassID lCLSContactID = STORE_INVALID_CLASSID; //17
+	DataEventID lCLSContactID = STORE_INVALID_CLASSID; //17
 	{
 		//mv:defineclass("contact","/pin[pin has posts]",0)
 		className = string("list") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSContactID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSContactID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -742,11 +742,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSContactID, mNotificationMeta));
 	}
 
-	ClassID lCLSVisFavAlbumID = STORE_INVALID_CLASSID; //18
+	DataEventID lCLSVisFavAlbumID = STORE_INVALID_CLASSID; //18
 	{
 		//	mv:defineclass("VisFavAlbum","/pin[pin has visIdentity and pin has name and (pin has shortname or pin has posts)]",0)
 		className = string("VisFavAlbum") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSVisFavAlbumID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSVisFavAlbumID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -782,11 +782,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSVisFavAlbumID, mNotificationMeta));
 	}
 
-	ClassID lFamilyImageClusterID = STORE_INVALID_CLASSID;//19
+	DataEventID lFamilyImageClusterID = STORE_INVALID_CLASSID;//19
 	{
 		//imageCluster  /pin[pin is image() and date in $dateRange]
 		className = string("imageCluster") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyImageClusterID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lFamilyImageClusterID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			SourceSpec lRange[1];
@@ -806,11 +806,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lFamilyImageClusterID, mNotificationMeta));
 	}
 
-	ClassID lFamilytaggedImagesID = STORE_INVALID_CLASSID;//20
+	DataEventID lFamilytaggedImagesID = STORE_INVALID_CLASSID;//20
 	{
 		//taggedImages  /pin[pin is image() and tag = $tagName]
 		className = string("taggedImages") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilytaggedImagesID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lFamilytaggedImagesID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			SourceSpec lRange[1];
@@ -830,10 +830,10 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lFamilytaggedImagesID, mNotificationMeta));
 	}
 
-	ClassID lCLSSubImageID = STORE_INVALID_CLASSID;//21
+	DataEventID lCLSSubImageID = STORE_INVALID_CLASSID;//21
 	{
 		className = string("imageEW") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSSubImageID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSSubImageID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned char lVar;
@@ -871,10 +871,10 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSSubImageID, mNotificationMeta));
 	}
 	
-	ClassID lCLSWasteImageID = STORE_INVALID_CLASSID;//22
+	DataEventID lCLSWasteImageID = STORE_INVALID_CLASSID;//22
 	{
 		className = string("imageW") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSWasteImageID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSWasteImageID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned char lVar;
@@ -896,11 +896,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSWasteImageID, mNotificationMeta));
 	}
 
-	ClassID lFamilytaggedImagesEWID = STORE_INVALID_CLASSID;//23
+	DataEventID lFamilytaggedImagesEWID = STORE_INVALID_CLASSID;//23
 	{
 		//taggedImagesEW  /pin[pin is imageEW() and prop1 = $tagName]
 		className = string("taggedImagesEW") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilytaggedImagesEWID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lFamilytaggedImagesEWID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			SourceSpec lRange[1];
@@ -921,11 +921,11 @@ void PhotoScenario::createPhotoClasses()
 	}
 
 	// Create the Family with lCLSSubImageID's class
-	ClassID lFamilyID = STORE_INVALID_CLASSID;//24
+	DataEventID lFamilyID = STORE_INVALID_CLASSID;//24
 	{
 		// pin is lCLSSubImageID and prop2 IN var1 (range of dates)
 		className = string("imageClusterEW") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lFamilyID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			SourceSpec lRange[1];
@@ -946,11 +946,11 @@ void PhotoScenario::createPhotoClasses()
 	}
 
 	// Create the Family with lCLSWasteImageID's class
-	ClassID lWasteFamilyID = STORE_INVALID_CLASSID;//25
+	DataEventID lWasteFamilyID = STORE_INVALID_CLASSID;//25
 	{
 		// pin is lCLSWasteImageID and prop2 IN var1 (range of dates)
 		className = string("imageClusterW") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lWasteFamilyID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lWasteFamilyID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			SourceSpec lRange[1];
@@ -970,11 +970,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lWasteFamilyID, mNotificationMeta));
 	}
 
-	ClassID lFamilyImageClusterEWCRID = STORE_INVALID_CLASSID;//26
+	DataEventID lFamilyImageClusterEWCRID = STORE_INVALID_CLASSID;//26
 	{
 		//imageClusterEWCR  /pin[pin is imageEW() and PROP_SPEC_CREATED in $dateRange]
 		className = string("imageClusterEWCR") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyImageClusterEWCRID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lFamilyImageClusterEWCRID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			SourceSpec lRange[1];
@@ -995,11 +995,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lFamilyImageClusterEWCRID, mNotificationMeta));
 	}
 
-	ClassID lFamilyImageClusterWCRID = STORE_INVALID_CLASSID;//27
+	DataEventID lFamilyImageClusterWCRID = STORE_INVALID_CLASSID;//27
 	{
 		//imageClusterWCR  /pin[pin is imageW() and PROP_SPEC_CREATED in $dateRange]
 		className = string("imageClusterWCR") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyImageClusterWCRID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lFamilyImageClusterWCRID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			SourceSpec lRange[1];
@@ -1020,11 +1020,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lFamilyImageClusterWCRID, mNotificationMeta));
 	}
 
-	ClassID lFamilyFileImageID = STORE_INVALID_CLASSID;//28
+	DataEventID lFamilyFileImageID = STORE_INVALID_CLASSID;//28
 	{
 		//fileimage  /pin[pin is importedFile() and fs_path = $path]
 		className = string("fileimage") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyFileImageID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lFamilyFileImageID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			SourceSpec lRange[1];
@@ -1044,11 +1044,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lFamilyFileImageID, mNotificationMeta));
 	}
 
-	ClassID lCLSTabInfoID = STORE_INVALID_CLASSID; //29
+	DataEventID lCLSTabInfoID = STORE_INVALID_CLASSID; //29
 	{
 		//mv:defineclass("tabinfo","/pin[pin has tabname]",0)
 		className = string("tabinfo") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSTabInfoID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSTabInfoID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -1062,11 +1062,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSTabInfoID, mNotificationMeta));
 	}
 
-	ClassID lCLSOwnerInfoID = STORE_INVALID_CLASSID; //30
+	DataEventID lCLSOwnerInfoID = STORE_INVALID_CLASSID; //30
 	{
 		//mv:defineclass("ownerinfo","/pin[pin has owner_id and pin has owner_name]",0)
 		className = string("list") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lCLSOwnerInfoID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lCLSOwnerInfoID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			unsigned const char lVar = lQ->addVariable();
@@ -1087,11 +1087,11 @@ void PhotoScenario::createPhotoClasses()
 		TVERIFYRC(mSession->enableClassNotifications(lCLSOwnerInfoID, mNotificationMeta));
 	}
 
-	ClassID lFamilyAllImportedFilesID = STORE_INVALID_CLASSID;//31
+	DataEventID lFamilyAllImportedFilesID = STORE_INVALID_CLASSID;//31
 	{
 		//allImportedFiles  /pin[pin is importedFile() and fs_path begins with $folder]		
 		className = string("allImportedFiles") + mPostfix ;
-		if(RC_OK!=mSession->getClassID(className.c_str(),lFamilyAllImportedFilesID))
+		if(RC_OK!=mSession->getDataEventID(className.c_str(),lFamilyAllImportedFilesID))
 		{
 			CmvautoPtr<IStmt> lQ(mSession->createStmt());
 			SourceSpec lRange[1];
@@ -1141,7 +1141,7 @@ IStmt * PhotoScenario::createClassQueryS
 	const char * inFTSearch			// Optional full text search within the class
 )
 {
-	ClassID cls = getClass(inClassName,inSession) ;
+	DataEventID cls = getClass(inClassName,inSession) ;
 	TVERIFY( cls != STORE_INVALID_CLASSID ) ;
 	IStmt * q = inSession->createStmt(sop) ;
 

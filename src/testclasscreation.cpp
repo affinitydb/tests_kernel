@@ -50,7 +50,7 @@ void TestClassCreation::doTest()
 
 	mSession = MVTApp::startSession();
 	//char *class1 = "TestClassCreation.CLASS1";
-	ClassID clsid = STORE_INVALID_CLASSID;
+	DataEventID clsid = STORE_INVALID_CLASSID;
 
 	URIMap pmaps[20];
 	MVTApp::mapURIs(mSession,"TestClassCreation",10,pmaps);
@@ -97,7 +97,7 @@ void TestClassCreation::doTest()
 	SourceSpec spec;
 	Tstring st;
 	IPIN *class_pins[10];
-	ClassID clsids[10];
+	DataEventID clsids[10];
 	std::cout<<"\n starting classification" << endl;
 	for (int i = 0; i < 6; i++)
 	{

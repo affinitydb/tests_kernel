@@ -254,7 +254,7 @@ class MVTApp
 		static void unregisterTestPINs(std::vector<IPIN *> &pTestPINs, ISession *pSession){ MVTUtil::unregisterTestPINs( pTestPINs, pSession ) ; }
 		static void unregisterTestPINs(std::vector<PID> &pTestPIDs, ISession *pSession){ MVTUtil::unregisterTestPINs( pTestPIDs, pSession ) ;  }
 		static PropertyID getProp(ISession* inS, const char* inName) { return MVTUtil::getProp( inS, inName ) ; }
-		static ClassID getClass(ISession* inS, const char* inClass) { return MVTUtil::getClass( inS, inClass ) ; }
+		static DataEventID getClass(ISession* inS, const char* inClass) { return MVTUtil::getClass( inS, inClass ) ; }
 		static char * myToUTF8(wchar_t const * pStr, size_t pLen, uint32_t & pBogus) { return MVTUtil::myToUTF8( pStr, pLen, pBogus) ; }
 		static char *toUTF8(const wchar_t *ustr,uint32_t ilen,uint32_t& olen) { return MVTUtil::toUTF8(ustr,ilen,olen); }
 		static wchar_t *toUNICODE(const char *str,uint32_t ilen,uint32_t& olen) { return MVTUtil::toUNICODE(str,ilen,olen) ; }

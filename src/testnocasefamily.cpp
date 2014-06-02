@@ -52,14 +52,14 @@ void TestNoCaseFamily::testNoCaseMeta(ISession *session)
 	1. OP_EQ
 	2. OP_BEGINS
 	*/
-	ClassID cls = STORE_INVALID_CLASSID;	
+	DataEventID cls = STORE_INVALID_CLASSID;	
 	Tstring lName; MVTRand::getString(lName,10,10,false,false);
 	char lB[100];
 	sprintf(lB,"testNoCaseFamily.OP_EQ%s.%d", lName.c_str(), 1); mFamilyNames.push_back(lB);
 	sprintf(lB,"testNoCaseFamily.OP_BEGINS%s.%d", lName.c_str(), 1); mFamilyNames.push_back(lB);
 	
 	//OP_EQ class
-	if (RC_NOTFOUND == session->getClassID(mFamilyNames[0].c_str(),cls)){
+	if (RC_NOTFOUND == session->getDataEventID(mFamilyNames[0].c_str(),cls)){
 		IStmt *query = session->createStmt();
 		unsigned char var = query->addVariable();
 		Value args[2];
@@ -72,7 +72,7 @@ void TestNoCaseFamily::testNoCaseMeta(ISession *session)
 		expr->destroy();
 	}
 	//OP_BEGINS
-	if (RC_NOTFOUND == session->getClassID(mFamilyNames[1].c_str(),cls)){
+	if (RC_NOTFOUND == session->getDataEventID(mFamilyNames[1].c_str(),cls)){
 		IStmt *query = session->createStmt();
 		unsigned char var = query->addVariable();
 		Value args[2];
@@ -134,7 +134,7 @@ void TestNoCaseFamily::testNoCaseQueries(ISession *session)
 {
 	vector<Tstring>::iterator it;
 	Tstring str;
-	ClassID cls;
+	DataEventID cls;
 	int x =0;
 	mLogger.out()<<"\nRunning Family queries for OP_EQ...";
 	for (it=vOpEqStr.begin();vOpEqStr.end() != it; it++){
@@ -148,7 +148,7 @@ void TestNoCaseFamily::testNoCaseQueries(ISession *session)
 		args[0] = testNoCaseString(*it,x,0);
 		query = session->createStmt();
 		cls = STORE_INVALID_CLASSID;
-		session->getClassID(mFamilyNames[0].c_str(),cls);
+		session->getDataEventID(mFamilyNames[0].c_str(),cls);
 		csp.objectID = cls;
 		csp.nParams = 1;
 		csp.params = args;
@@ -172,7 +172,7 @@ void TestNoCaseFamily::testNoCaseQueries(ISession *session)
 		x = rand() % 4;
 		args[0] = testNoCaseString(*it,x,1);
 		query = session->createStmt();
-		session->getClassID(mFamilyNames[1].c_str(),cls);
+		session->getDataEventID(mFamilyNames[1].c_str(),cls);
 		csp.objectID = cls;
 		csp.nParams = 1;
 		csp.params = args;

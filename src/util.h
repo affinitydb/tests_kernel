@@ -141,7 +141,7 @@ public:
 
 	static PropertyID getProp(ISession* inS, const char* inName) ;
 	static PropertyID getPropRand(ISession *pSession, const char *pPropName) ;
-	static ClassID getClass(ISession* inS, const char* inClass,uint32_t classnotify=0/*optional*/) ;
+	static DataEventID getClass(ISession* inS, const char* inClass,uint32_t classnotify=0/*optional*/) ;
 
 	/*! \brief Generate a new class.  
 	
@@ -156,7 +156,7 @@ public:
 	\param class-related notification flags, see ISession::setNotification()
 	\return INVALID_CLASSID if unable to create a unique class
 	*/
-	static ClassID createUniqueClass(ISession* inS, const char* inPrefix, IStmt* inQ, std::string * outname=NULL,uint32_t classnotify=0);
+	static DataEventID createUniqueClass(ISession* inS, const char* inPrefix, IStmt* inQ, std::string * outname=NULL,uint32_t classnotify=0);
 
 	static char * myToUTF8(wchar_t const * pStr, size_t pLen, uint32_t & pBogus);
 	static char *toUTF8(const wchar_t *ustr,uint32_t ilen,uint32_t& olen);

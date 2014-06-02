@@ -78,6 +78,28 @@ void TestVTMap::doCase1()
     TVERIFYRC(MVTApp::execStmt(mSession, "insert multiply_10_mapping={0->0, 1->10, 2->20, 3->30, 4->40}"));
     TVERIFY(MVTApp::countStmt(mSession, "select * where exists(multiply_10_mapping)") == 1); 
 
+    // supported since kernel#rev.1740
+    // individual map element access 
+    TVERIFYRC(MVTApp::execStmt(mSession, "INSERT afy:objectID='testvtmap_c1_t1',map={1->'a','a'->2, 2->TIMESTAMP '2014-05-29'};"));
+    ICursor* res = NULL; IStmt *qry = NULL; Value val;
+    TVERIFY((qry = mSession->createStmt("SELECT map[map[map[1]]] FROM #testvtmap_c1_t1", NULL, 0, NULL)) != NULL);
+    TVERIFYRC(qry->execute(&res));
+    TVERIFYRC(res->next(val));
+    TVERIFY(val.type == VT_DATETIME);
+    if (qry!=NULL) qry->destroy();if (res!=NULL) res->destroy();
+    TVERIFY((qry = mSession->createStmt("SELECT map['a'] WHERE map[1]='a'", NULL, 0, NULL)) != NULL);
+    TVERIFYRC(qry->execute(&res));
+    TVERIFYRC(res->next(val));
+    TVERIFY(val.ui == 2);
+    if (qry!=NULL) qry->destroy();if (res!=NULL) res->destroy();
+
+    TVERIFYRC(MVTApp::execStmt(mSession, "INSERT afy:objectID='testvtmap_c1_t2',map={1->'a','a'->3, 3->1};")); // a circle
+    TVERIFY((qry = mSession->createStmt("SELECT map[map[map[3]]] FROM #testvtmap_c1_t2", NULL, 0, NULL)) != NULL);
+    TVERIFYRC(qry->execute(&res));
+    TVERIFYRC(res->next(val));
+    TVERIFY(val.ui == 3);
+    if (qry!=NULL) qry->destroy();if (res!=NULL) res->destroy();
+    
     mLogger.out() << "testvtmap doCase1 finish!" << endl;
 }
 

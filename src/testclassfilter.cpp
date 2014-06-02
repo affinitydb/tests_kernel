@@ -29,7 +29,7 @@ public:
 	static const int sNumProps = 4;
 	static const int sNumClasses = 2;
 	PropertyID mProp[sNumProps];
-	ClassID mClass[sNumClasses];
+	DataEventID mClass[sNumClasses];
 };
 TEST_IMPLEMENT(testclassfilter, TestLogger::kDStdOut);
 

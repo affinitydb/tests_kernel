@@ -21,7 +21,7 @@ class TestDNFQuery : public ITest
 	protected:
 		void doTest();
 		void testDNFSimple();
-		bool testQuery(ClassID pClassID, int pExpCount);
+		bool testQuery(DataEventID pClassID, int pExpCount);
 };
 
 TEST_IMPLEMENT(TestDNFQuery, TestLogger::kDStdOut);
@@ -37,7 +37,7 @@ void TestDNFQuery::testDNFSimple()
 	MVTApp::mapURIs(mSession, "TestDNFQuery.testDNFSimple.prop", 5, lPropIDs);
 	
 	// (!a and b and !c) or (!a and !b and c)
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -90,7 +90,7 @@ void TestDNFQuery::testDNFSimple()
 		TVERIFYRC(defineClass(mSession,lB, lQ, &lCLSID));
 	}
 	// (!a or b) and (d or e)
-	ClassID lCLSID2 = STORE_INVALID_CLASSID;
+	DataEventID lCLSID2 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -149,7 +149,7 @@ void TestDNFQuery::testDNFSimple()
 	}
 }
 
-bool TestDNFQuery::testQuery(ClassID pClassID, int pExpCount)
+bool TestDNFQuery::testQuery(DataEventID pClassID, int pExpCount)
 {
 	if(STORE_INVALID_CLASSID != pClassID)
 	{

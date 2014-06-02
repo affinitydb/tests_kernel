@@ -13,7 +13,7 @@ class TestUndelete : public ITest
 		static const int sNumProps = 4;
 		static const int sNumPINs = 3000;	
 		PropertyID mPropIDs[sNumProps];
-		ClassID mCLSID, mFamilyID, mFamilyID1, mFamilyID2,mFamilyID3;
+		DataEventID mCLSID, mFamilyID, mFamilyID1, mFamilyID2,mFamilyID3;
 		std::vector<PID> mPIDs;
 		Tstring mQueryStr;
 		std::vector<Tstring> mPIDStr;		

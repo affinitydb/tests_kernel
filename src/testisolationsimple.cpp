@@ -86,7 +86,7 @@ class TestIsolationSimple : public ITest
 		ISession * mSession1, * mSession2;
 		PropertyID mPropIDs[215];
 		PID mPIDs[kPEnd];
-		ClassID mCLSID;
+		DataEventID mCLSID;
 		Tstring mLargeString;
 		int mCurrentReadOnlyType; // eReadOnlyType
 		int mCurrentTxiLevel; // Afy::TXI_LEVEL
@@ -128,8 +128,8 @@ class TestIsolationSimple : public ITest
 		void createBlankReplicatedPID(ISession & pSession, PID & pResult);
 	protected:
 		static bool findPin_session(ISession * pS, PID const & pPID);
-		static bool findPin_fullscan(ISession * pS, ClassID pClsid, PID const & pPID);
-		static bool findPin_class(ISession * pS, ClassID pClsid, PID const & pPID);
+		static bool findPin_fullscan(ISession * pS, DataEventID pClsid, PID const & pPID);
+		static bool findPin_class(ISession * pS, DataEventID pClsid, PID const & pPID);
 		static bool findPin_ft(ISession * pS, PID const & pPID, Tstring const & pTxt, unsigned long pMode = 0);
 		static bool findPin_result(ICursor * pCursor, PID const & pPID);
 		static Tstring readStream(Afy::IStream & pStream);
@@ -359,7 +359,7 @@ int TestIsolationSimple::execute()
 			// Class.
 			mCLSID = STORE_INVALID_CLASSID;
 			Tstring const lClassName("testisolationsimple.class.1");
-			if (RC_OK != mSession1->getClassID(lClassName.c_str(), mCLSID))
+			if (RC_OK != mSession1->getDataEventID(lClassName.c_str(), mCLSID))
 			{
 				CmvautoPtr<IStmt> lQ(mSession1->createStmt());
 				PropertyID  lProps[1];
@@ -549,6 +549,7 @@ void TestIsolationSimple::testUpdateSmallString()
 
 void TestIsolationSimple::testUpdateLargeString()
 {
+#if 0
 	logSubtest("testUpdateLargeString");
 	char const * const lNewSegment = "Jamie Lee Curtis";
 	Tstring lSomeWords;
@@ -578,6 +579,7 @@ void TestIsolationSimple::testUpdateLargeString()
 	if (!simulatingrc())
 		{ TVERIFYRC(lWS->rollback()); }
 	lP1->destroy();
+#endif
 }
 
 void TestIsolationSimple::testUpdateSmallCollection()
@@ -1169,10 +1171,10 @@ bool TestIsolationSimple::findPin_session(ISession * pS, PID const & pPID)
 	CmvautoPtr<IPIN> lP(pS->getPIN(pPID));
 	return lP.IsValid();
 }
-bool TestIsolationSimple::findPin_fullscan(ISession * pS, ClassID pClsid, PID const & pPID)
+bool TestIsolationSimple::findPin_fullscan(ISession * pS, DataEventID pClsid, PID const & pPID)
 {
 	IPIN * lCls;
-	if (RC_OK != pS->getClassInfo(pClsid, lCls))
+	if (RC_OK != pS->getDataEventInfo(pClsid, lCls))
 		return false;
 	Value const * const lClsV = lCls->getValue(PROP_SPEC_PREDICATE);
 	if (!lClsV || lClsV->type != Afy::VT_STMT)
@@ -1184,7 +1186,7 @@ bool TestIsolationSimple::findPin_fullscan(ISession * pS, ClassID pClsid, PID co
 	lCls->destroy();
 	return findPin_result(lR, pPID);
 }
-bool TestIsolationSimple::findPin_class(ISession * pS, ClassID pClsid, PID const & pPID)
+bool TestIsolationSimple::findPin_class(ISession * pS, DataEventID pClsid, PID const & pPID)
 {
 	// Note (maxw):
 	//   There is a known issue in the store presently, causing the classes to

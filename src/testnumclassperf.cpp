@@ -178,7 +178,7 @@ public:
 		IStmt * q = mSession->createStmt();
 
 		// See if a class exists to speed up the query
-		ClassID lClassID = MVTApp::getClass(mSession,mClassName);			 
+		DataEventID lClassID = MVTApp::getClass(mSession,mClassName);			 
 
 		if ( lClassID != STORE_INVALID_CLASSID )
 		{
@@ -200,7 +200,7 @@ public:
 	{
 		const char * lClassName = mFamilyName;
 
-		ClassID cls = MVTApp::getClass(mSession, lClassName );
+		DataEventID cls = MVTApp::getClass(mSession, lClassName );
 		TV_R( cls != STORE_INVALID_CLASSID,mTest );
 		IStmt * q = mSession->createStmt();
 
@@ -245,7 +245,7 @@ public:
 
 		IStmt * lQ;
 
-		ClassID cls = MVTApp::getClass(mSession, mFamilyName );
+		DataEventID cls = MVTApp::getClass(mSession, mFamilyName );
 		if ( cls != STORE_INVALID_CLASSID )
 		{
 			lQ = getIndexSearchForNumber( mSpecificNumber );

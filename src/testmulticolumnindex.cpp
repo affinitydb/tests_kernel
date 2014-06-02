@@ -31,14 +31,14 @@ class TestMultiColumnIndex : public ITest
             DescrCondition(size_t pPropIndex, Afy::ExprOp pCondType) : mPropIndex(pPropIndex), mCondType(pCondType) {}
         };
         typedef std::vector<DescrCondition> DescrIndex; // Multi-column indexes are defined by multiple conditions.
-        typedef std::vector<ClassID> ClassIDs;
+        typedef std::vector<DataEventID> ClassIDs;
         typedef std::vector<std::string> Strings;
         typedef std::vector<Value> Values;
         struct DescrFamily
         {
             DescrIndex mDescr; // The logical description.
             std::string mBaseName; // The base name used to generate the various families involved.
-            ClassID mMulti; // The class id of the multi-variable implementation.
+            DataEventID mMulti; // The class id of the multi-variable implementation.
             ClassIDs mSingles; // The class ids of the corresponding single-variable implementations.
             std::string mMultiName; // The class name of the multi-variable implementation.
             Strings mSinglesNames; // The class names of the single-variable implementations.

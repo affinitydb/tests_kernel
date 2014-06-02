@@ -185,7 +185,7 @@ afy:request=${UPDATE testservices2_t1_c1 SET testservices2_t1_p1='HELLO'}, tests
 void TestServices2::doCase2(){
     char sql[300],sql2[100],address[20];
     ICursor *res=NULL; IStmt *qry=NULL;
-    IPIN *pin=NULL; int i;
+    IPIN *pin=NULL,*lNext=NULL; int i=0;
 
     mLogger.out() << "Start testservices2 doCase2... " << endl;
     
@@ -210,7 +210,8 @@ void TestServices2::doCase2(){
     memset(sql2, 0, sizeof(sql2));
     // This message should display on STDOUT
     sprintf(sql2, "INSERT OPTIONS(TRANSIENT) testservices2_t2_update='Hello from Store2!\n'");
-    sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address=\'%s\',afy:request=${%s}, testservices2_t2_p2=1", address, sql2);
+    sprintf(sql, "INSERT afy:service={.srv:pathSQL,.srv:sockets,.srv:protobuf},afy:address=\'%s\',afy:request=${%s},\
+testservices2_t2_p2=1,afy:objectID='testservices2_t2_sender'", address, sql2);
     TVERIFYRC(execStmt(mSession,sql,&res));
     TVERIFY((pin = res->next()) != NULL);
 
@@ -226,36 +227,44 @@ void TestServices2::doCase2(){
     while(res->next()!=NULL);
     if(res!= NULL) res->destroy();
 
-    // send many messages by updating afy:request of this CPIN
-    i = 0;
-    while (i < 1000) {
-        memset(sql, 0, sizeof(sql));
-        memset(sql2, 0, sizeof(sql2));
-        sprintf(sql2, "INSERT OPTIONS(TRANSIENT) testservices2_t2_update='Hello from Store2! UPDATE#%d\n'", i);
-        sprintf(sql, "UPDATE RAW @" _LX_FM " SET afy:request=${%s}", (pin->getPID()).pid, sql2);
-        TVERIFYRC(execStmt(mSession, sql));
-        TVERIFYRC(qry->execute(&res));
-        IPIN * lNext;
-        while(res && NULL != (lNext = res->next())) lNext->destroy(); // this message should display here.
-        if(res!= NULL) res->destroy();  
-        i++;
-    }
+    // old way of sending a request 
+    sprintf(sql2, "INSERT OPTIONS(TRANSIENT) testservices2_t2_update='Hello from Store2! UPDATE#%d\n'", i);i++;
+    sprintf(sql, "UPDATE RAW @" _LX_FM " SET afy:request=${%s}", (pin->getPID()).pid, sql2);
+    TVERIFYRC(execStmt(mSession, sql));
+    TVERIFYRC(qry->execute(&res));
+    while(res && NULL != (lNext = res->next())) lNext->destroy(); 
+    if(res!= NULL) res->destroy(); 
 
     // create a timer to update CPIN
     memset(sql, 0, sizeof(sql));
     //sprintf(sql, "CREATE TIMER testservices2_t2_t2 INTERVAL \'00:00:01\' AS \
-//UPDATE RAW @" _LX_FM  " SET afy:request=${INSERT OPTIONS(TRANSIENT) testservices2_t2_update=CURRENT_TIMESTAMP}", (pin->getPID()).pid);
+    //UPDATE RAW @" _LX_FM  " SET afy:request=${INSERT OPTIONS(TRANSIENT) testservices2_t2_update=CURRENT_TIMESTAMP}", (pin->getPID()).pid);
     sprintf(sql, "CREATE TIMER testservices2_t2_t2 INTERVAL \'00:00:01\' AS \
 UPDATE RAW @" _LX_FM  " SET afy:request=${INSERT OPTIONS(TRANSIENT) testservices2_t2_update='Hello from Store2(TIMER UPDATE)!\n'}", (pin->getPID()).pid);
     cout << sql << endl;
     TVERIFYRC(execStmt(mSession,sql)); 
     // sleep 10 seconds
+     cout << "sleep 10 seconds..." << endl;
     MVTestsPortability::threadSleep(1000*10);
 
     TVERIFYRC(qry->execute(&res));
     while(res->next()!=NULL);    
     if(res != NULL) res->destroy();
     if(qry!=NULL) qry->destroy();
+
+    /**
+      * new way of sending many messages, using WITH
+      */
+    while (i < 1000) {
+        memset(sql, 0, sizeof(sql));
+        memset(sql2, 0, sizeof(sql2));
+        sprintf(sql2, "INSERT OPTIONS(TRANSIENT) testservices2_t2_update='Hello from Store2! UPDATE#%d\n'", i);
+        sprintf(sql, "WITH afy:request=${%s} SELECT * FROM #testservices2_t2_sender",sql2);
+        TVERIFYRC(execStmt(mSession,sql,&res));
+        while(res && NULL != (lNext = res->next())) lNext->destroy(); // this message should display here.
+        if(res!= NULL) res->destroy();
+        i++;
+    }
 
     // send many messages by creating many CPINs
     i = 0;

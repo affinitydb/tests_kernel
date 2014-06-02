@@ -37,10 +37,10 @@ class TestFamilyBasic : public ITest
 
 		vector<PID> mPINs ;
 
-		ClassID mClass1 ;
-		ClassID mFamily2 ;
-		ClassID mFamily3 ;
-		ClassID mFamily4 ;
+		DataEventID mClass1 ;
+		DataEventID mFamily2 ;
+		DataEventID mFamily3 ;
+		DataEventID mFamily4 ;
 };
 TEST_IMPLEMENT(TestFamilyBasic, TestLogger::kDStdOut);
 

@@ -52,7 +52,7 @@ void TestIndexRollback::doTest()
 
 	mSession = MVTApp::startSession();
 	char *class1 = "TestIndexRollback.CLASS1";
-	ClassID clsid = STORE_INVALID_CLASSID;
+	DataEventID clsid = STORE_INVALID_CLASSID;
 
 	URIMap pmaps[20];
 	MVTApp::mapURIs(mSession,"TestIndexRollback",3,pmaps);

@@ -93,7 +93,7 @@ class TestDeadLock : public ITest
 	private:	
 		PropertyID mProp;
 		PID mPids[CNT_PINS]; // Pins created by test (no pins added/deleted by threads)
-		ClassID mClass; // Tracks same pins as in mPids
+		DataEventID mClass; // Tracks same pins as in mPids
 };
 TEST_IMPLEMENT(TestDeadLock, TestLogger::kDStdOut);
 

@@ -40,7 +40,7 @@ class TestLeftJoin : public ITest
 		void doTest();
 		void createMeta();
 		void createData();
-		ClassID getClassID(int pClassIndex);
+		DataEventID getDataEventID(int pClassIndex);
 		void executeQuery(SourceSpec *pLHSCS, SourceSpec *pRHSCS, IExprNode *pET = NULL, unsigned pMode = 0);
 	protected:
 		void testLeftJoinEQ();
@@ -65,7 +65,7 @@ void TestLeftJoin::testLeftJoinEQ()
 	lLHSValue[0].set(mLHSStr.c_str());
 	
 	SourceSpec lLHSCS[1];
-	lLHSCS[0].objectID = getClassID(0);
+	lLHSCS[0].objectID = getDataEventID(0);
 	lLHSCS[0].nParams = 1;
 	lLHSCS[0].params = lLHSValue;		
 
@@ -73,7 +73,7 @@ void TestLeftJoin::testLeftJoinEQ()
 	lRHSValue[0].set(sRHSStr[0]);
 	
 	SourceSpec lRHSCS[1];
-	lRHSCS[0].objectID = getClassID(1);
+	lRHSCS[0].objectID = getDataEventID(1);
 	lRHSCS[0].nParams = 1;
 	lRHSCS[0].params = lRHSValue;
 	
@@ -98,7 +98,7 @@ void TestLeftJoin::testLeftJoinIN()
 	Value lVal[2]; lVal[0].set(mLHSStr.c_str()); lVal[1].set(mLHSStr.c_str());
 	Value lLHSVal[1]; lLHSVal[0].setRange(lVal);
 	SourceSpec lLHSCS[1];
-	lLHSCS[0].objectID = getClassID(2);
+	lLHSCS[0].objectID = getDataEventID(2);
 	lLHSCS[0].nParams = 1;
 	lLHSCS[0].params = lLHSVal;
 
@@ -107,7 +107,7 @@ void TestLeftJoin::testLeftJoinIN()
 	Value lVal2[2]; lVal2[0].set(lStart); lVal2[1].set(lEnd);
 	Value lRHSVal[1]; lRHSVal[0].setRange(lVal2);
 	SourceSpec lRHSCS[1];
-	lRHSCS[0].objectID = getClassID(3);
+	lRHSCS[0].objectID = getDataEventID(3);
 	lRHSCS[0].nParams = 1;
 	lRHSCS[0].params = lRHSVal;
 
@@ -207,7 +207,7 @@ void TestLeftJoin::doTest()
 void TestLeftJoin::createMeta()
 {
 	// Family #0
-	ClassID lLHSFamilyID = STORE_INVALID_CLASSID;
+	DataEventID lLHSFamilyID = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -227,7 +227,7 @@ void TestLeftJoin::createMeta()
 	}
 
 	// Family #1
-	ClassID lRHSFamilyID = STORE_INVALID_CLASSID;
+	DataEventID lRHSFamilyID = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -247,7 +247,7 @@ void TestLeftJoin::createMeta()
 	}
 	
 	// Family #2
-	ClassID lLHSFamilyID2 = STORE_INVALID_CLASSID;
+	DataEventID lLHSFamilyID2 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -267,7 +267,7 @@ void TestLeftJoin::createMeta()
 	}
 
 	// Family #3
-	ClassID lRHSFamilyID2 = STORE_INVALID_CLASSID;
+	DataEventID lRHSFamilyID2 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -287,7 +287,7 @@ void TestLeftJoin::createMeta()
 	}
 
 	// Family #4
-	ClassID lLHSFamilyID3 = STORE_INVALID_CLASSID;
+	DataEventID lLHSFamilyID3 = STORE_INVALID_CLASSID;
 	{
 		IStmt *lQ = mSession->createStmt();
 		unsigned char lVar = lQ->addVariable();
@@ -367,12 +367,12 @@ void TestLeftJoin::createData()
 	lPINs.clear();
 }
 
-ClassID TestLeftJoin::getClassID(int pClassIndex)
+DataEventID TestLeftJoin::getDataEventID(int pClassIndex)
 {
 	char lB[64];			
 	sprintf(lB, "TestLeftJoin.%s.Family%d", mClassStr.c_str(), pClassIndex);
-	ClassID lCLSID = STORE_INVALID_CLASSID;
-	TVERIFYRC(mSession->getClassID(lB, lCLSID));
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
+	TVERIFYRC(mSession->getDataEventID(lB, lCLSID));
 	return lCLSID;
 }
 

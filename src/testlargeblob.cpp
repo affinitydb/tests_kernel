@@ -128,6 +128,7 @@ PID TestLargeBlob::createFilePin( int pageSize, int pagePerPageGroup, int testFi
 			}
 			else if ( group == 0 )
 			{
+#if 0
 				// OP_EDIT can work if we only have a single (non-collection)
 				// property value.  This is the normal pifs mechanism
 
@@ -138,9 +139,11 @@ PID TestLargeBlob::createFilePin( int pageSize, int pagePerPageGroup, int testFi
 				v.setPropID(mFileContent);
 				v.eid = endElement ;  // Attempt to say which item to edit
 				TVERIFYRC(mSession->modifyPIN(myPID,&v,1)) ;
+#endif
 			}
 			else
 			{
+#if 0
 				// Try to append to the existing collection item
 #if TEST_8359
 				// OP_EDIT not supported on element of a collection
@@ -193,6 +196,7 @@ PID TestLargeBlob::createFilePin( int pageSize, int pagePerPageGroup, int testFi
 
 				// The old EID is not reused
 				//endElement = v.eid ;  
+#endif
 #endif
 			}
 		}

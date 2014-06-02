@@ -14,7 +14,7 @@ class TestFamilies : public ITest{
 		static const int mNumPINs = 10000;
 		static const int mNumClasses = 7;
 		PID mPID[mNumPINs];
-		ClassID mCLSIDs[mNumClasses];
+		DataEventID mCLSIDs[mNumClasses];
 		int mNumParams[mNumClasses]; // How many parameters the query requires
 		int mExpResult[mNumClasses]; // Expected results for each query
 		uint64_t mUI64a; 
@@ -613,7 +613,7 @@ bool TestFamilies::quickTest(ISession *pSession){
 
 	// Register a class (with random name) based on the query
 	char lB[64];
-	ClassID lCLSID = STORE_INVALID_CLASSID;
+	DataEventID lCLSID = STORE_INVALID_CLASSID;
 	Tstring lClassName; MVTRand::getString(lClassName,10,10,false,false);
 	sprintf(lB, "TestFamilies.quickTest%s.%d", lClassName.c_str(), 1000);
 	defineClass(pSession, lB, lQ, &lCLSID);

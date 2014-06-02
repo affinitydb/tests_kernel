@@ -76,7 +76,7 @@ class PhotoScenario : public ITest, public IStoreNotification
 		// Helper functions
 	protected:
 		PropertyID getProp( const char * inPropName ) ;
-		ClassID getClass(const char * inClassName, ISession *pSession = NULL  ) ;
+		DataEventID getClass(const char * inClassName, ISession *pSession = NULL  ) ;
 		void runClassQueries() ; 
 		IStmt * createClassQuery
 		( 

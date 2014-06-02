@@ -114,7 +114,7 @@ void TestIndexWithNull::doTest()
 
 		qry = mSession->createStmt();
 		SourceSpec spec;
-		mSession->getClassID("TestIndexWithNull.class1",spec.objectID);
+		mSession->getDataEventID("TestIndexWithNull.class1",spec.objectID);
 		spec.nParams = 0; spec.params = NULL;
 		qry->addVariable(&spec,1);
 		uint64_t cnt;
@@ -122,7 +122,7 @@ void TestIndexWithNull::doTest()
 		qry->destroy();
 		TVERIFY(cnt == 2);
 		qry = mSession->createStmt();
-		mSession->getClassID("TestIndexWithNull.class2",spec.objectID);
+		mSession->getDataEventID("TestIndexWithNull.class2",spec.objectID);
 		va[1].set(30); va[2].set(30); va[0].setRange(&va[1]);
 		spec.nParams = 1; spec.params = va;
 		qry->addVariable(&spec,1);

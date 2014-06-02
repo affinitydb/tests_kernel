@@ -572,8 +572,8 @@ void TestMultiStore::doStuffInStore( ISession* inS  )
 	}
 
 	// Run a query
-	ClassID stringLookup = STORE_INVALID_CLASSID;
-	TVERIFYRC(inS->getClassID("StringLookup", stringLookup )) ;
+	DataEventID stringLookup = STORE_INVALID_CLASSID;
+	TVERIFYRC(inS->getDataEventID("StringLookup", stringLookup )) ;
 	lQ = inS->createStmt() ;
 
 	Value stringToLookup ;
@@ -601,12 +601,12 @@ void TestMultiStore::doStuffInStore( ISession* inS  )
 void TestMultiStore::doGuestStuffInStore( ISession* inS  )
 {
 	// Run a query
-	ClassID stringLookup = STORE_INVALID_CLASSID ;
+	DataEventID stringLookup = STORE_INVALID_CLASSID ;
 
 	RC rc ;
 	while(true)
 	{
-		rc = inS->getClassID("StringLookup", stringLookup ) ;
+		rc = inS->getDataEventID("StringLookup", stringLookup ) ;
 		if (rc==RC_OK)
 			break ;
 		// 

@@ -29,7 +29,7 @@ class TestClassPerf : public ITest
 		bool testclassperf(ISession *session, int pWhich);
 	protected:
 		URIMap pm[2];
-		ClassID cls;
+		DataEventID cls;
 };
 #define lAllClassNotifs (CLASS_NOTIFY_JOIN | CLASS_NOTIFY_LEAVE | CLASS_NOTIFY_CHANGE | CLASS_NOTIFY_DELETE | CLASS_NOTIFY_NEW)
 TEST_IMPLEMENT(TestClassPerf, TestLogger::kDStdOut);
@@ -94,7 +94,7 @@ void TestClassPerf::mapProps(ISession *session)
 		std::cout << "Error: failed in mapURIs!" << std::endl;
 
 	// cls won't be valid first time this test is run, but will be fixed later
-	session->getClassID("TestClassPerf.classperf",cls);
+	session->getDataEventID("TestClassPerf.classperf",cls);
 	session->enableClassNotifications(cls,lAllClassNotifs);
 }
 void TestClassPerf::createPINS(ISession *session)
@@ -117,7 +117,7 @@ void TestClassPerf::createPINS(ISession *session)
 	if (RC_OK != defineClass(session,"TestClassPerf.classperf",classquery,&cls))
 		std::cout << "Error: failed in defineClass" << std::endl;
 	if (RC_OK != session->enableClassNotifications(cls,lAllClassNotifs))
-		std::cout << "Error: failed in getClassID" << std::endl;
+		std::cout << "Error: failed in getDataEventID" << std::endl;
 	classquery->destroy();
 	classopexistexpr->destroy();
 
